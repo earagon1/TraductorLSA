@@ -144,3 +144,19 @@ Se realizaron pruebas en diferentes dispositivos, obteniéndose los siguientes r
 - MediaPipe Tasks Vision
 - TensorFlow Lite
 - Text-to-Speech (Android TTS)
+
+---
+
+## **Novedades recientes**
+
+### Modo Training para recolección de datos
+Se agregó un nuevo **modo de entrenamiento** que permite:
+- Mostrar las **tres mejores predicciones** del modelo (Top-3) junto con su porcentaje de confianza.
+- Seleccionar manualmente la predicción correcta para **guardar la secuencia capturada con la etiqueta elegida**.
+- **Exportar los datos en JSON** (`lsa_samples_YYYYMMDD_HHMMSS.json`) para usarlos luego en el reentrenamiento del modelo en Python.
+- Llevar un contador de muestras recolectadas y opciones para **limpiar** o **exportar**.
+
+### Cierre manual del panel de predicciones
+- Dentro del panel de entrenamiento se agregó un botón **“X”** en la esquina superior derecha.  
+- Esto permite **cerrar el panel manualmente** en caso de que ninguna predicción sea correcta o si la seña fue mal realizada, dejando la pantalla lista para una nueva captura.
+
