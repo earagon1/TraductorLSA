@@ -176,7 +176,7 @@ class GestureEngine(
     }
 
 
-    fun forcePrediction() {
+    /*fun forcePrediction() {
         val T = classifier.T
         val D = classifier.D
         val recent = sequenceBuffer.recent(15)
@@ -207,18 +207,18 @@ class GestureEngine(
 
         val gesture = labelProvider.labels.getOrNull(idx) ?: "Unknown"
         onPrediction?.invoke(PredictionResult(gesture, prob, handedness))
-    }
+    }*/
 
     fun setCameraFacing(isFront: Boolean) {
         isFrontCamera = isFront
         sequenceBuffer.clear()
     }
 
-    fun release() {
+    /*fun release() {
         handTracker.close()
         classifier.close()
         sequenceBuffer.clear()
         onHands = null
         onPrediction = null
-    }
+    }*/
 }
