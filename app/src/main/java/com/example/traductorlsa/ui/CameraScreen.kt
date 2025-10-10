@@ -10,9 +10,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -43,7 +47,25 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
 
-// ---------- modelos simples ----------
+import androidx.compose.material3.OutlinedTextField
+
+import android.content.Context
+
+import androidx.compose.material.icons.filled.List
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.launch
+
+import org.json.JSONObject
+
+import android.content.Intent
+import androidx.core.content.FileProvider
+
+import android.os.Environment
+import org.json.JSONArray
+
+// ---------- modelos/estado simples ----------
 data class OverlayData(
     val imgW: Int = 0,
     val imgH: Int = 0,
@@ -56,7 +78,40 @@ data class TrainingSample(
     val label: String,
     val seq: List<List<Float>> // T x D
 )
-// -------------------------------------
+// -------------------------------------------
+
+
+// Archivo único y ruta
+private const val DATASET_FILE_NAME = "lsa_samples.json"
+
+private fun loadAllLabels(context: Context): List<String> {
+    // 1) words.json con "word_ids": [...]
+    try {
+        context.assets.open("words.json").bufferedReader().use { br ->
+            val json = JSONObject(br.readText())
+            val arr = json.optJSONArray("word_ids")
+            if (arr != null && arr.length() > 0) {
+                val out = ArrayList<String>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val v = arr.optString(i)?.trim()
+                    if (!v.isNullOrEmpty()) out += v
+                }
+                return out.distinct().sorted()
+            }
+        }
+    } catch (_: Exception) {
+        // seguimos al fallback
+    }
+
+    // 2) Fallback a labels.txt (uno por línea)
+    return try {
+        context.assets.open("labels.txt").bufferedReader().use { br ->
+            br.readLines().map { it.trim() }.filter { it.isNotEmpty() }.distinct().sorted()
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
 
 @Composable
 fun CameraScreen() {
@@ -68,21 +123,23 @@ fun CameraScreen() {
     var translatedText by rememberSaveable { mutableStateOf("") }
     var currentPrediction by remember { mutableStateOf<PredictionResult?>(null) }
 
-    // métricas (se ocultan en training)
+    // métricas (ocultas en training)
     var captureTime by remember { mutableStateOf(0L) }
     var inferTime by remember { mutableStateOf(0L) }
     var fpsValue by remember { mutableStateOf(0f) }
     var targetFramesUsed by remember { mutableStateOf(15) }
 
     // ---- TRAINING STATE ----
-    var trainingMode by rememberSaveable { mutableStateOf(true) } // podés dejarlo en false si querés
+    var trainingMode by rememberSaveable { mutableStateOf(true) }
     val collected = remember { mutableStateListOf<TrainingSample>() }
     var top3 by remember { mutableStateOf<List<PredictionResult>>(emptyList()) }
     var lastSeq by remember { mutableStateOf<List<List<Float>>>(emptyList()) }
     var tUsed by remember { mutableStateOf(0) }
     var dUsed by remember { mutableStateOf(0) }
-    // visibilidad de botones: aparecen SOLO cuando terminó una predicción
     var showChoices by remember { mutableStateOf(false) }
+
+    // Etiquetas personalizadas cacheadas para reusar
+    val customLabels = remember { mutableStateListOf<String>() }
     // ------------------------
 
     var hasPermission by remember {
@@ -117,9 +174,22 @@ fun CameraScreen() {
         )
     }
 
+    // Snackbar para "Deshacer"
+    val snack = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    // Guardamos el índice del último agregado para poder revertirlo
+    var lastAddedIndex by remember { mutableStateOf<Int?>(null) }
+
+
     var frameCount by remember { mutableStateOf(0) }
 
-    // ---------- Callbacks del engine ----------
+    val allBaseLabels = remember { mutableStateListOf<String>() }
+    LaunchedEffect(Unit) {
+        allBaseLabels.clear()
+        allBaseLabels += loadAllLabels(context)   // ← ahora lee words.json
+    }
+
+    // -------- Callbacks del engine --------
     DisposableEffect(engine) {
         engine.onHands = { hands, w, h, rot, isFront ->
             lastHandsAt = SystemClock.uptimeMillis()
@@ -129,7 +199,6 @@ fun CameraScreen() {
         engine.onPrediction = { prediction ->
             currentPrediction = prediction
             if (!trainingMode) {
-                // Sólo hablar y acumular texto fuera de training
                 speechManager.speak(prediction.gesture)
                 if (prediction.confidence > 0.5f &&
                     prediction.gesture != "Unknown" &&
@@ -147,14 +216,11 @@ fun CameraScreen() {
 
         engine.onCaptureProgress = { count, _ ->
             frameCount = count
-            if (trainingMode) {
-                // Mientras se está capturando, ocultar opciones
-                if (count > 0) showChoices = false
-            }
+            if (trainingMode && count > 0) showChoices = false
         }
 
         engine.onCaptureStats = { cap, inf, fps, newTarget ->
-            if (!trainingMode) { // 🔕 ocultar métricas si está training
+            if (!trainingMode) {
                 if (cap > 0) {
                     captureTime = cap
                     fpsValue = fps
@@ -164,14 +230,14 @@ fun CameraScreen() {
             }
         }
 
-        // 👉 Top-3 + features normalizados: acá sabemos que TERMINÓ la predicción
+        // Top-3 + features normalizados → listo para etiquetar
         engine.onTopPredictions = { preds, seq ->
             if (trainingMode) {
                 top3 = preds
                 lastSeq = seq.map { it.toList() }
                 tUsed = seq.size
                 dUsed = if (seq.isNotEmpty()) seq[0].size else 0
-                showChoices = true // ← mostrar botones recién ahora
+                showChoices = true
             }
         }
 
@@ -184,9 +250,9 @@ fun CameraScreen() {
             speechManager.release()
         }
     }
-    // -----------------------------------------
+    // -------------------------------------
 
-    // Limpieza del overlay si se “van” las manos
+    // Limpia overlay si se “van” las manos
     LaunchedEffect(Unit) {
         while (true) {
             delay(250)
@@ -237,7 +303,7 @@ fun CameraScreen() {
         // Overlay landmarks
         com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
 
-        // Barra superior: switch + acciones dataset (sólo en training)
+        // Barra superior
         Row(
             Modifier
                 .fillMaxWidth()
@@ -252,7 +318,6 @@ fun CameraScreen() {
                     checked = trainingMode,
                     onCheckedChange = {
                         trainingMode = it
-                        // limpiar UI de opciones al salir/entrar
                         showChoices = false
                         top3 = emptyList()
                     }
@@ -272,23 +337,53 @@ fun CameraScreen() {
                     ) { Text("Limpiar") }
 
                     Spacer(Modifier.width(8.dp))
+                    // Exportar JSON → append al archivo único del día
                     Button(
                         onClick = {
                             if (collected.isEmpty()) {
                                 Toast.makeText(context, "No hay muestras para exportar", Toast.LENGTH_SHORT).show()
                             } else {
-                                val json = buildJson(collected, tUsed, dUsed)
-                                val file = saveJson(context.getExternalFilesDir(null) ?: context.filesDir, json)
-                                Toast.makeText(context, "Exportado: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                                val f = appendSamplesByDate(context, collected, tUsed, dUsed)
+                                Toast.makeText(context, "Guardado en: ${f.absolutePath}", Toast.LENGTH_LONG).show()
+                                // (opcional) limpiar el buffer de sesión
+                                collected.clear()
                             }
                         },
                         shape = RoundedCornerShape(12.dp)
                     ) { Text("Exportar JSON") }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    // Compartir → también hace append previo y luego abre el chooser
+                    Button(
+                        onClick = {
+                            if (collected.isEmpty()) {
+                                Toast.makeText(context, "No hay muestras para compartir", Toast.LENGTH_SHORT).show()
+                            } else {
+                                exportAndShareJson(context, collected, tUsed, dUsed)
+                                // (opcional) limpiar buffer
+                                collected.clear()
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp)
+                    ) { Text("Compartir") }
                 }
+            }
+            if (trainingMode && collected.isNotEmpty()) {
+                Spacer(Modifier.width(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (collected.isNotEmpty()) {
+                            collected.removeAt(collected.lastIndex)
+                            Toast.makeText(context, "Se eliminó la última muestra", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                ) { Text("Deshacer último") }
             }
         }
 
-        // Indicador de captura (podemos ocultarlo si querés)
+        // Indicador de captura (puedo ocultarlo en training si querés)
         if (frameCount > 0) {
             Column(
                 Modifier
@@ -311,26 +406,9 @@ fun CameraScreen() {
             }
         }
 
-        // Métricas: 🔕 se ocultan en Training
-        if (!trainingMode && (captureTime > 0 || inferTime > 0)) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (captureTime > 0) {
-                    Text("⏱️ Captura: ${captureTime} ms", color = Color.White)
-                    Text("📸 FPS efectivos: ${"%.1f".format(fpsValue)}", color = Color.White)
-                    Text("🎯 targetFrames: $targetFramesUsed", color = Color.Yellow)
-                }
-                if (inferTime > 0) {
-                    Text("🤖 Inferencia: ${inferTime} ms", color = Color.White)
-                }
-            }
-        }
+        // Métricas (ocultas en training) — omitidas aquí para simplificar
 
-        // Panel inferior: cambia por modo
+        // Panel inferior
         Column(
             Modifier
                 .fillMaxSize()
@@ -339,23 +417,90 @@ fun CameraScreen() {
         ) {
             if (trainingMode) {
                 TrainingPanel(
-                    visible = showChoices,    // ← solo cuando hay predicción lista
+                    visible = showChoices,
                     top3 = top3,
+                    allLabels = (allBaseLabels + customLabels).distinct().sorted(),
+                    customLabels = customLabels,
                     onPick = { label ->
                         if (lastSeq.isEmpty()) {
                             Toast.makeText(context, "No hay secuencia disponible aún", Toast.LENGTH_SHORT).show()
                         } else {
-                            collected += TrainingSample(label = label, seq = lastSeq)
-                            // ocultar hasta la próxima predicción
+                            val sample = TrainingSample(label = label /* o newLabel */, seq = lastSeq)
+                            collected += sample
+// recordá el índice exacto que agregaste
+                            val idx = collected.lastIndex
+                            lastAddedIndex = idx
+
+// ocultar panel hasta la próxima predicción (como ya hacías)
                             showChoices = false
                             top3 = emptyList()
-                            Toast.makeText(context, "Agregada muestra: $label (T=$tUsed, D=$dUsed)", Toast.LENGTH_SHORT).show()
+
+// Snackbar con acción "Deshacer"
+                            scope.launch {
+                                val res = snack.showSnackbar(
+                                    message = "Muestra guardada: ${sample.label}",
+                                    actionLabel = "Deshacer",
+                                    withDismissAction = true,
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (res == SnackbarResult.ActionPerformed) {
+                                    // si no hubo otra inserción en el medio y el índice sigue válido, borramos esa muestra
+                                    if (lastAddedIndex != null && lastAddedIndex!! in collected.indices) {
+                                        collected.removeAt(lastAddedIndex!!)
+                                        Toast.makeText(context, "Se deshizo la última muestra", Toast.LENGTH_SHORT).show()
+                                    }
+                                    lastAddedIndex = null
+                                } else {
+                                    // No se deshizo; limpiamos el puntero
+                                    lastAddedIndex = null
+                                }
+                            }
                         }
                     },
                     onClose = {
-                        // cerrar manualmente el panel (por ejemplo si ninguna predicción aplica)
                         showChoices = false
                         top3 = emptyList()
+                    },
+                    onCreateAndPick = { newLabel ->
+                        if (newLabel.isBlank()) {
+                            Toast.makeText(context, "La etiqueta no puede estar vacía", Toast.LENGTH_SHORT).show()
+                        } else if (lastSeq.isEmpty()) {
+                            Toast.makeText(context, "No hay secuencia disponible aún", Toast.LENGTH_SHORT).show()
+                        } else {
+                            if (customLabels.none { it.equals(newLabel, ignoreCase = true) }) {
+                                customLabels += newLabel
+                            }
+                            val sample = TrainingSample(label = newLabel, seq = lastSeq)
+                            collected += sample
+// recordá el índice exacto que agregaste
+                            val idx = collected.lastIndex
+                            lastAddedIndex = idx
+
+// ocultar panel hasta la próxima predicción (como ya hacías)
+                            showChoices = false
+                            top3 = emptyList()
+
+// Snackbar con acción "Deshacer"
+                            scope.launch {
+                                val res = snack.showSnackbar(
+                                    message = "Muestra guardada: ${sample.label}",
+                                    actionLabel = "Deshacer",
+                                    withDismissAction = true,
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (res == SnackbarResult.ActionPerformed) {
+                                    // si no hubo otra inserción en el medio y el índice sigue válido, borramos esa muestra
+                                    if (lastAddedIndex != null && lastAddedIndex!! in collected.indices) {
+                                        collected.removeAt(lastAddedIndex!!)
+                                        Toast.makeText(context, "Se deshizo la última muestra", Toast.LENGTH_SHORT).show()
+                                    }
+                                    lastAddedIndex = null
+                                } else {
+                                    // No se deshizo; limpiamos el puntero
+                                    lastAddedIndex = null
+                                }
+                            }
+                        }
                     }
                 )
             } else {
@@ -376,94 +521,304 @@ fun CameraScreen() {
                 }
             }
         }
+        // Snackbar (aparece centrado-abajo)
+        SnackbarHost(
+            hostState = snack,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
     }
 }
 
-// ---------- UI de Training (3 botones + X para cerrar) ----------
+// ---------- UI Training: Top-3 (grid 1×3) + X + “Agregar” + Chips ----------
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TrainingPanel(
     visible: Boolean,
     top3: List<PredictionResult>,
+    allLabels: List<String>,
+    customLabels: List<String>,
     onPick: (String) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onCreateAndPick: (String) -> Unit
 ) {
     if (!visible) return
 
+    var addMode by remember { mutableStateOf(false) }
+    var newLabel by remember { mutableStateOf("") }
+
+    // Sheet de “todas las etiquetas”
+    var showAll by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val scope = rememberCoroutineScope()
+    var search by remember { mutableStateOf("") }
+    val filtered = remember(allLabels, search) {
+        val q = search.lowercase()
+        if (q.isBlank()) allLabels else allLabels.filter { it.lowercase().contains(q) }
+    }
+
+    if (showAll) {
+        // Abrir ya expandido
+        LaunchedEffect(Unit) { scope.launch { sheetState.expand() } }
+
+        ModalBottomSheet(
+            onDismissRequest = { showAll = false },
+            sheetState = sheetState,
+            // un poco translúcido para no tapar 100%
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("Elegí una etiqueta", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = search,
+                    onValueChange = { search = it },
+                    singleLine = true,
+                    placeholder = { Text("Buscar…") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+
+                // Lista scrolleable y clickeable
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp)
+                ) {
+                    items(filtered) { label ->
+                        ListItem(
+                            headlineContent = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onPick(label)
+                                    showAll = false
+                                }
+                        )
+                        Divider()
+                    }
+                }
+                if (filtered.isEmpty()) {
+                    Text(
+                        "No hay resultados",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // Card principal (Top-3 / Agregar / Chips / Lista)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.75f))
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.65f))
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
-            // Header con título + X (arriba-derecha)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Seleccioná la etiqueta correcta:", color = Color.White)
-                IconButton(onClick = onClose) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Cerrar",
-                        tint = Color.White
-                    )
+                Text(
+                    if (addMode) "Nueva etiqueta para esta seña:" else "Seleccioná la etiqueta correcta:",
+                    color = Color.White
+                )
+                Row {
+                    IconButton(onClick = { showAll = true }) {
+                        Icon(Icons.Filled.List, contentDescription = "Ver todas", tint = Color.White)
+                    }
+                    IconButton(onClick = { addMode = !addMode }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Agregar etiqueta", tint = Color.White)
+                    }
+                    IconButton(onClick = onClose) {
+                        Icon(Icons.Filled.Close, contentDescription = "Cerrar", tint = Color.White)
+                    }
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-            if (top3.isEmpty()) {
-                Text("Esperando predicción…", color = Color.White.copy(alpha = 0.7f))
-            } else {
-                top3.forEach { pred ->
-                    val pct = (pred.confidence * 100).coerceIn(0f, 100f)
+            Spacer(Modifier.height(6.dp))
+
+            if (addMode) {
+                OutlinedTextField(
+                    value = newLabel,
+                    onValueChange = { newLabel = it.trim() },
+                    singleLine = true,
+                    placeholder = { Text("Ingresá nueva etiqueta…") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     Button(
-                        onClick = { onPick(pred.gesture) },
+                        onClick = {
+                            onCreateAndPick(newLabel)
+                            newLabel = ""
+                            addMode = false
+                        },
+                        shape = RoundedCornerShape(12.dp)
+                    ) { Text("Guardar") }
+                    OutlinedButton(
+                        onClick = { newLabel = ""; addMode = false },
+                        shape = RoundedCornerShape(12.dp)
+                    ) { Text("Cancelar") }
+                }
+            } else {
+                // Top-3 en una sola fila
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    (0 until 3).forEach { i ->
+                        val pred = top3.getOrNull(i)
+                        Button(
+                            onClick = { pred?.let { onPick(it.gesture) } },
+                            enabled = pred != null,
+                            modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            val pct = ((pred?.confidence ?: 0f) * 100).coerceIn(0f, 100f)
+                            Text(
+                                text = if (pred != null)
+                                    "${pred.gesture}  (${String.format(Locale.US, "%.1f", pct)}%)"
+                                else "—",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
+                // Chips de etiquetas personalizadas (si hay)
+                if (customLabels.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(14.dp)
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("${pred.gesture}  (${String.format(Locale.US, "%.1f", pct)}%)")
+                        customLabels.forEach { label ->
+                            OutlinedButton(
+                                onClick = { onPick(label) },
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.heightIn(min = 36.dp)
+                            ) {
+                                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
-// -----------------------------------------------
+// -------------------------------------------------------------------------
 
 // ---------- Helpers JSON ----------
-private fun buildJson(samples: List<TrainingSample>, T: Int, D: Int): String {
-    val sb = StringBuilder()
-    sb.append("{\"t\":").append(T).append(",\"d\":").append(D).append(",\"samples\":[")
-    samples.forEachIndexed { i, s ->
-        if (i > 0) sb.append(',')
-        sb.append("{\"label\":\"")
-            .append(s.label.replace("\"", "\\\""))
-            .append("\",\"seq\":[")
-        s.seq.forEachIndexed { ti, frame ->
-            if (ti > 0) sb.append(',')
-            sb.append('[')
-            frame.forEachIndexed { di, v ->
-                if (di > 0) sb.append(',')
-                sb.append(v)
-            }
-            sb.append(']')
-        }
-        sb.append("]}")
-    }
-    sb.append("]}")
-    return sb.toString()
+
+private fun datasetFile(context: Context): File {
+    val base = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
+    return File(base, DATASET_FILE_NAME)
 }
 
-private fun saveJson(baseDir: File, json: String): File {
-    val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-    val file = File(baseDir, "lsa_samples_$ts.json")
-    file.writeText(json)
-    return file
+// Cargar JSON actual o iniciar uno nuevo con schema {t, d, by_date:{}}
+private fun loadOrInitDataset(context: Context, T: Int, D: Int): JSONObject {
+    val f = datasetFile(context)
+    if (!f.exists() || f.length() == 0L) {
+        return JSONObject().apply {
+            put("t", T)
+            put("d", D)
+            put("by_date", JSONObject())
+        }
+    }
+    return try {
+        val obj = JSONObject(f.readText())
+        // si no trae campos, los inicializamos
+        if (!obj.has("t")) obj.put("t", T)
+        if (!obj.has("d")) obj.put("d", D)
+        if (!obj.has("by_date")) obj.put("by_date", JSONObject())
+        obj
+    } catch (e: Exception) {
+        // archivo corrupto → reinicio
+        JSONObject().apply {
+            put("t", T)
+            put("d", D)
+            put("by_date", JSONObject())
+        }
+    }
+}
+
+// Append de muestras al día actual (YYYY-MM-DD)
+private fun appendSamplesByDate(context: Context, samples: List<TrainingSample>, T: Int, D: Int): File {
+    if (samples.isEmpty()) return datasetFile(context)
+
+    val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+    val root = loadOrInitDataset(context, T, D)
+
+    // Si cambió T o D, actualizamos metadatos (o podrías abortar si querés estricta compatibilidad)
+    root.put("t", T)
+    root.put("d", D)
+
+    val byDate = root.getJSONObject("by_date")
+    val arr: JSONArray = if (byDate.has(today)) byDate.getJSONArray(today) else JSONArray()
+
+    // Convertir nuestras muestras a JSON y agregarlas
+    samples.forEach { s ->
+        val seqJson = JSONArray()
+        s.seq.forEach { frame ->
+            val fArr = JSONArray()
+            frame.forEach { v -> fArr.put(v) }
+            seqJson.put(fArr)
+        }
+        val sampleObj = JSONObject()
+            .put("label", s.label)
+            .put("seq", seqJson)
+        arr.put(sampleObj)
+    }
+
+    byDate.put(today, arr)
+    root.put("by_date", byDate)
+
+    val out = datasetFile(context)
+    out.writeText(root.toString())
+    return out
+}
+
+// Compartir SIEMPRE el archivo único, asegurando append previo
+private fun exportAndShareJson(context: Context, samples: List<TrainingSample>, T: Int, D: Int) {
+    if (samples.isEmpty()) {
+        Toast.makeText(context, "No hay muestras para exportar", Toast.LENGTH_SHORT).show()
+        return
+    }
+    try {
+        val file = appendSamplesByDate(context, samples, T, D)
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Compartir dataset JSON"))
+
+    } catch (e: Exception) {
+        Toast.makeText(context, "Error al exportar/compartir: ${e.message}", Toast.LENGTH_LONG).show()
+    }
 }
 // -----------------------------------

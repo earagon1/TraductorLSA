@@ -20,3 +20,4 @@ build/
 *.log
 *.class
 .DS_Store 
+*.rar
