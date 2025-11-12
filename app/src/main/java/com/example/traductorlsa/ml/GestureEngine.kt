@@ -46,12 +46,27 @@ class GestureEngine(
 
 
     fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long) {
-        val mpImage = BitmapImageBuilder(bitmap).build()
-        val res = handTracker.detect(mpImage, rotationDeg)
+        // ============================================================
+        // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
+        val correctedBitmap = when (rotationDeg) {
+            90 -> Bitmap.createBitmap(
+                bitmap, 0, 0, bitmap.width, bitmap.height,
+                android.graphics.Matrix().apply { postRotate(90f) }, true
+            )
+            270 -> Bitmap.createBitmap(
+                bitmap, 0, 0, bitmap.width, bitmap.height,
+                android.graphics.Matrix().apply { postRotate(270f) }, true
+            )
+            else -> bitmap
+        }
+
+        // Ya está rotado correctamente, así que pasamos rotación 0 al tracker
+        val mpImage = BitmapImageBuilder(correctedBitmap).build()
+        val res = handTracker.detect(mpImage, 0)
 
         // ============================================================
-        // 🔍 Log y flip solo para overlay (no afecta al modelo)
-        val handsOverlay = featureBuilder.toOverlayPoints(res, rotationDeg)
+        // 🔍 Flip de coordenadas solo para overlay (no afecta el modelo)
+        val handsOverlay = featureBuilder.toOverlayPoints(res, 0)
 
         // Loguear coordenadas antes del flip
         handsOverlay.firstOrNull()?.firstOrNull()?.let { p ->
@@ -71,29 +86,21 @@ class GestureEngine(
         }
 
         // Enviar overlay a la UI
-        onHands?.invoke(flippedOverlay, bitmap.width, bitmap.height, rotationDeg, isFrontCamera)
+        onHands?.invoke(flippedOverlay, correctedBitmap.width, correctedBitmap.height, 0, isFrontCamera)
+
         // ============================================================
 
         val hasHands = res != null && res.landmarks().isNotEmpty()
 
         if (hasHands && res != null) {
             try {
-                // Si la versión de MediaPipe expone la mano detectada
                 val handednessList = res.handednesses()
-                val label = handednessList
-                    ?.firstOrNull()
-                    ?.firstOrNull()
-                    ?.categoryName() ?: "Unknown"
-
+                val label = handednessList?.firstOrNull()?.firstOrNull()?.categoryName() ?: "Unknown"
                 Log.d("GestureDebug", "🖐 Mano detectada: $label")
-
             } catch (e: Exception) {
-                // En caso de que la API no tenga handedness() o falle, lo ignoramos
                 Log.d("GestureDebug", "🖐 Mano detectada (sin info de lado)")
             }
         }
-
-
 
         when (state) {
             CaptureState.IDLE -> {
@@ -104,9 +111,7 @@ class GestureEngine(
                         waitStartTime = ts
                         handFrames = 0
                     }
-                } else {
-                    handFrames = 0
-                }
+                } else handFrames = 0
             }
 
             CaptureState.WAITING -> {
@@ -131,21 +136,19 @@ class GestureEngine(
 
             CaptureState.CAPTURING -> {
                 if (hasHands) {
-                    val vec = featureBuilder.toVector126(res, false, rotationDeg)
+                    val vec = featureBuilder.toVector126(res, false, 0)
                     sequenceBuffer.push(vec)
 
-                    val leftCount  = vec.slice(0..62).count { it != 0f }
+                    val leftCount = vec.slice(0..62).count { it != 0f }
                     val rightCount = vec.slice(63..125).count { it != 0f }
 
                     val activeHand = when {
                         rightCount > leftCount -> "Right"
                         leftCount > rightCount -> "Left"
-                        
                         else -> "Unknown"
                     }
 
                     Log.d("GestureDebug", "🖐 Mano activa: $activeHand (L=$leftCount, R=$rightCount)")
-
 
                     val size = sequenceBuffer.recent(targetFrames).size
                     onCaptureProgress?.invoke(size, targetFrames)
@@ -162,7 +165,6 @@ class GestureEngine(
                         targetFrames = newTarget
 
                         Log.d("GestureEngine", "✅ Captura: ${captureDuration}ms, FPS=%.1f, nuevo target=$newTarget".format(fps))
-
                         onCaptureStats?.invoke(captureDuration, 0, fps, newTarget)
 
                         autoPredict()
@@ -186,9 +188,7 @@ class GestureEngine(
                         state = CaptureState.IDLE
                         noHandFrames = 0
                     }
-                } else {
-                    noHandFrames = 0
-                }
+                } else noHandFrames = 0
             }
         }
     }
