@@ -49,10 +49,51 @@ class GestureEngine(
         val mpImage = BitmapImageBuilder(bitmap).build()
         val res = handTracker.detect(mpImage, rotationDeg)
 
+        // ============================================================
+        // 🔍 Log y flip solo para overlay (no afecta al modelo)
         val handsOverlay = featureBuilder.toOverlayPoints(res, rotationDeg)
-        onHands?.invoke(handsOverlay, bitmap.width, bitmap.height, rotationDeg, isFrontCamera)
+
+        // Loguear coordenadas antes del flip
+        handsOverlay.firstOrNull()?.firstOrNull()?.let { p ->
+            Log.d("GestureDebug", "Antes del flip: x=${p.x}, y=${p.y}, isFrontCamera=$isFrontCamera")
+        }
+
+        // Invertir coordenadas X solo si la cámara es frontal (para coincidir con el preview espejado)
+        val flippedOverlay = if (isFrontCamera) {
+            handsOverlay.map { hand -> hand.map { p -> NormPoint(1f - p.x, p.y) } }
+        } else {
+            handsOverlay
+        }
+
+        // Loguear coordenadas después del flip
+        flippedOverlay.firstOrNull()?.firstOrNull()?.let { p ->
+            Log.d("GestureDebug", "Después del flip: x=${p.x}, y=${p.y}")
+        }
+
+        // Enviar overlay a la UI
+        onHands?.invoke(flippedOverlay, bitmap.width, bitmap.height, rotationDeg, isFrontCamera)
+        // ============================================================
 
         val hasHands = res != null && res.landmarks().isNotEmpty()
+
+        if (hasHands && res != null) {
+            try {
+                // Si la versión de MediaPipe expone la mano detectada
+                val handednessList = res.handednesses()
+                val label = handednessList
+                    ?.firstOrNull()
+                    ?.firstOrNull()
+                    ?.categoryName() ?: "Unknown"
+
+                Log.d("GestureDebug", "🖐 Mano detectada: $label")
+
+            } catch (e: Exception) {
+                // En caso de que la API no tenga handedness() o falle, lo ignoramos
+                Log.d("GestureDebug", "🖐 Mano detectada (sin info de lado)")
+            }
+        }
+
+
 
         when (state) {
             CaptureState.IDLE -> {
@@ -88,11 +129,23 @@ class GestureEngine(
                 }
             }
 
-
             CaptureState.CAPTURING -> {
                 if (hasHands) {
-                    val vec = featureBuilder.toVector126(res, isFrontCamera, rotationDeg)
+                    val vec = featureBuilder.toVector126(res, false, rotationDeg)
                     sequenceBuffer.push(vec)
+
+                    val leftCount  = vec.slice(0..62).count { it != 0f }
+                    val rightCount = vec.slice(63..125).count { it != 0f }
+
+                    val activeHand = when {
+                        rightCount > leftCount -> "Right"
+                        leftCount > rightCount -> "Left"
+                        
+                        else -> "Unknown"
+                    }
+
+                    Log.d("GestureDebug", "🖐 Mano activa: $activeHand (L=$leftCount, R=$rightCount)")
+
 
                     val size = sequenceBuffer.recent(targetFrames).size
                     onCaptureProgress?.invoke(size, targetFrames)
@@ -101,11 +154,10 @@ class GestureEngine(
                     if (size >= targetFrames) {
                         val captureDuration = ts - captureStartTime
                         val fps = targetFrames.toFloat() / (captureDuration / 1000f)
-                        // 🔧 Ajuste automático del targetFrames
                         val newTarget = when {
-                            fps < 8f -> 10  // si el dispositivo es lento, reducimos frames
-                            fps > 20f -> 20 // si es muy rápido, pedimos más frames
-                            else -> 15      // en rango normal, dejamos 15
+                            fps < 8f -> 10
+                            fps > 20f -> 20
+                            else -> 15
                         }
                         targetFrames = newTarget
 
@@ -138,10 +190,8 @@ class GestureEngine(
                     noHandFrames = 0
                 }
             }
-
         }
     }
-
 
     private fun autoPredict() {
         val T = classifier.T

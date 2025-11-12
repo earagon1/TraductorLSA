@@ -88,7 +88,7 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax")
 
     // MediaPipe Tasks (hands)
-    implementation("com.google.mediapipe:tasks-vision:latest.release")
+    implementation("com.google.mediapipe:tasks-vision:0.10.29")
 
     // TensorFlow Lite
     implementation("org.tensorflow:tensorflow-lite:2.14.0")

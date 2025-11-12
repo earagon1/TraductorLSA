@@ -65,6 +65,9 @@ import androidx.core.content.FileProvider
 import android.os.Environment
 import org.json.JSONArray
 
+import androidx.compose.ui.graphics.graphicsLayer
+
+
 // ---------- modelos/estado simples ----------
 data class OverlayData(
     val imgW: Int = 0,
@@ -289,16 +292,28 @@ fun CameraScreen() {
 
         // Preview
         AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = {
-                PreviewView(it).apply {
+            modifier = Modifier
+                .fillMaxSize()
+                // 🔁 Espejo a nivel Compose para que NO se pierda en recomposiciones
+                .graphicsLayer { scaleX = -1f },
+
+            factory = { ctx ->
+                PreviewView(ctx).apply {
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     controller = camController
-                    scaleX = -1f // espejo frontal
+                    // (opcional) también acá por si el OEM ignora el graphicsLayer
+                    scaleX = -1f
                 }
+            },
+
+            update = { pv ->
+                // Rebindeos del controller pueden resetear transforms: lo re-aplicamos
+                pv.controller = camController
+                pv.scaleX = -1f
             }
         )
+
 
         // Overlay landmarks
         com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
