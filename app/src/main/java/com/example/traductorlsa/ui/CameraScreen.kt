@@ -67,6 +67,8 @@ import org.json.JSONArray
 
 import androidx.compose.ui.graphics.graphicsLayer
 
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
 
 // ---------- modelos/estado simples ----------
 data class OverlayData(
@@ -154,6 +156,7 @@ fun CameraScreen() {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> hasPermission = granted }
+
     LaunchedEffect(Unit) { if (!hasPermission) launcher.launch(Manifest.permission.CAMERA) }
 
     val camController = remember { LifecycleCameraController(context) }
@@ -182,7 +185,6 @@ fun CameraScreen() {
     val scope = rememberCoroutineScope()
     // Guardamos el índice del último agregado para poder revertirlo
     var lastAddedIndex by remember { mutableStateOf<Int?>(null) }
-
 
     var frameCount by remember { mutableStateOf(0) }
 
@@ -267,13 +269,29 @@ fun CameraScreen() {
     }
 
     // Cámara
+    // ... (imports y variables de estado previos)
+
+    // Obtenemos la configuración actual para detectar la orientación de inicio
+    val configuration = LocalConfiguration.current
+
+    // Cámara
     LaunchedEffect(hasPermission, lifecycleOwner) {
         if (!hasPermission) return@LaunchedEffect
+
+        // Detectamos si estamos en modo Portrait (Vertical) al iniciar
+        val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
+        // Si es vertical, invertimos las dimensiones para pedir 480x640
+        // Si es horizontal, mantenemos 640x480
+        val targetSize = if (isPortrait) Size(480, 640) else Size(640, 480)
+
         cameraManager.configure(
             lensFacingFront = true,
             analysisStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST,
-            targetSize = Size(640, 480)
+            targetSize = targetSize
         )
+
+        // Sincronizamos también el engine, aunque tu código ya lo hace por defecto
         engine.setCameraFacing(isFront = true)
 
         camController.bindToLifecycle(lifecycleOwner)
