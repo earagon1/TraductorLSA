@@ -136,7 +136,14 @@ class GestureEngine(
 
             CaptureState.CAPTURING -> {
                 if (hasHands) {
-                    val vec = featureBuilder.toVector126(res, false, 0)
+                    val vec = featureBuilder.toVector126(
+                        res,
+                        false, // isFrontCamera ya se maneja en el mapeo interno, o puedes pasar isFrontCamera aquí si tu lógica lo requiere, pero nota que en tu código original pasabas 'false'. Revisa si eso era intencional.
+                        0,
+                        correctedBitmap.width,
+                        correctedBitmap.height
+                    )
+
                     sequenceBuffer.push(vec)
 
                     val leftCount = vec.slice(0..62).count { it != 0f }
