@@ -5,6 +5,9 @@
     <!-- Permiso para cámara -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Permiso para acceso a Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Declarar que la app necesita cámara (cualquier cámara).
          Si querés permitir instalar en dispositivos SIN cámara, poné required="false". -->
     <uses-feature
@@ -24,6 +27,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TraductorLSA"
+        android:name=".SenarApp"
         tools:targetApi="31">
 
         <activity
