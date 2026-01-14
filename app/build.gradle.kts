@@ -33,14 +33,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "2.2.21"
     }
 
     // ← evita que AAPT comprima los .tflite (permite memory-mapping)
@@ -55,7 +60,8 @@ android {
                 "META-INF/DEPENDENCIES",
                 "META-INF/LICENSE*",
                 "META-INF/AL2.0",
-                "META-INF/LGPL2.1"
+                "META-INF/LGPL2.1",
+                "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
             )
         }
     }
@@ -94,9 +100,26 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
-    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0") // ← clave para tu .tflite
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
+
+    // Clerk Android (API + UI)
+    implementation("com.clerk:clerk-android-api:0.1.28")
+    implementation("com.clerk:clerk-android-ui:0.1.3")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2")
+
+    // Compose + Flows con lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.4")
+    //implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     // Lifecycle / Activity
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
+
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.material:material-icons-extended")
+
+    val lottieVersion = "6.7.1"
+    implementation("com.airbnb.android:lottie-compose:$lottieVersion")
+
 }
