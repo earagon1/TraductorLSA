@@ -1,13 +1,11 @@
 package com.example.traductorlsa.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,34 +19,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material.icons.filled.Videocam
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.*
+import com.airbnb.lottie.compose.*
 import com.example.traductorlsa.R
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clerk.api.Clerk
 import com.clerk.ui.auth.AuthView
 import com.clerk.ui.userbutton.UserButton
+// CORRECCIÓN 1: Nombre correcto del componente de Clerk
 import com.clerk.ui.userprofile.UserProfileView
 
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
+import com.example.traductorlsa.voice.VoiceToText
 
 // Si tenés tu propio Theme (TraductorLSATheme, etc.),
 // podés envolver todo esto adentro de ese tema en vez de MaterialTheme.
@@ -86,7 +77,6 @@ sealed class AppDestination(val route: String) {
 }
 
 /* ----------------- NavHost principal ----------------- */
-
 @Composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(
@@ -136,6 +126,18 @@ fun AppNavHost(navController: NavHostController) {
         composable(AppDestination.TranslateSign.route) {
             TranslateSignScreen(navController)
         }
+
+        // CORRECCIÓN 2: Ahora la ruta y la función coinciden en argumentos
+        composable(AppDestination.TranslateVoice.route) {
+            TranslateVoiceScreen(navController)
+        }
+
+        composable(AppDestination.TrainingHome.route) { TrainingHomeScreen(navController) }
+        composable(AppDestination.TrainingCapture.route) { TrainingCaptureScreen(navController) }
+        composable(AppDestination.Dataset.route) { DatasetScreen(navController) }
+        composable(AppDestination.Dictionary.route) { DictionaryScreen(navController) }
+        composable(AppDestination.Settings.route) { SettingsScreen(navController) }
+        composable(AppDestination.About.route) { AboutScreen(navController) }
 
         composable(AppDestination.TranslateVoice.route) {
             TranslateVoiceScreen(navController)
@@ -595,79 +597,94 @@ fun TranslateSignScreen(navController: NavHostController) {
 /* ----------------- Pantalla Traducción de voz ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TranslateVoiceScreen(navController: NavHostController) {
+@Composable // CORRECCIÓN 3: Eliminada anotación duplicada
+fun TranslateVoiceScreen(navController: NavHostController) { // Agregado navController para consistencia
+    val context = LocalContext.current
+    var recognizedText by remember { mutableStateOf("Presiona el micrófono y habla...") }
+    var isRecording by remember { mutableStateOf(false) }
+
+    val vtt = remember {
+        VoiceToText(
+            context = context,
+            onPartial = { recognizedText = it },
+            onFinal = {
+                recognizedText = it
+                isRecording = false
+            },
+            onError = {
+                recognizedText = "Error: $it"
+                isRecording = false
+            }
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            isRecording = true
+            vtt.start()
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Traducir voz") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                    IconButton(onClick = {
+                        vtt.stop() // Detener si se vuelve atrás
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
         }
     ) { padding ->
-        // Por ahora un UI simple; después conectamos con reconocimiento de voz
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column {
-                Text(
-                    text = "Decile a la otra persona que hable al micrófono.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(16.dp))
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    tonalElevation = 2.dp,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize()
-                    ) {
-                        Text(
-                            text = "Acá va a aparecer el texto transcripto.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
+            Text(
+                text = recognizedText,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Button(
-                    onClick = { /* TODO: empezar/parar escucha de voz */ },
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Mic,
-                        contentDescription = null
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Empezar a escuchar")
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Funcionalidad de voz en construcción 😊",
-                    style = MaterialTheme.typography.bodySmall
+            Button(
+                onClick = {
+                    if (!isRecording) {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        if (hasPermission) {
+                            isRecording = true
+                            vtt.start()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    } else {
+                        isRecording = false
+                        vtt.stop()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 )
+            ) {
+                Icon(if (isRecording) Icons.Default.Stop else Icons.Default.Mic, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (isRecording) "Detener" else "Escuchar")
             }
         }
     }
 }
-
 /* ----------------- Modo entrenamiento: menú ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
