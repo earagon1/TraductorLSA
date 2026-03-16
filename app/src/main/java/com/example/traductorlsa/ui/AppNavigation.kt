@@ -43,8 +43,6 @@ import com.example.traductorlsa.voice.VoiceToText
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -52,16 +50,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -72,40 +66,10 @@ import java.util.Locale
 
 import android.content.res.AssetManager
 import androidx.compose.foundation.Image
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.asImageBitmap
-import kotlinx.coroutines.withContext
-import androidx.compose.material.icons.filled.Image
-
-
-import androidx.compose.ui.text.style.TextOverflow
-
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image as ImageFilledIcon
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-
-import androidx.compose.ui.platform.LocalContext
-
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 import androidx.compose.ui.layout.ContentScale
-
-
+import androidx.compose.ui.text.style.TextOverflow
 
 
 // Si tenés tu propio Theme (TraductorLSATheme, etc.),
@@ -194,7 +158,6 @@ fun AppNavHost(navController: NavHostController) {
             TranslateSignScreen(navController)
         }
 
-        // CORRECCIÓN 2: Ahora la ruta y la función coinciden en argumentos
         composable(AppDestination.TranslateVoice.route) {
             TranslateVoiceScreen(navController)
         }
@@ -205,34 +168,6 @@ fun AppNavHost(navController: NavHostController) {
         composable(AppDestination.Dictionary.route) { DictionaryScreen(navController) }
         composable(AppDestination.Settings.route) { SettingsScreen(navController) }
         composable(AppDestination.About.route) { AboutScreen(navController) }
-
-        composable(AppDestination.TranslateVoice.route) {
-            TranslateVoiceScreen(navController)
-        }
-
-        composable(AppDestination.TrainingHome.route) {
-            TrainingHomeScreen(navController)
-        }
-
-        composable(AppDestination.TrainingCapture.route) {
-            TrainingCaptureScreen(navController)
-        }
-
-        composable(AppDestination.Dataset.route) {
-            DatasetScreen(navController)
-        }
-
-        composable(AppDestination.Dictionary.route) {
-            DictionaryScreen(navController)
-        }
-
-        composable(AppDestination.Settings.route) {
-            SettingsScreen(navController)
-        }
-
-        composable(AppDestination.About.route) {
-            AboutScreen(navController)
-        }
     }
 }
 
@@ -630,42 +565,11 @@ private fun FeatureCard(
     }
 }
 
-/* ----------------- Pantalla Traducción de señas ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TranslateSignScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Traducir señas") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            // Acá reutilizamos tu lógica actual de cámara + GestureEngine
-            CameraScreen()
-        }
-    }
-}
-
 /* ----------------- Pantalla Traducción de voz ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable // CORRECCIÓN 3: Eliminada anotación duplicada
-fun TranslateVoiceScreen(navController: NavHostController) { // Agregado navController para consistencia
+@Composable
+fun TranslateVoiceScreen(navController: NavHostController) {
     val context = LocalContext.current
     var recognizedText by remember { mutableStateOf("Presiona el micrófono y habla...") }
     var isRecording by remember { mutableStateOf(false) }
@@ -791,42 +695,6 @@ fun TrainingHomeScreen(navController: NavHostController) {
                 description = "Etiquetas y cantidad de muestras",
                 icon = Icons.Filled.TableChart,
                 onClick = { navController.navigate(AppDestination.Dataset.route) }
-            )
-        }
-    }
-}
-
-/* ----------------- Modo entrenamiento: captura ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TrainingCaptureScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Grabar nuevas muestras") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        // Más adelante podemos separar la lógica de training de tu CameraScreen actual
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Acá vamos a conectar el modo training que ya tenés armado (captura de muestras, JSON, etc.).",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -1513,6 +1381,3 @@ fun AuthClerkScreen(navController: NavHostController) {
         }
     }
 }
-
-
-
