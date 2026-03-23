@@ -1,7 +1,9 @@
-package com.example.traductorlsa.ui
+﻿package com.example.traductorlsa.ui
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 
@@ -27,7 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clerk.api.Clerk
 import com.clerk.ui.auth.AuthView
 import com.clerk.ui.userbutton.UserButton
-// CORRECCIÓN 1: Nombre correcto del componente de Clerk
+// CORRECCIóN 1: Nombre correcto del componente de Clerk
 import com.clerk.ui.userprofile.UserProfileView
 
 import androidx.compose.runtime.rememberCoroutineScope
@@ -73,7 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 
 
 // Si tenés tu propio Theme (TraductorLSATheme, etc.),
-// podés envolver todo esto adentro de ese tema en vez de MaterialTheme.
+// podrás envolver todo esto adentro de ese tema en vez de MaterialTheme.
 
 @Composable
 fun LsaTranslatorApp() {
@@ -134,7 +136,7 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
 
-        // 👉 acá usamos directamente AuthView en la ruta AuthEntry
+        // ðŸ‘‰ acÃ¡ usamos directamente AuthView en la ruta AuthEntry
         composable(AppDestination.AuthEntry.route) {
             AuthEntryScreen(navController)
         }
@@ -162,9 +164,15 @@ fun AppNavHost(navController: NavHostController) {
             TranslateVoiceScreen(navController)
         }
 
-        composable(AppDestination.TrainingHome.route) { TrainingHomeScreen(navController) }
-        composable(AppDestination.TrainingCapture.route) { TrainingCaptureScreen(navController) }
-        composable(AppDestination.Dataset.route) { DatasetScreen(navController) }
+        composable(AppDestination.TrainingHome.route) {
+            TrainingAccessGate(navController) { TrainingHomeScreen(navController) }
+        }
+        composable(AppDestination.TrainingCapture.route) {
+            TrainingAccessGate(navController) { TrainingCaptureScreen(navController) }
+        }
+        composable(AppDestination.Dataset.route) {
+            TrainingAccessGate(navController) { DatasetScreen(navController) }
+        }
         composable(AppDestination.Dictionary.route) { DictionaryScreen(navController) }
         composable(AppDestination.Settings.route) { SettingsScreen(navController) }
         composable(AppDestination.About.route) { AboutScreen(navController) }
@@ -177,7 +185,7 @@ fun AppNavHost(navController: NavHostController) {
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(1500) // 1.5s de “presentación”
+        delay(1500) // 1.5s de â€œpresentaciónâ€
         onFinished()
     }
 
@@ -187,7 +195,7 @@ fun SplashScreen(onFinished: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = Icons.Filled.Face, // mano como guiño a LSA
+                imageVector = Icons.Filled.Face, // mano como guiÃ±o a LSA
                 contentDescription = null,
                 modifier = Modifier.size(64.dp)
             )
@@ -199,7 +207,7 @@ fun SplashScreen(onFinished: () -> Unit) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Lengua de Señas Argentina · Texto · Voz",
+                text = "Lengua de Señas Argentina Â· Texto Â· Voz",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -264,7 +272,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
             Spacer(Modifier.height(32.dp))
 
-            // Indicadores de página
+            // Indicadores de pÃ¡gina
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -313,6 +321,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
             }
 
             Spacer(Modifier.height(16.dp))
+
         }
     }
 }
@@ -342,10 +351,10 @@ fun AuthEntryScreen(navController: NavHostController) {
         ) {
 
             // TU HEADER + LOTTIE
-            Text("SeñAR", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            Text("SeÃ±AR", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Comunicá en Lengua de Señas Argentina",
+                text = "ComunicÃ¡ en Lengua de SeÃ±as Argentina",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -369,11 +378,11 @@ fun AuthEntryScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "o sincronizá tu progreso con una cuenta",
+                    "o sincronizÃ¡ tu progreso con una cuenta",
                     style = MaterialTheme.typography.bodySmall
                 )
 
-                // 👉 nuevo botón que abre Clerk
+                // nuevo botón que abre Clerk
                 AuthButton(
                     icon = Icons.Filled.Cloud,
                     text = "Sincronizar con mi cuenta",
@@ -460,7 +469,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("SeñAR") },
+                title = { Text("SeÑAR") },
                 actions = {
                     if (user != null) {
                         // Placeholder del botón de perfil para futuro Clerk UI
@@ -489,24 +498,26 @@ fun HomeScreen(
 
             FeatureCard(
                 title = "Traducir señas",
-                description = "LSA → texto y voz",
+                description = "LSA a texto y voz",
                 icon = Icons.Filled.Videocam,
                 onClick = onTranslateSign
             )
 
             FeatureCard(
                 title = "Traducir voz",
-                description = "Voz → texto en pantalla",
+                description = "Voz a texto en pantalla",
                 icon = Icons.Filled.Mic,
                 onClick = onTranslateVoice
             )
 
-            FeatureCard(
-                title = "Modo entrenamiento",
-                description = "Grabar nuevas muestras y gestionar el dataset",
-                icon = Icons.Filled.School,
-                onClick = onTraining
-            )
+            if (user != null) {
+                FeatureCard(
+                    title = "Modo entrenamiento",
+                    description = "Practicar, grabar nuevas muestras y revisar el dataset",
+                    icon = Icons.Filled.School,
+                    onClick = onTraining
+                )
+            }
 
             FeatureCard(
                 title = "Diccionario de señas",
@@ -521,6 +532,62 @@ fun HomeScreen(
                 icon = Icons.Filled.Settings,
                 onClick = onSettings
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TrainingAccessGate(
+    navController: NavHostController,
+    content: @Composable () -> Unit
+) {
+    val user by Clerk.userFlow.collectAsStateWithLifecycle()
+
+    if (user != null) {
+        content()
+        return
+    }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Modo entrenamiento") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CloudOff,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp)
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "El entrenamiento solo estÃ¡ disponible con tu cuenta sincronizada.",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Podrás seguir usando el diccionario en modo offline. Para entrenar nuevas señas, iniciá sesión desde la app.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = { navController.navigate(AppDestination.AuthClerk.route) }) {
+                Text("Iniciar sesión")
+            }
         }
     }
 }
@@ -705,6 +772,15 @@ fun TrainingHomeScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatasetScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    var counts by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var totalSamples by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        counts = loadDatasetCountsByLabel(context)
+        totalSamples = counts.values.sum()
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -724,20 +800,60 @@ fun DatasetScreen(navController: NavHostController) {
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Acá vamos a listar etiquetas, cantidad de muestras y un botón para exportar el JSON.",
+                text = "Revisá cuántas muestras hay por seña y exportá el dataset cuando lo necesites.",
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    // TODO: llamar a tu exportAndShareJson(...)
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Resumen del dataset", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = if (totalSamples > 0) {
+                            "$totalSamples muestras guardadas en total."
+                        } else {
+                            "Todavía no hay muestras guardadas."
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Button(onClick = { shareDatasetJsonFile(context) }) {
+                        Text("Exportar dataset (JSON)")
+                    }
                 }
-            ) {
-                Text("Exportar dataset (JSON)")
+            }
+
+            if (counts.isEmpty()) {
+                Text(
+                    text = "Cuando guardes muestras desde entrenamiento, acá vas a poder revisar cuántas hay por seña.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                Text("Muestras por seña", style = MaterialTheme.typography.titleMedium)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(counts.toList()) { (label, count) ->
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(displayWord(label), style = MaterialTheme.typography.bodyLarge)
+                                Text("$count", style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -898,7 +1014,7 @@ fun DictionaryScreen(navController: NavHostController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { sortAsc = !sortAsc }) {
-                    Text(if (sortAsc) "Orden: A → Z" else "Orden: Z → A")
+                    Text(if (sortAsc) "Orden: A â†’ Z" else "Orden: Z â†’ A")
                 }
             }
 
@@ -932,7 +1048,7 @@ fun DictionaryScreen(navController: NavHostController) {
                 return@Column
             }
 
-            // Columnas por categoría
+            // Columnas por categorÃ­a
             val cols = when (selectedCategory) {
                 WordCategory.LETRAS -> GridCells.Adaptive(120.dp)
                 WordCategory.NUMEROS -> GridCells.Adaptive(120.dp)
@@ -955,7 +1071,7 @@ fun DictionaryScreen(navController: NavHostController) {
             }
         }
 
-        // ✅ Preview: tap afuera cierra
+        // âœ… Preview: tap afuera cierra
         selectedItem?.let { item ->
             ImagePreviewDialog(item = item, onDismiss = { selectedItem = null })
         }
@@ -984,7 +1100,7 @@ private fun DictionaryCard(
         Column(Modifier.fillMaxSize()) {
             DictionaryAssetImage(
                 assetPath = item.imageAssetPath,
-                contentScale = ContentScale.Crop, // ✅ llena todo el rectángulo
+                contentScale = ContentScale.Crop, // âœ… llena todo el rectÃ¡ngulo
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(imageHeight)
@@ -1053,7 +1169,7 @@ private fun ImagePreviewDialog(
 
                 DictionaryAssetImage(
                     assetPath = item.imageAssetPath,
-                    contentScale = ContentScale.Fit, // ✅ muestra completa
+                    contentScale = ContentScale.Fit, // âœ… muestra completa
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 180.dp, max = 320.dp)
@@ -1071,7 +1187,7 @@ private fun ImagePreviewDialog(
 private fun DictionaryAssetImage(
     assetPath: String?,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop // ✅ por defecto: llena la miniatura
+    contentScale: ContentScale = ContentScale.Crop // âœ… por defecto: llena la miniatura
 ) {
     val context = LocalContext.current
 
@@ -1091,7 +1207,7 @@ private fun DictionaryAssetImage(
         Image(
             bitmap = bitmap!!.asImageBitmap(),
             contentDescription = null,
-            contentScale = contentScale, // ✅ usa el parámetro
+            contentScale = contentScale, // âœ… usa el parÃ¡metro
             modifier = modifier
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )
@@ -1168,7 +1284,7 @@ private fun findWordImageInAssets(assetManager: AssetManager, word: String): Str
 
 /**
  * Normaliza para nombre de archivo:
- * - minúsculas
+ * - minÃºsculas
  * - sin tildes
  * - mantiene "_" (porque tus words vienen con _)
  * - espacios -> "_"
@@ -1230,7 +1346,7 @@ fun SettingsScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(32.dp))
 
-            // 👉 BOTÓN DE CERRAR SESIÓN
+            //BOTóN DE CERRAR SESIóN
             val scope = rememberCoroutineScope()
 
             OutlinedButton(
@@ -1245,7 +1361,7 @@ fun SettingsScreen(navController: NavHostController) {
                                 popUpTo(AppDestination.Home.route) { inclusive = true }
                             }
                         } catch (e: Exception) {
-                            // Si querés, podés loguear el error
+                            // Si querés, podrás loguear el error
                             e.printStackTrace()
                         }
                     }
@@ -1296,7 +1412,7 @@ fun AboutScreen(navController: NavHostController) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Proyecto de Tesina de Evelin Aragón.\nLengua de Señas Argentina ↔ Texto y Voz.",
+                text = "Proyecto de Tesina de Evelin Aragón.\nLengua de Señas Argentina” Texto y Voz.",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(16.dp))
@@ -1314,7 +1430,7 @@ fun AuthClerkScreen(navController: NavHostController) {
     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle(false)
     val user by Clerk.userFlow.collectAsStateWithLifecycle()
 
-    // Cuando Clerk está listo y hay usuaria → ir al Home
+    // Cuando Clerk está¡ listo y hay usuaria â†’ ir al Home
     LaunchedEffect(isInitialized, user) {
         if (isInitialized && user != null) {
             navController.navigate(AppDestination.Home.route) {
@@ -1341,7 +1457,7 @@ fun AuthClerkScreen(navController: NavHostController) {
     ) { padding ->
 
         when {
-            // 1) Clerk todavía inicializando → spinner
+            // 1) Clerk todavía inicializando â†’ spinner
             !isInitialized -> {
                 Box(
                     modifier = Modifier
@@ -1353,7 +1469,7 @@ fun AuthClerkScreen(navController: NavHostController) {
                 }
             }
 
-            // 2) Sin usuaria → mostramos AuthView normalmente
+            // 2) Sin usuaria â†’ mostramos AuthView normalmente
             user == null -> {
                 Box(
                     modifier = Modifier
@@ -1366,7 +1482,7 @@ fun AuthClerkScreen(navController: NavHostController) {
                 }
             }
 
-            // 3) Con usuaria → no mostramos AuthView (ya se está navegando al Home)
+            // 3) Con usuaria â†’ no mostramos AuthView (ya se está¡ navegando al Home)
             else -> {
                 Box(
                     modifier = Modifier
@@ -1374,10 +1490,14 @@ fun AuthClerkScreen(navController: NavHostController) {
                         .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Opcional: un mini texto tipo "Entrando a SeñAR..."
-                    // Text("Entrando a SeñAR…")
+                    // Opcional: un mini texto tipo "Entrando a SeÑAR..."
+                    // Text("Entrando a SeÑAR")
                 }
             }
         }
     }
 }
+
+
+
+
