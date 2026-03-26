@@ -136,7 +136,7 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
 
-        // ðŸ‘‰ acÃ¡ usamos directamente AuthView en la ruta AuthEntry
+        // Y aca usamos directamente AuthView en la ruta AuthEntry
         composable(AppDestination.AuthEntry.route) {
             AuthEntryScreen(navController)
         }
@@ -185,7 +185,7 @@ fun AppNavHost(navController: NavHostController) {
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(1500) // 1.5s de â€œpresentaciónâ€
+        delay(1500) // 1.5s
         onFinished()
     }
 
@@ -195,7 +195,7 @@ fun SplashScreen(onFinished: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = Icons.Filled.Face, // mano como guiÃ±o a LSA
+                imageVector = Icons.Filled.Face,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp)
             )
@@ -207,7 +207,7 @@ fun SplashScreen(onFinished: () -> Unit) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Lengua de Señas Argentina Â· Texto Â· Voz",
+                text = "Lengua de Señas Argentina",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -272,7 +272,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
             Spacer(Modifier.height(32.dp))
 
-            // Indicadores de pÃ¡gina
+            // Indicadores de página
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -351,10 +351,10 @@ fun AuthEntryScreen(navController: NavHostController) {
         ) {
 
             // TU HEADER + LOTTIE
-            Text("SeÃ±AR", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            Text("SeÑAR", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "ComunicÃ¡ en Lengua de SeÃ±as Argentina",
+                text = "Comunicá en Lengua de Señas Argentina",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -378,7 +378,7 @@ fun AuthEntryScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "o sincronizÃ¡ tu progreso con una cuenta",
+                    "o sincronizá tu progreso con una cuenta",
                     style = MaterialTheme.typography.bodySmall
                 )
 
@@ -395,9 +395,6 @@ fun AuthEntryScreen(navController: NavHostController) {
         }
     }
 }
-
-
-
 
 @Composable
 private fun AuthLottieIllustration() {
@@ -576,7 +573,7 @@ private fun TrainingAccessGate(
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "El entrenamiento solo estÃ¡ disponible con tu cuenta sincronizada.",
+                text = "El entrenamiento solo está disponible con tu cuenta sincronizada.",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(Modifier.height(8.dp))
@@ -723,6 +720,7 @@ fun TranslateVoiceScreen(navController: NavHostController) {
         }
     }
 }
+
 /* ----------------- Modo entrenamiento: menú ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1014,7 +1012,7 @@ fun DictionaryScreen(navController: NavHostController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { sortAsc = !sortAsc }) {
-                    Text(if (sortAsc) "Orden: A â†’ Z" else "Orden: Z â†’ A")
+                    Text(if (sortAsc) "Orden: A a Z" else "Orden: Z a A")
                 }
             }
 
@@ -1071,7 +1069,7 @@ fun DictionaryScreen(navController: NavHostController) {
             }
         }
 
-        // âœ… Preview: tap afuera cierra
+        //Preview: tap afuera cierra
         selectedItem?.let { item ->
             ImagePreviewDialog(item = item, onDismiss = { selectedItem = null })
         }
@@ -1169,7 +1167,7 @@ private fun ImagePreviewDialog(
 
                 DictionaryAssetImage(
                     assetPath = item.imageAssetPath,
-                    contentScale = ContentScale.Fit, // âœ… muestra completa
+                    contentScale = ContentScale.Fit, // muestra completa
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 180.dp, max = 320.dp)
@@ -1412,7 +1410,7 @@ fun AboutScreen(navController: NavHostController) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Proyecto de Tesina de Evelin Aragón.\nLengua de Señas Argentina” Texto y Voz.",
+                text = "Proyecto de Tesina de Evelin Aragón.\nLengua de Señas Argentina Texto y Voz.",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(16.dp))
@@ -1430,7 +1428,7 @@ fun AuthClerkScreen(navController: NavHostController) {
     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle(false)
     val user by Clerk.userFlow.collectAsStateWithLifecycle()
 
-    // Cuando Clerk está¡ listo y hay usuaria â†’ ir al Home
+    // Cuando Clerk está listo y hay usuaria ir al Home
     LaunchedEffect(isInitialized, user) {
         if (isInitialized && user != null) {
             navController.navigate(AppDestination.Home.route) {
@@ -1457,7 +1455,7 @@ fun AuthClerkScreen(navController: NavHostController) {
     ) { padding ->
 
         when {
-            // 1) Clerk todavía inicializando â†’ spinner
+            // 1) Clerk todavía inicializando spinner
             !isInitialized -> {
                 Box(
                     modifier = Modifier
@@ -1469,7 +1467,7 @@ fun AuthClerkScreen(navController: NavHostController) {
                 }
             }
 
-            // 2) Sin usuaria â†’ mostramos AuthView normalmente
+            // 2) Sin usuaria mostramos AuthView normalmente
             user == null -> {
                 Box(
                     modifier = Modifier
@@ -1482,7 +1480,7 @@ fun AuthClerkScreen(navController: NavHostController) {
                 }
             }
 
-            // 3) Con usuaria â†’ no mostramos AuthView (ya se está¡ navegando al Home)
+            // 3) Con usuaria no mostramos AuthView (ya se está¡ navegando al Home)
             else -> {
                 Box(
                     modifier = Modifier
@@ -1497,7 +1495,3 @@ fun AuthClerkScreen(navController: NavHostController) {
         }
     }
 }
-
-
-
-
