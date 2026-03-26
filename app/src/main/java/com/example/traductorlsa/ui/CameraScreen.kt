@@ -177,8 +177,8 @@ fun CameraScreen(
 
     val overlayState = remember { mutableStateOf(OverlayData()) }
     var lastHandsAt by remember { mutableStateOf(0L) }
-    var translatedText by rememberSaveable { mutableStateOf("") }
-    var currentPrediction by remember { mutableStateOf<PredictionResult?>(null) }
+    var currentTranslation by rememberSaveable { mutableStateOf("") }
+    var recentTranslations by rememberSaveable { mutableStateOf(listOf<String>()) }
 
     // mÃ©tricas
     var captureTime by remember { mutableStateOf(0L) }
@@ -249,18 +249,16 @@ fun CameraScreen(
         }
 
         engine.onPrediction = { prediction ->
-            currentPrediction = prediction
             if (!trainingMode) {
                 speechManager.speak(prediction.gesture)
                 if (prediction.confidence > 0.5f &&
                     prediction.gesture != "Unknown" &&
                     prediction.gesture != "Sin datos"
                 ) {
-                    val last = translatedText.split(" ").lastOrNull()
+                    val last = recentTranslations.lastOrNull()
                     if (last != prediction.gesture) {
-                        translatedText =
-                            if (translatedText.isEmpty()) prediction.gesture
-                            else "$translatedText ${prediction.gesture}"
+                        currentTranslation = prediction.gesture
+                        recentTranslations = (recentTranslations + prediction.gesture).takeLast(3)
                     }
                 }
             }
@@ -394,6 +392,7 @@ fun CameraScreen(
         Row(
             Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -409,9 +408,10 @@ fun CameraScreen(
                     }
                 }
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Traducir Señas", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.width(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = Color.Black.copy(alpha = 0.40f)
+                ) {
                     IconButton(onClick = { isFrontCamera = !isFrontCamera }) {
                         Icon(
                             Icons.Default.Cameraswitch,
@@ -448,16 +448,10 @@ fun CameraScreen(
                     )
                 }
             } else {
-                com.example.traductorlsa.ui.widgets.PredictionCard(currentPrediction)
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f))
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Texto traducido:", color = Color.White.copy(alpha = 0.7f))
-                        Text(translatedText.ifEmpty { "Esperando señas..." }, color = Color.White)
-                    }
-                }
+                com.example.traductorlsa.ui.widgets.PredictionCard(
+                    currentTranslation = currentTranslation,
+                    recentTranslations = recentTranslations
+                )
             }
         }
 
@@ -959,4 +953,3 @@ fun loadDatasetCountsByLabel(context: Context): Map<String, Int> {
         emptyMap()
     }
 }
-
