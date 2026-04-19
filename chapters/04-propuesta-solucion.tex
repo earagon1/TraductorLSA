@@ -1,0 +1,30 @@
+\chapter{Propuesta de solucion}
+
+\section{Vision general del sistema}
+
+La solucion propuesta se organiza como un pipeline de procesamiento en tiempo real ejecutado localmente en el dispositivo movil. A partir de la imagen capturada por la camara, el sistema detecta landmarks de las manos, construye una representacion numerica de la secuencia gestual e infiere la seña correspondiente mediante un modelo liviano de clasificacion.
+
+\section{Arquitectura propuesta}
+
+La arquitectura se compone de los siguientes modulos principales:
+
+\begin{itemize}
+    \item Captura de imagen mediante CameraX.
+    \item Deteccion de manos mediante MediaPipe Hand Landmarker.
+    \item Extraccion de caracteristicas a partir de landmarks.
+    \item Normalizacion de secuencias temporales.
+    \item Clasificacion mediante TensorFlow Lite.
+    \item Presentacion del resultado en texto y voz.
+\end{itemize}
+
+\section{Flujo de procesamiento}
+
+Completar con una descripcion paso a paso del flujo: camara, frame, landmarks, vector de caracteristicas, buffer temporal, modelo, prediccion, texto y voz.
+
+\section{Decisiones tecnologicas}
+
+Completar justificando el uso de Android, Kotlin, CameraX, MediaPipe, TensorFlow Lite y Text-to-Speech.
+
+\section{Justificacion de la ejecucion offline}
+
+La ejecucion local permite reducir la dependencia de conectividad, mejorar la disponibilidad de la aplicacion en diferentes contextos y evitar el envio de imagenes o datos sensibles a servidores externos. Esta decision resulta especialmente relevante en aplicaciones vinculadas con accesibilidad y comunicacion personal.

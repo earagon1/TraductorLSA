@@ -1,0 +1,34 @@
+\chapter{Pruebas y resultados}
+
+\section{Metodologia de evaluacion}
+
+Completar indicando como se realizaron las pruebas, en que condiciones y que aspectos se observaron.
+
+\section{Dispositivos utilizados}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        Dispositivo & SoC & FPS efectivos & Inferencia \\
+        \midrule
+        Galaxy Tab S7 & Snapdragon 865+ & 14.0 & 32 ms \\
+        Galaxy A55 & Exynos 1480 & 5.3 & 30 ms \\
+        Galaxy A31 & Helio P65 & 3.0 & 559 ms \\
+        \bottomrule
+    \end{tabular}
+    \caption{Resultados preliminares de rendimiento en distintos dispositivos.}
+    \label{tab:rendimiento-dispositivos}
+\end{table}
+
+\section{Metricas consideradas}
+
+Las metricas consideradas incluyen el tiempo de captura de una secuencia, los FPS efectivos, el tiempo de inferencia y la estabilidad de la deteccion de landmarks.
+
+\section{Analisis de rendimiento}
+
+Los resultados muestran que la inferencia del modelo mantiene tiempos relativamente estables en algunos dispositivos, mientras que el mayor costo computacional se concentra en las etapas previas de captura, conversion de imagen y extraccion de landmarks. Esto sugiere que el principal desafio de rendimiento no reside exclusivamente en el clasificador, sino en el procesamiento visual necesario para alimentar el modelo.
+
+\section{Limitaciones observadas}
+
+Completar con limitaciones detectadas durante las pruebas: variacion entre dispositivos, iluminacion, orientacion de la camara, estabilidad de landmarks, cantidad limitada de señas y sensibilidad a la forma de ejecucion del gesto.

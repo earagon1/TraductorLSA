@@ -1,0 +1,43 @@
+\chapter{Introduccion}
+
+\section{Contexto y motivacion}
+
+La comunicacion accesible constituye un aspecto central para la inclusion social y tecnologica. En el caso de las personas sordas, la Lengua de Señas Argentina (LSA) representa una forma de comunicacion natural y fundamental, pero su uso no siempre encuentra correspondencia en herramientas digitales ampliamente disponibles. Esta situacion genera barreras de interaccion en distintos contextos cotidianos, especialmente cuando no existe un interlocutor que conozca la lengua de señas.
+
+En este marco, el presente trabajo aborda el desarrollo de un prototipo de software orientado a la traduccion de señas a texto y voz mediante un dispositivo movil Android. La propuesta se centra en una arquitectura de ejecucion local, sin dependencia permanente de conexion a internet, con el objetivo de favorecer la portabilidad, la privacidad y la disponibilidad del sistema en escenarios de uso real.
+
+El proyecto combina tecnicas de vision por computadora y aprendizaje automatico. En particular, utiliza la deteccion de landmarks de manos para representar geometricamente los gestos capturados por la camara y un modelo TensorFlow Lite para su clasificacion en tiempo real. Sobre esa base, la aplicacion produce una salida textual y sonora que busca facilitar la comunicacion entre personas sordas y oyentes.
+
+\section{Problema}
+
+A pesar del crecimiento de las tecnologias de asistencia, siguen siendo limitadas las soluciones orientadas a la traduccion automatica de Lengua de Señas Argentina en dispositivos moviles, especialmente aquellas que puedan ejecutarse de forma local. Muchas propuestas dependen de servicios externos, conectividad permanente o conjuntos de datos que no representan adecuadamente las particularidades de la LSA. Esto reduce su aplicabilidad en contextos reales y plantea desafios vinculados con la latencia, la privacidad y la accesibilidad.
+
+Frente a esta situacion, surge la necesidad de explorar alternativas que permitan reconocer un conjunto acotado de señas en tiempo real sobre dispositivos Android, aprovechando modelos livianos y tecnicas de procesamiento eficientes. El problema que orienta esta tesina puede expresarse de la siguiente manera: ¿es factible desarrollar un traductor movil de LSA a texto y voz que funcione localmente en Android y ofrezca un comportamiento aceptable en condiciones realistas de uso?
+
+\section{Objetivo general}
+
+Desarrollar y evaluar un prototipo de aplicacion movil para Android capaz de traducir señas de Lengua de Señas Argentina a texto y voz en tiempo real, mediante una arquitectura de ejecucion local basada en vision por computadora y aprendizaje automatico.
+
+\section{Objetivos especificos}
+
+\begin{itemize}
+    \item Diseñar una arquitectura de procesamiento apta para ejecutarse en dispositivos moviles Android.
+    \item Implementar la captura de imagen y el analisis de gestos a partir de la camara del dispositivo.
+    \item Detectar landmarks de manos utilizando herramientas de vision por computadora.
+    \item Construir una representacion de caracteristicas adecuada para la clasificacion temporal de señas.
+    \item Integrar un modelo TensorFlow Lite para reconocer un conjunto inicial de palabras o expresiones.
+    \item Generar una salida en texto y voz para mejorar la interpretacion del resultado.
+    \item Evaluar el comportamiento del prototipo en distintos dispositivos y analizar sus limitaciones.
+\end{itemize}
+
+\section{Alcance}
+
+El trabajo se focaliza en el desarrollo de un prototipo funcional orientado a validar la factibilidad tecnica de la propuesta. No se busca resolver la traduccion completa de la Lengua de Señas Argentina ni cubrir toda su riqueza linguistica, sino implementar un sistema capaz de reconocer un conjunto limitado de señas previamente definidas. Asimismo, el enfoque esta puesto en la traduccion de seña a texto y voz, quedando fuera del alcance la traduccion completa en sentido inverso o la interpretacion de estructuras gramaticales complejas.
+
+\section{Metodologia de trabajo}
+
+La metodologia adoptada fue de tipo aplicada y experimental. En una primera etapa se relevaron antecedentes sobre reconocimiento de señas, accesibilidad y ejecucion de modelos en dispositivos moviles. Luego se diseño la arquitectura general del sistema, definiendo el flujo de captura, deteccion, extraccion de caracteristicas, clasificacion e interfaz de usuario. Finalmente, se implemento el prototipo y se realizaron pruebas de funcionamiento y rendimiento en distintos dispositivos Android para analizar su viabilidad practica.
+
+\section{Estructura del informe}
+
+El presente informe se organiza de la siguiente manera. En el Capitulo 2 se desarrolla el marco teorico y se revisan antecedentes relacionados con la traduccion automatica de lenguas de señas. En el Capitulo 3 se delimita el problema abordado y se especifican los requisitos del sistema. En el Capitulo 4 se presenta la propuesta de solucion y la arquitectura general del prototipo. En el Capitulo 5 se describe la implementacion realizada. En el Capitulo 6 se exponen las pruebas efectuadas y los resultados obtenidos. Finalmente, en el Capitulo 7 se presentan las conclusiones, limitaciones y posibles lineas de trabajo futuro.

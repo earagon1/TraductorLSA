@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+\input{preamble}
+
+\title{Traductor movil en tiempo real para Lengua de Señas Argentina basado en aprendizaje automatico y ejecucion local en Android}
+\author{Evelin Emilce Aragon}
+\date{\today}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    {\Large Universidad Nacional de General Sarmiento\par}
+    \vspace{1.5cm}
+    {\large Licenciatura en Sistemas\par}
+    \vspace{2.5cm}
+    {\Huge\bfseries Traductor movil en tiempo real para Lengua de Señas Argentina\par}
+    \vspace{0.4cm}
+    {\Large basado en aprendizaje automatico y ejecucion local en Android\par}
+    \vspace{2.5cm}
+    {\large Autora: Evelin Emilce Aragon\par}
+    \vspace{0.3cm}
+    {\large Director/a: completar\par}
+    \vfill
+    {\large \today\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+Este trabajo presenta el desarrollo de un prototipo de aplicacion movil orientado a la traduccion de señas de Lengua de Señas Argentina a texto y voz en tiempo real. La propuesta se basa en una arquitectura de ejecucion local sobre dispositivos Android, con el objetivo de favorecer la portabilidad, la privacidad y la disponibilidad del sistema sin depender de una conexion permanente a internet.
+
+El sistema combina tecnicas de vision por computadora y aprendizaje automatico. A partir de la imagen capturada por la camara del dispositivo, se detectan landmarks de las manos, se construye una representacion numerica de la secuencia gestual y se realiza la clasificacion mediante un modelo TensorFlow Lite. Finalmente, la aplicacion presenta el resultado como texto y lo reproduce mediante sintesis de voz.
+
+El alcance del proyecto se centra en validar la factibilidad tecnica de la propuesta mediante un conjunto inicial de señas, analizando su funcionamiento y rendimiento en distintos dispositivos Android.
+
+\textbf{Palabras clave:} Lengua de Señas Argentina, accesibilidad, vision por computadora, aprendizaje automatico, Android, TensorFlow Lite.
+
+\chapter*{Agradecimientos}
+\addcontentsline{toc}{chapter}{Agradecimientos}
+Completar al finalizar el informe.
+
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\input{chapters/01-introduccion}
+\input{chapters/02-marco-teorico}
+\input{chapters/03-analisis-problema}
+\input{chapters/04-propuesta-solucion}
+\input{chapters/05-implementacion}
+\input{chapters/06-pruebas-resultados}
+\input{chapters/07-conclusiones}
+
+\printbibliography[heading=bibintoc,title={Bibliografia}]
+
+\appendix
+\chapter{Anexos}
+En esta seccion pueden incorporarse capturas de pantalla, tablas complementarias, detalles del conjunto de datos, etiquetas del modelo y fragmentos relevantes de configuracion.
+
+\end{document}

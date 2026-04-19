@@ -1,0 +1,46 @@
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{csquotes}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage[backend=biber,style=apa,sorting=nyt]{biblatex}
+
+\geometry{
+    left=3cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=2.5cm
+}
+
+\onehalfspacing
+\graphicspath{{figures/}}
+\addbibresource{bibliografia.bib}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue,
+    pdftitle={Informe de Tesina},
+    pdfauthor={Evelin Emilce Aragon}
+}
+
+\titleformat{\chapter}
+  {\normalfont\Large\bfseries}
+  {\thechapter.}
+  {0.7em}
+  {}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection}
+  {0.7em}
+  {}
