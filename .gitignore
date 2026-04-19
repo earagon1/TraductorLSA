@@ -10,5 +10,6 @@
 *.run.xml
 *.synctex.gz
 *.toc
+*.zip
 _minted-*/
 build/
