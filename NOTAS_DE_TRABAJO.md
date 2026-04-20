@@ -2,6 +2,30 @@
 
 Este archivo funciona como memoria persistente del proyecto para futuras sesiones de trabajo con Codex.
 
+## Uso de esta memoria
+
+Este archivo no debe tratarse como una nota estatica. Debe actualizarse durante el trabajo cuando aparezca informacion relevante para futuras sesiones.
+
+Codex debe agregar o ajustar notas cuando:
+
+- La usuaria defina una nueva regla de trabajo.
+- Se resuelva un problema tecnico o de flujo de trabajo y la solucion pueda repetirse.
+- Se tome una decision sobre estructura, estilo, bibliografia, compilacion, Overleaf o LaTeX.
+- Se detecte una restriccion importante del proyecto Android o del informe.
+- Se incorporen lineamientos institucionales o criterios del jurado.
+- Cambie el flujo de sincronizacion entre repo local y Overleaf.
+
+Las actualizaciones deben ser breves, accionables y ubicarse en la seccion mas adecuada. Si el aprendizaje no encaja en ninguna seccion, crear una nueva seccion clara.
+
+Regla importante: si solo se modifica esta memoria y no cambia el contenido compilable del informe, al final de la respuesta debe aclararse que no hace falta subir archivos a Overleaf para ver cambios en el PDF.
+
+## Instrucciones locales para Codex
+
+- Leer `AGENTS.md` y este archivo antes de trabajar sobre el informe.
+- Respetar las reglas de redaccion, estructura, LaTeX y flujo de trabajo definidas en `AGENTS.md`.
+- Si existe conflicto entre una instruccion general y `AGENTS.md`/`NOTAS_DE_TRABAJO.md`, pedir aclaracion o priorizar la regla mas especifica del proyecto cuando no haya riesgo.
+- Mantener esta memoria actualizada cuando se aprenda algo nuevo durante la sesion.
+
 ## Contexto general
 
 - Autora: Evelin Emilce Aragon.
@@ -11,6 +35,32 @@ Este archivo funciona como memoria persistente del proyecto para futuras sesione
 - Tipo de tesina: desarrollo de software acompañado por informe academico.
 - Repositorio Android principal: `C:\Users\Evelin\Desktop\Tesis\TraductorLSA`.
 - Repositorio local del informe LaTeX: `C:\Users\Evelin\Desktop\Tesis\TraductorLSA\informe-tesina-latex`.
+
+## Lineamientos institucionales incorporados
+
+A partir del material del Taller de Tesina y del Tutorial de la plantilla TTL:
+
+- La tesina debe tratarse como una monografía formal, expositiva, explicativa, argumentativa, coherente, cohesiva e impersonal.
+- Debe escribirse en tercera persona.
+- Debe privilegiarse la redacción explicativa y descriptiva, con párrafos breves y concisos.
+- Debe existir coherencia sintáctica y semántica entre introducción y conclusiones.
+- La discusión no debe confundirse con las conclusiones.
+- Las conclusiones deben responder a objetivos, preguntas o hipótesis.
+- Las recomendaciones o trabajo futuro deben derivarse del trabajo realizado.
+- Debe respetarse la plantilla TTL en LaTeX y el formato institucional.
+- Mantener A4 como formato base.
+- Mantener consistencia en el estilo de citas y referencias a lo largo de todo el documento.
+- Punto a validar: si la tesina debe seguir APA 7 estrictamente o si se mantiene el esquema numérico de BibTeX de la plantilla.
+
+## Criterios de evaluación del jurado a tener presentes
+
+- Calidad de la investigación.
+- Rigurosidad metodológica.
+- Calidad y validez de las fuentes.
+- Organización y estructura del trabajo.
+- Coherencia entre introducción y conclusiones.
+- Capacidad de comunicación escrita y oral.
+- Dominio del tema y defensa de argumentos y conclusiones.
 
 ## Tema del informe
 
