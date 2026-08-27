@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Onest:wght@400..700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #3B6AE8; } a:hover { color: #2A4FC4; }
+    .sn-disp { font-family: 'Bricolage Grotesque', 'Segoe UI', 'Helvetica Neue', sans-serif; }
+    .sn-body { font-family: 'Onest', 'Segoe UI', system-ui, sans-serif; }
+    .sn-sec { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; color: #8B93A5; }
+    .sn-sw { display: flex; flex-direction: column; gap: 10px; }
+    .sn-chip-h { height: 74px; border-radius: 16px; }
+    .sn-hex { font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; color: #1E2230; }
+    .sn-role { font-size: 12px; font-weight: 400; line-height: 1.35; color: #6B7385; }
+  </style>
+</helmet>
+
+<div class="sn-body" style="width: 1080px; height: 1100px; box-sizing: border-box; padding: 56px; background: #F5F7FB; color: #1E2230; display: flex; flex-direction: column; gap: 44px;">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; padding-bottom: 26px; border-bottom: 1px solid #E3E8F2;">
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <svg viewBox="0 0 200 156" width="72" height="56" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SeNAR">
+        <path d="M28 92 L22 134 L58 104 Z" fill="#5D8EF9"></path>
+        <rect x="8" y="0" width="112" height="104" rx="27" fill="#5D8EF9"></rect>
+        <g transform="translate(33 20) scale(0.62)" fill="#FFFFFF">
+          <rect x="30" y="46" width="58" height="44" rx="19"></rect>
+          <rect x="32" y="20" width="13" height="46" rx="6.5"></rect>
+          <rect x="46.5" y="13" width="13" height="53" rx="6.5"></rect>
+          <rect x="61" y="19" width="13" height="47" rx="6.5"></rect>
+          <rect x="75.5" y="29" width="13" height="37" rx="6.5"></rect>
+          <rect x="10" y="44" width="13" height="34" rx="6.5" transform="rotate(-28 16.5 61)"></rect>
+        </g>
+        <path d="M168 116 L178 150 L144 126 Z" fill="#3F4553"></path>
+        <rect x="104" y="44" width="92" height="84" rx="22" fill="#3F4553"></rect>
+        <g fill="#FFFFFF">
+          <rect x="122" y="76" width="11" height="20" rx="5.5"></rect>
+          <rect x="137" y="66" width="11" height="40" rx="5.5"></rect>
+          <rect x="152" y="72" width="11" height="28" rx="5.5"></rect>
+          <rect x="167" y="80" width="11" height="12" rx="5.5"></rect>
+        </g>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="sn-disp" style="font-size: 34px; font-weight: 700; letter-spacing: -0.025em; line-height: 1;">Sistema visual</div>
+        <div style="font-size: 15px; font-weight: 400; color: #5C6474;">Tokens y componentes para las pantallas de entrada</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E8F2;">
+      <span style="width: 14px; height: 14px; border-radius: 5px; background: #3B6AE8;"></span>
+      <span style="font-size: 14.5px; font-weight: 600;">Azul = seña</span>
+      <span style="width: 1px; height: 18px; background: #E3E8F2;"></span>
+      <span style="width: 14px; height: 14px; border-radius: 5px; background: #3F4553;"></span>
+      <span style="font-size: 14.5px; font-weight: 600;">Grafito = voz</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="sn-sec">COLOR</div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #0E1738;"></div><div class="sn-hex">#0E1738</div><div class="sn-role">azul-900 · fondo de marca</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #2A4FC4;"></div><div class="sn-hex">#2A4FC4</div><div class="sn-role">azul-700 · texto y enlaces</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #3B6AE8;"></div><div class="sn-hex">#3B6AE8</div><div class="sn-role">azul-600 · acción primaria · 4,8:1 con blanco</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #5D8EF9;"></div><div class="sn-hex">#5D8EF9</div><div class="sn-role">azul-500 · marca e ilustración (nunca texto chico)</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #DCE7FE;"></div><div class="sn-hex">#DCE7FE</div><div class="sn-role">azul-100 · chips y estados</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #EDF3FC;"></div><div class="sn-hex">#EDF3FC</div><div class="sn-role">azul-050 · superficies tenues</div></div>
+
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #1E2230;"></div><div class="sn-hex">#1E2230</div><div class="sn-role">grafito-900 · texto principal</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #3F4553;"></div><div class="sn-hex">#3F4553</div><div class="sn-role">grafito-700 · burbuja de voz</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #5C6474;"></div><div class="sn-hex">#5C6474</div><div class="sn-role">grafito-500 · texto secundario · 5,5:1</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #E3E8F2;"></div><div class="sn-hex">#E3E8F2</div><div class="sn-role">gris-200 · bordes y divisores</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #F5F7FB; border: 1px solid #E3E8F2; box-sizing: border-box;"></div><div class="sn-hex">#F5F7FB</div><div class="sn-role">papel · fondo de la app</div></div>
+      <div class="sn-sw"><div class="sn-chip-h" style="background: #FFBE1B;"></div><div class="sn-hex">#FFBE1B</div><div class="sn-role">ámbar · acento de confianza, uso puntual</div></div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="sn-sec">TIPOGRAFÍA</div>
+      <div style="display: flex; flex-direction: column; gap: 18px; padding: 26px 28px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+          <span class="sn-disp" style="font-size: 31px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.14;">Tus señas, en texto y voz</span>
+          <span class="sn-role" style="flex-shrink: 0; text-align: right;">Bricolage Grotesque 700<br>31 / 1,14 / −0,025em</span>
+        </div>
+        <div style="height: 1px; background: #F0F3F9;"></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+          <span class="sn-disp" style="font-size: 23px; font-weight: 700; letter-spacing: -0.02em;">Elegí cómo empezar</span>
+          <span class="sn-role" style="flex-shrink: 0; text-align: right;">Bricolage 700 · 23</span>
+        </div>
+        <div style="height: 1px; background: #F0F3F9;"></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+          <span style="font-size: 16px; font-weight: 400; line-height: 1.5; color: #5C6474;">Apuntá la cámara y hacé la seña.</span>
+          <span class="sn-role" style="flex-shrink: 0; text-align: right;">Onest 400 · 16 / 1,5</span>
+        </div>
+        <div style="height: 1px; background: #F0F3F9;"></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+          <span style="font-size: 17px; font-weight: 600;">Siguiente</span>
+          <span class="sn-role" style="flex-shrink: 0; text-align: right;">Onest 600 · 17 · botón</span>
+        </div>
+        <div style="height: 1px; background: #F0F3F9;"></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+          <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; color: #8B93A5;">VOS · SEÑA</span>
+          <span class="sn-role" style="flex-shrink: 0; text-align: right;">Onest 600 · 10,5 · +0,12em</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="sn-sec">COMPONENTES</div>
+      <div style="display: flex; flex-direction: column; gap: 18px; padding: 26px 28px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; border-radius: 18px; background: #3B6AE8; box-shadow: 0 8px 20px rgba(59,106,232,0.28);">
+          <span style="font-size: 17px; font-weight: 600; color: #FFFFFF;">Acción primaria</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M5 12h13m-5.5-5.5L18 12l-5.5 5.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 18px; background: #FFFFFF; border: 1.5px solid #E3E8F2;">
+          <span style="font-size: 17px; font-weight: 600; color: #1E2230;">Acción secundaria</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; background: #DCE7FE;">
+            <span style="font-size: 13px; font-weight: 600; color: #2A4FC4;">Chip activo</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E3E8F2;">
+            <span style="font-size: 13px; font-weight: 600; color: #3F4553;">Chip neutro</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; margin-left: 8px;">
+            <div style="width: 30px; height: 5px; border-radius: 999px; background: #3B6AE8;"></div>
+            <div style="width: 12px; height: 5px; border-radius: 999px; background: #C9D3E6;"></div>
+            <div style="width: 12px; height: 5px; border-radius: 999px; background: #C9D3E6;"></div>
+          </div>
+        </div>
+        <div style="height: 1px; background: #F0F3F9;"></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+          <div class="sn-sw"><div style="height: 46px; border-radius: 28px 28px 0 0; background: #EDF3FC;"></div><div class="sn-role"><strong style="color:#1E2230;">28</strong> · tarjetas y hojas</div></div>
+          <div class="sn-sw"><div style="height: 46px; border-radius: 18px 18px 0 0; background: #EDF3FC;"></div><div class="sn-role"><strong style="color:#1E2230;">18</strong> · botones</div></div>
+          <div class="sn-sw"><div style="height: 46px; border-radius: 13px 13px 0 0; background: #EDF3FC;"></div><div class="sn-role"><strong style="color:#1E2230;">13</strong> · cajas de ícono</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="sn-sec">REGLAS NO NEGOCIABLES</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <span style="font-size: 15px; font-weight: 600;">Toque mínimo 48 × 48 dp</span>
+        <span class="sn-role">Incluye “Saltar”, los puntos de progreso y los íconos de la barra superior.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <span style="font-size: 15px; font-weight: 600;">Contraste 4,5:1 en texto</span>
+        <span class="sn-role">azul-500 sobre blanco da 3,1:1: sirve para formas grandes, no para etiquetas.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <span style="font-size: 15px; font-weight: 600;">El color nunca solo</span>
+        <span class="sn-role">Cada estado lleva además ícono, texto o forma: nadie debe depender del matiz.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <span style="font-size: 15px; font-weight: 600;">Texto escalable al 200 %</span>
+        <span class="sn-role">Alturas mínimas, no fijas, y contenido desplazable si la fuente del sistema crece.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1080,"height":1100}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>
