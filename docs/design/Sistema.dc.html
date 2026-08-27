@@ -21,7 +21,7 @@
   </style>
 </helmet>
 
-<div class="sn-body" style="width: 1080px; height: 1100px; box-sizing: border-box; padding: 56px; background: #F5F7FB; color: #1E2230; display: flex; flex-direction: column; gap: 44px;">
+<div class="sn-body" style="width: 1080px; height: 1300px; box-sizing: border-box; padding: 56px; background: #F5F7FB; color: #1E2230; display: flex; flex-direction: column; gap: 44px;">
 
   <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; padding-bottom: 26px; border-bottom: 1px solid #E3E8F2;">
     <div style="display: flex; align-items: center; gap: 20px;">
@@ -147,6 +147,30 @@
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="sn-sec">BARRA FIJA</div>
+    <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
+      <div style="padding: 22px 26px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 56px;">
+          <div style="display: flex; align-items: center; gap: 9px;"><svg viewBox="0 0 200 156" width="30" height="23" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M28 92 L22 134 L58 104 Z" fill="#5D8EF9"></path><rect x="8" y="0" width="112" height="104" rx="27" fill="#5D8EF9"></rect><g transform="translate(33 20) scale(0.62)" fill="#FFFFFF"><rect x="30" y="46" width="58" height="44" rx="19"></rect><rect x="32" y="20" width="13" height="46" rx="6.5"></rect><rect x="46.5" y="13" width="13" height="53" rx="6.5"></rect><rect x="61" y="19" width="13" height="47" rx="6.5"></rect><rect x="75.5" y="29" width="13" height="37" rx="6.5"></rect><g transform="rotate(-30 17.5 62)"><rect x="11" y="42" width="14" height="44" rx="7"></rect></g></g><path d="M168 116 L178 150 L144 126 Z" fill="#3F4553"></path><rect x="104" y="44" width="92" height="84" rx="22" fill="#3F4553"></rect><g fill="#FFFFFF"><rect x="122" y="76" width="11" height="20" rx="5.5"></rect><rect x="137" y="66" width="11" height="40" rx="5.5"></rect><rect x="152" y="72" width="11" height="28" rx="5.5"></rect><rect x="167" y="80" width="11" height="12" rx="5.5"></rect></g></svg><span class="sn-disp" style="font-size: 20px; font-weight: 800; letter-spacing: -0.6px; color: #1E2230;">Se<span style="color: #3B6AE8;">Ñ</span>AR</span></div>
+          <div style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 999px; background: #3B6AE8; flex-shrink: 0;"><span style="font-size: 14px; font-weight: 600; letter-spacing: 0.3px; color: #FFFFFF;">EA</span></div>
+        </div>
+        <div class="sn-role" style="margin-top: 12px;">Idéntica en todas las pantallas de la app. El logotipo vuelve al inicio; el avatar abre Ajustes, donde vive la cuenta.</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; padding: 22px 26px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 999px; background: #3B6AE8; flex-shrink: 0;"><span style="font-size: 14px; font-weight: 600; letter-spacing: 0.3px; color: #FFFFFF;">EA</span></div>
+          <span class="sn-role" style="text-align: center;">con sesión</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 999px; background: #E7EBF4; border: 1px solid #DCE2EE; flex-shrink: 0;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="9" r="3.4" stroke="#8B93A5" stroke-width="1.8"></circle><path d="M5.6 19.4c0-3 2.9-4.9 6.4-4.9s6.4 1.9 6.4 4.9" stroke="#8B93A5" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <span class="sn-role" style="text-align: center;">invitada</span>
+        </div>
+        <div class="sn-role" style="flex: 1;">Con foto de Clerk se muestra la foto; sin foto, las iniciales.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
     <div class="sn-sec">REGLAS NO NEGOCIABLES</div>
     <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
       <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E7EBF4;">
@@ -170,7 +194,7 @@
 
 </div>
 </x-dc>
-<script data-dc-script data-props='{"$preview":{"width":1080,"height":1100}}'>
+<script data-dc-script data-props='{"$preview":{"width":1080,"height":1300}}'>
 class Component extends DCLogic {}
 </script>
 </body>
