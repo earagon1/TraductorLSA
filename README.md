@@ -39,7 +39,13 @@ com.example.traductorlsa
 ├── ml/              # Motor de inferencia y clasificación
 ├── model/           # Modelos de datos simples (NormPoint, PredictionResult)
 ├── speech/          # Síntesis de voz (Text-to-Speech)
-├── ui/              # Pantallas, overlays y widgets con Jetpack Compose
+├── startup/         # Precarga de assets durante el splash
+├── ui/
+│   ├── brand/       # Isotipo, logotipo y ornamentos dibujados en Compose
+│   ├── screens/     # Splash, onboarding y acceso
+│   ├── theme/       # Color, tipografía, formas y tema
+│   ├── overlay/     # Dibujo de landmarks sobre la cámara
+│   └── widgets/     # Componentes sueltos
 └── MainActivity.kt  # Punto de entrada de la aplicación
 ```
 
@@ -71,6 +77,37 @@ com.example.traductorlsa
 
 ### Punto de entrada
 - **`MainActivity.kt`**: Inicia la UI y ajusta el volumen del dispositivo para maximizar la salida de voz.
+
+---
+
+## **Sistema de diseño**
+
+Las pantallas de entrada siguen un sistema propio, definido en `ui/theme/`.
+
+**La regla base sale del logo:** una burbuja azul con una mano (seña) y una
+burbuja grafito con una onda (voz). De ahí en más, **el azul es siempre el lado
+que seña y el grafito el que habla**, y las esquinas redondeadas de esas
+burbujas definen los radios de toda la app (28 tarjetas, 18 botones, 13 cajas
+de ícono).
+
+- **Color** (`Color.kt`): azul de acción `#3B6AE8` (4,8:1 con blanco), azul de
+  marca `#5D8EF9` solo para formas grandes e ilustración, grafito para texto y
+  para el lado de la voz, ámbar `#FFBE1B` como acento puntual.
+- **Tipografía** (`Type.kt`): Bricolage Grotesque para títulos y Onest para
+  cuerpo, ambas empaquetadas en `res/font/` — no se descargan, así la app
+  funciona sin red.
+- **Tema** (`Theme.kt`): el color dinámico de Material You quedó deshabilitado
+  a propósito. Antes la app tomaba el fondo de pantalla del teléfono y se veía
+  distinta en cada dispositivo. Todavía no hay esquema oscuro diseñado.
+- **Marca** (`ui/brand/`): el isotipo está dibujado con Compose Canvas sobre un
+  lienzo de 200 × 156 unidades, así escala a cualquier tamaño y se recolorea
+  según el fondo.
+
+Los mockups de las cinco pantallas viven en `docs/design/`.
+
+**Accesibilidad, no negociable:** toque mínimo 48 dp, contraste 4,5:1 en texto,
+el color nunca como único indicador, y el contenido de lectura desplazable para
+que resista la fuente del sistema al 200 %.
 
 ---
 

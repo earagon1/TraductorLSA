@@ -1,0 +1,44 @@
+package com.example.traductorlsa.startup
+
+import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/**
+ * Deja los assets pesados en la caché del sistema mientras se ve el splash.
+ *
+ * El README ya midió que el cuello de botella no es la inferencia sino la
+ * etapa previa, y el modelo de landmarks pesa casi 8 MB: leerlo acá evita que
+ * la primera traducción pague esa lectura de disco.
+ *
+ * No crea intérpretes ni toca la cámara a propósito: solo lee y descarta, así
+ * no queda ningún recurso nativo abierto ni memoria retenida.
+ */
+object AssetWarmup {
+
+    /** Cada asset con la fracción de progreso que representa al terminarlo. */
+    private val ASSETS = listOf(
+        "words.json" to 0.10f,
+        "actions_15_f32.tflite" to 0.28f,
+        "hand_landmarker.task" to 1.00f,
+    )
+
+    suspend fun precargar(context: Context, onProgreso: suspend (Float) -> Unit) {
+        val buffer = ByteArray(64 * 1024)
+        for ((nombre, avance) in ASSETS) {
+            withContext(Dispatchers.IO) {
+                try {
+                    context.assets.open(nombre).use { entrada ->
+                        while (entrada.read(buffer) > 0) {
+                            // Solo calentamos la caché: el contenido se descarta.
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Log.w("AssetWarmup", "No se pudo precargar $nombre: ${t.message}")
+                }
+            }
+            onProgreso(avance)
+        }
+    }
+}
