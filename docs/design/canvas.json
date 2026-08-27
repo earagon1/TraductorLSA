@@ -1,15 +1,118 @@
 {
   "pages": [
-    { "id": "page-1", "name": "Flujo de entrada" },
-    { "id": "page-2", "name": "Sistema visual" }
+    {
+      "id": "page-1",
+      "name": "Flujo de entrada"
+    },
+    {
+      "id": "page-3",
+      "name": "Pantallas principales"
+    },
+    {
+      "id": "page-2",
+      "name": "Sistema visual"
+    }
   ],
   "artboards": [
-    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",           "page": "page-1" },
-    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",           "page": "page-1" },
-    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",       "page": "page-1" },
-    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",      "page": "page-1" },
-    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Acceso",          "page": "page-1" },
-    { "file": "Sistema.dc.html",     "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 · Splash",
+      "page": "page-1"
+    },
+    {
+      "file": "Onboarding1.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 · Señas",
+      "page": "page-1"
+    },
+    {
+      "file": "Onboarding2.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 · Dos modos",
+      "page": "page-1"
+    },
+    {
+      "file": "Onboarding3.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 · Privacidad",
+      "page": "page-1"
+    },
+    {
+      "file": "Acceso.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 · Acceso",
+      "page": "page-1"
+    },
+    {
+      "file": "Inicio.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Inicio",
+      "page": "page-3"
+    },
+    {
+      "file": "VozReposo.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Traducir voz · listo",
+      "page": "page-3"
+    },
+    {
+      "file": "VozEscuchando.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Traducir voz · escuchando",
+      "page": "page-3"
+    },
+    {
+      "file": "Entrenamiento.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Modo entrenamiento",
+      "page": "page-3"
+    },
+    {
+      "file": "Ajustes.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 1620,
+      "title": "Ajustes (se desplaza)",
+      "page": "page-3"
+    },
+    {
+      "file": "Sistema.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1080,
+      "h": 1100,
+      "title": "Tokens y componentes",
+      "page": "page-2"
+    }
   ],
   "annotations": [
     {
@@ -18,7 +121,7 @@
       "y": -230,
       "w": 860,
       "page": "page-1",
-      "text": "Dirección: «conversación en dos voces».\nEl logo ya dice de qué se trata la app: una burbuja azul con una mano (seña) y una gris oscura con una onda (voz). Ese par pasa a ser el sistema entero — azul es siempre el lado que seña, grafito siempre el que habla — y sus formas redondeadas dan el radio de tarjetas y botones. Cada pantalla muestra el producto real: la mano con landmarks, la conversación de ida y vuelta, el teléfono cerrado."
+      "text": "Dirección: «conversación en dos voces».\nEl logo ya dice de qué se trata la app: una burbuja azul con una mano (seña) y una gris oscura con una onda (voz). Ese par pasa a ser el sistema entero — azul es siempre el lado que seña, grafito siempre el que habla — y sus formas redondeadas dan el radio de tarjetas y botones."
     },
     {
       "id": "acceso-google",
@@ -26,8 +129,27 @@
       "y": -230,
       "w": 390,
       "page": "page-1",
-      "text": "El fondo de marca sigue del splash, así que las dos pantallas se leen como un solo movimiento.\n\nEl logo de Google está redibujado a mano para el mockup. Al implementar hay que usar el asset oficial de Google (o el botón que ya trae Clerk): sus lineamientos de marca exigen el logo original, no una versión propia."
+      "text": "El logo de Google está redibujado para el mockup. Al implementar hay que usar el asset oficial o el botón que ya trae Clerk."
+    },
+    {
+      "id": "decisiones-principales",
+      "x": 0,
+      "y": -300,
+      "w": 1330,
+      "page": "page-3",
+      "text": "Tres decisiones de fondo.\n\n1. Ajustes sale de la lista y se va al engranaje de la barra. La lista del Inicio es para lo que la app HACE; la configuración no compite con eso. Y el ícono de perfil desaparece: la cuenta pasa a ser una sección más adentro de Ajustes, así hay un solo lugar donde configurar.\n\n2. Los dos modos dejan de ser una fila más. Traducir señas y traducir voz son el producto: van como dos tarjetas grandes, lado a lado, aplicando la regla del sistema — azul el que seña, grafito el que habla. El resto baja a un nivel visual claramente menor.\n\n3. Traducir voz se rediseña alrededor del texto, no del botón. Esa pantalla la lee una persona sorda mientras la otra habla: el texto va a 26 px y ocupa la tarjeta entera, con lo provisorio en gris y lo confirmado en negro, tal como ya distingue VoiceToText."
+    },
+    {
+      "id": "nota-ajustes",
+      "x": 1880,
+      "y": 1700,
+      "w": 390,
+      "page": "page-3",
+      "text": "Cada control de acá está atado a algo que ya existe en el código: la resolución sale de CameraManager, la sensibilidad de HandTracker, la velocidad y el tono de SpeechManager, la variante de español de los dos motores a la vez.\n\nOjo con ese último: hoy el TTS habla en es-MX y el reconocimiento escucha en es-AR. Están desalineados."
     }
   ],
-  "launch": { "view": "canvas", "page": "page-1" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-3"
+  }
 }

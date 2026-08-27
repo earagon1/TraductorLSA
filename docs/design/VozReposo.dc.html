@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Onest:wght@400..700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #3B6AE8; text-decoration: none; } a:hover { color: #2A4FC4; }
+    .sn-disp { font-family: 'Bricolage Grotesque', 'Segoe UI', 'Helvetica Neue', sans-serif; }
+    .sn-body { font-family: 'Onest', 'Segoe UI', system-ui, sans-serif; }
+    .sn-h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; color: #1E2230; margin: 0; }
+    .sn-sec { font-size: 11px; font-weight: 600; letter-spacing: 1.3px; color: #8B93A5; }
+    .sn-row { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E7EBF4; }
+    .sn-iconbox { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; }
+    .sn-t { font-size: 16px; font-weight: 600; line-height: 1.25; color: #1E2230; }
+    .sn-s { font-size: 13px; font-weight: 400; line-height: 1.35; color: #5C6474; }
+    .sn-bar { display: flex; align-items: center; height: 56px; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div class="sn-body" style="display: flex; flex-direction: column; width: 390px; height: 844px; box-sizing: border-box; padding: 54px 24px 34px; background: #F5F7FB; overflow: hidden;">
+  <div class="sn-bar">
+    <div style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: -10px;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M14.5 5.5 8 12l6.5 6.5" stroke="#1E2230" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </div>
+    <div class="sn-disp" style="flex-grow: 1; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #1E2230;">Traducir voz</div>
+    <div style="width: 44px;"></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; flex-grow: 1; margin: 20px 0 20px; border-radius: 28px; background: #FFFFFF; border: 1px solid #E7EBF4;">
+    <div style="display: flex; align-items: center; justify-content: center; width: 96px; height: 96px; border-radius: 999px; background: #F0F3F9;">
+      <svg viewBox="0 0 100 100" width="46" height="46" fill="#A9B1C2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="20" y="38" width="11" height="24" rx="5.5"></rect><rect x="36" y="24" width="11" height="52" rx="5.5"></rect><rect x="52" y="32" width="11" height="36" rx="5.5"></rect><rect x="68" y="42" width="11" height="16" rx="5.5"></rect></svg>
+    </div>
+    <div style="max-width: 250px; text-align: center;">
+      <div class="sn-disp" style="font-size: 19px; font-weight: 700; color: #1E2230;">Acá vas a leer lo que digan</div>
+      <div class="sn-s" style="margin-top: 8px;">Tocá el micrófono y pedile a la otra persona que hable.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 64px; border-radius: 20px; background: #3F4553; box-shadow: 0 10px 24px rgba(30,34,48,0.24); flex-shrink: 0;">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="9" y="2.6" width="6" height="11.4" rx="3" fill="#FFFFFF"></rect>
+      <path d="M5.4 11.4a6.6 6.6 0 0 0 13.2 0M12 18v3.4" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round"></path>
+    </svg>
+    <span style="font-size: 18px; font-weight: 600; color: #FFFFFF;">Escuchar</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>
