@@ -1,0 +1,185 @@
+package com.example.traductorlsa.ui.screens
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.example.traductorlsa.startup.AssetWarmup
+import com.example.traductorlsa.ui.brand.SenarBurbujasContorno
+import com.example.traductorlsa.ui.brand.SenarConstelacion
+import com.example.traductorlsa.ui.brand.SenarIsotipo
+import com.example.traductorlsa.ui.brand.SenarLogotipo
+import com.example.traductorlsa.ui.brand.fondoDeMarca
+import com.example.traductorlsa.ui.theme.SenarAzul100
+import com.example.traductorlsa.ui.theme.SenarAzul200
+import com.example.traductorlsa.ui.theme.SenarAzul300
+import com.example.traductorlsa.ui.theme.SenarAzul500
+import com.example.traductorlsa.ui.theme.SenarBlanco
+import com.example.traductorlsa.ui.theme.SenarGrafito900
+import com.example.traductorlsa.ui.theme.SenarSobreMarca
+import com.example.traductorlsa.ui.theme.SenarSobreMarcaSuave
+import com.example.traductorlsa.ui.theme.SenarSystemBars
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** Tiempo mínimo en pantalla, para que la marca no aparezca como un parpadeo. */
+private const val TIEMPO_MINIMO_MS = 1_200L
+
+/** Techo de espera: si la precarga se hace larga, entramos igual. */
+private const val TIEMPO_MAXIMO_MS = 5_000L
+
+@Composable
+fun SplashScreen(onFinished: () -> Unit) {
+    SenarSystemBars(iconosOscuros = false)
+
+    val context = LocalContext.current
+    var objetivo by remember { mutableFloatStateOf(0f) }
+    val progreso by animateFloatAsState(
+        targetValue = objetivo,
+        animationSpec = tween(durationMillis = 420),
+        label = "progresoPrecarga",
+    )
+
+    val version = remember {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull()
+    }
+
+    LaunchedEffect(Unit) {
+        val minimo = launch { delay(TIEMPO_MINIMO_MS) }
+        withTimeoutOrNull(TIEMPO_MAXIMO_MS) {
+            AssetWarmup.precargar(context) { objetivo = it }
+        }
+        objetivo = 1f
+        minimo.join()
+        delay(220)
+        onFinished()
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .fondoDeMarca()
+            .clipToBounds()
+    ) {
+        SenarConstelacion(
+            modifier = Modifier
+                .size(420.dp)
+                .align(Alignment.TopStart)
+                .offset(x = (-120).dp, y = (-70).dp),
+            colorTrazo = SenarAzul200,
+            colorPunto = SenarAzul100,
+            opacidad = 0.16f,
+        )
+        SenarBurbujasContorno(
+            modifier = Modifier
+                .size(380.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 140.dp, y = 90.dp),
+            color = SenarAzul200,
+            opacidad = 0.09f,
+        )
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = (-40).dp)
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                SenarIsotipo(
+                    ancho = 186.dp,
+                    burbujaVoz = SenarAzul100,
+                    glifoVoz = SenarGrafito900,
+                )
+                Spacer(Modifier.height(34.dp))
+                SenarLogotipo(
+                    estilo = MaterialTheme.typography.displayLarge,
+                    colorTexto = SenarBlanco,
+                    colorEne = SenarAzul300,
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Traductor de Lengua de Señas Argentina",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = SenarSobreMarca,
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 44.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier
+                        .width(148.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(SenarAzul200.copy(alpha = 0.22f))
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(progreso.coerceIn(0.06f, 1f))
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .background(SenarAzul500)
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    text = "Preparando el reconocimiento…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SenarSobreMarcaSuave,
+                )
+                if (version != null) {
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "V $version",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SenarSobreMarcaSuave.copy(alpha = 0.65f),
+                    )
+                }
+            }
+        }
+    }
+}
