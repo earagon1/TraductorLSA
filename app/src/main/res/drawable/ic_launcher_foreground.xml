@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Ícono de SeÑAR: la mano de la burbuja del logo.
-  El isotipo completo no se lee a 48 px, así que el ícono se queda con su
-  elemento más reconocible. La geometría es la misma que dibuja
-  ui/brand/SenarBrand.kt: si se toca una, hay que tocar la otra.
+  Isotipo de SeÑAR: la burbuja de seña (mano) y la de voz (onda).
+  Misma geometría que dibuja ui/brand/SenarBrand.kt sobre un lienzo de
+  200 x 156; si se toca una, hay que tocar la otra.
+  La marca ocupa 45 dp de ancho: entra entera en la zona segura de
+  66 dp, así ninguna máscara de launcher le come las colas.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -11,17 +12,34 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:scaleX="0.693"
-        android:scaleY="0.693"
-        android:translateX="22.705"
-        android:translateY="18.331">
-        <path android:fillColor="#FFFFFFFF" android:pathData="M49,46 H69 A19,19 0 0 1 88,65 V71 A19,19 0 0 1 69,90 H49 A19,19 0 0 1 30,71 V65 A19,19 0 0 1 49,46 Z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M38.5,20 H38.5 A6.5,6.5 0 0 1 45,26.5 V59.5 A6.5,6.5 0 0 1 38.5,66 H38.5 A6.5,6.5 0 0 1 32,59.5 V26.5 A6.5,6.5 0 0 1 38.5,20 Z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M53,13 H53 A6.5,6.5 0 0 1 59.5,19.5 V59.5 A6.5,6.5 0 0 1 53,66 H53 A6.5,6.5 0 0 1 46.5,59.5 V19.5 A6.5,6.5 0 0 1 53,13 Z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M67.5,19 H67.5 A6.5,6.5 0 0 1 74,25.5 V59.5 A6.5,6.5 0 0 1 67.5,66 H67.5 A6.5,6.5 0 0 1 61,59.5 V25.5 A6.5,6.5 0 0 1 67.5,19 Z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M82,29 H82 A6.5,6.5 0 0 1 88.5,35.5 V59.5 A6.5,6.5 0 0 1 82,66 H82 A6.5,6.5 0 0 1 75.5,59.5 V35.5 A6.5,6.5 0 0 1 82,29 Z" />
-        <group android:rotation="-30" android:pivotX="17.5" android:pivotY="62">
-            <path android:fillColor="#FFFFFFFF" android:pathData="M18,42 H18 A7,7 0 0 1 25,49 V79 A7,7 0 0 1 18,86 H18 A7,7 0 0 1 11,79 V49 A7,7 0 0 1 18,42 Z" />
+        android:scaleX="0.2394"
+        android:scaleY="0.2394"
+        android:translateX="29.5851"
+        android:translateY="36.0479">
+
+        <path android:fillColor="#FF5D8EF9" android:pathData="M28,92 L22,134 L58,104 Z" />
+        <path android:fillColor="#FF5D8EF9" android:pathData="M35,0 H93 A27,27 0 0 1 120,27 V77 A27,27 0 0 1 93,104 H35 A27,27 0 0 1 8,77 V27 A27,27 0 0 1 35,0 Z" />
+
+        <group
+            android:scaleX="0.62"
+            android:scaleY="0.62"
+            android:translateX="33"
+            android:translateY="20">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M49,46 H69 A19,19 0 0 1 88,65 V71 A19,19 0 0 1 69,90 H49 A19,19 0 0 1 30,71 V65 A19,19 0 0 1 49,46 Z" />
+                <path android:fillColor="#FFFFFFFF" android:pathData="M38.5,20 H38.5 A6.5,6.5 0 0 1 45,26.5 V59.5 A6.5,6.5 0 0 1 38.5,66 H38.5 A6.5,6.5 0 0 1 32,59.5 V26.5 A6.5,6.5 0 0 1 38.5,20 Z" />
+                <path android:fillColor="#FFFFFFFF" android:pathData="M53,13 H53 A6.5,6.5 0 0 1 59.5,19.5 V59.5 A6.5,6.5 0 0 1 53,66 H53 A6.5,6.5 0 0 1 46.5,59.5 V19.5 A6.5,6.5 0 0 1 53,13 Z" />
+                <path android:fillColor="#FFFFFFFF" android:pathData="M67.5,19 H67.5 A6.5,6.5 0 0 1 74,25.5 V59.5 A6.5,6.5 0 0 1 67.5,66 H67.5 A6.5,6.5 0 0 1 61,59.5 V25.5 A6.5,6.5 0 0 1 67.5,19 Z" />
+                <path android:fillColor="#FFFFFFFF" android:pathData="M82,29 H82 A6.5,6.5 0 0 1 88.5,35.5 V59.5 A6.5,6.5 0 0 1 82,66 H82 A6.5,6.5 0 0 1 75.5,59.5 V35.5 A6.5,6.5 0 0 1 82,29 Z" />
+            <group android:rotation="-30" android:pivotX="17.5" android:pivotY="62">
+                <path android:fillColor="#FFFFFFFF" android:pathData="M18,42 H18 A7,7 0 0 1 25,49 V79 A7,7 0 0 1 18,86 H18 A7,7 0 0 1 11,79 V49 A7,7 0 0 1 18,42 Z" />
+            </group>
         </group>
+
+        <path android:fillColor="#FFDCE7FE" android:pathData="M168,116 L178,150 L144,126 Z" />
+        <path android:fillColor="#FFDCE7FE" android:pathData="M126,44 H174 A22,22 0 0 1 196,66 V106 A22,22 0 0 1 174,128 H126 A22,22 0 0 1 104,106 V66 A22,22 0 0 1 126,44 Z" />
+        <path android:fillColor="#FF1E2230" android:pathData="M127.5,76 H127.5 A5.5,5.5 0 0 1 133,81.5 V90.5 A5.5,5.5 0 0 1 127.5,96 H127.5 A5.5,5.5 0 0 1 122,90.5 V81.5 A5.5,5.5 0 0 1 127.5,76 Z" />
+        <path android:fillColor="#FF1E2230" android:pathData="M142.5,66 H142.5 A5.5,5.5 0 0 1 148,71.5 V100.5 A5.5,5.5 0 0 1 142.5,106 H142.5 A5.5,5.5 0 0 1 137,100.5 V71.5 A5.5,5.5 0 0 1 142.5,66 Z" />
+        <path android:fillColor="#FF1E2230" android:pathData="M157.5,72 H157.5 A5.5,5.5 0 0 1 163,77.5 V94.5 A5.5,5.5 0 0 1 157.5,100 H157.5 A5.5,5.5 0 0 1 152,94.5 V77.5 A5.5,5.5 0 0 1 157.5,72 Z" />
+        <path android:fillColor="#FF1E2230" android:pathData="M172.5,80 H172.5 A5.5,5.5 0 0 1 178,85.5 V86.5 A5.5,5.5 0 0 1 172.5,92 H172.5 A5.5,5.5 0 0 1 167,86.5 V85.5 A5.5,5.5 0 0 1 172.5,80 Z" />
     </group>
 </vector>
