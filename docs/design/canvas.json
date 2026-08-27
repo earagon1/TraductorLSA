@@ -100,7 +100,7 @@
       "x": 1880,
       "y": 0,
       "w": 390,
-      "h": 1620,
+      "h": 1720,
       "title": "Ajustes (se desplaza)",
       "page": "page-3"
     },
@@ -109,7 +109,7 @@
       "x": 0,
       "y": 0,
       "w": 1080,
-      "h": 1100,
+      "h": 1300,
       "title": "Tokens y componentes",
       "page": "page-2"
     }
@@ -137,7 +137,7 @@
       "y": -300,
       "w": 1330,
       "page": "page-3",
-      "text": "Tres decisiones de fondo.\n\n1. Ajustes sale de la lista y se va al engranaje de la barra. La lista del Inicio es para lo que la app HACE; la configuración no compite con eso. Y el ícono de perfil desaparece: la cuenta pasa a ser una sección más adentro de Ajustes, así hay un solo lugar donde configurar.\n\n2. Los dos modos dejan de ser una fila más. Traducir señas y traducir voz son el producto: van como dos tarjetas grandes, lado a lado, aplicando la regla del sistema — azul el que seña, grafito el que habla. El resto baja a un nivel visual claramente menor.\n\n3. Traducir voz se rediseña alrededor del texto, no del botón. Esa pantalla la lee una persona sorda mientras la otra habla: el texto va a 26 px y ocupa la tarjeta entera, con lo provisorio en gris y lo confirmado en negro, tal como ya distingue VoiceToText."
+      "text": "Tres decisiones de fondo.\n\n1. Barra fija en todas las pantallas: el logotipo a la izquierda y el avatar a la derecha, siempre igual. El avatar abre Ajustes, así que el engranaje desaparece: dos íconos que llevaban a lugares parecidos pasan a ser uno. Por eso Cuenta es ahora la primera sección de Ajustes, para que el viaje cierre. En las pantallas internas, el botón de volver y el título bajan a su propia línea, con el título grande y alineado a la izquierda.\n\n2. Los dos modos dejan de ser una fila más. Traducir señas y traducir voz son el producto: van como tarjetas grandes aplicando la regla del sistema — azul el que seña, grafito el que habla.\n\n3. Traducir voz se rediseña alrededor del texto, no del botón. Esa pantalla la lee una persona sorda mientras la otra habla: el texto va a 26 px y ocupa la tarjeta entera, con lo provisorio en gris y lo confirmado en negro, tal como ya distingue VoiceToText."
     },
     {
       "id": "nota-ajustes",
@@ -146,6 +146,14 @@
       "w": 390,
       "page": "page-3",
       "text": "Cada control de acá está atado a algo que ya existe en el código: la resolución sale de CameraManager, la sensibilidad de HandTracker, la velocidad y el tono de SpeechManager, la variante de español de los dos motores a la vez.\n\nOjo con ese último: hoy el TTS habla en es-MX y el reconocimiento escucha en es-AR. Están desalineados."
+    },
+    {
+      "id": "nota-avatar",
+      "x": 470,
+      "y": 900,
+      "w": 860,
+      "page": "page-3",
+      "text": "Los dos estados del avatar están repartidos a propósito: «Traducir voz · listo» muestra el genérico de invitada y el resto, el de sesión iniciada. Con foto de Clerk se muestra la foto; sin foto, las iniciales sobre el azul de marca.\n\nLo único que perdés al sacar el engranaje es visibilidad: hay que saber que Ajustes está detrás del avatar. Es el patrón de Gmail y Chrome, y con Cuenta arriba de todo se entiende al primer toque. Si preferís el engranaje al lado del avatar, es un cambio de dos minutos."
     }
   ],
   "launch": {
