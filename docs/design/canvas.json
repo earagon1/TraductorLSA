@@ -4,14 +4,12 @@
     { "id": "page-2", "name": "Sistema visual" }
   ],
   "artboards": [
-    { "file": "Main.dc.html",          "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",              "page": "page-1" },
-    { "file": "Onboarding1.dc.html",   "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",              "page": "page-1" },
-    { "file": "Onboarding2.dc.html",   "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",          "page": "page-1" },
-    { "file": "Onboarding3.dc.html",   "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",         "page": "page-1" },
-    { "file": "Acceso.dc.html",        "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Claro",              "page": "page-1" },
-    { "file": "AccesoOscuro.dc.html",  "x": 2350, "y": 0, "w": 390, "h": 844, "title": "5 · Fondo de marca",     "page": "page-1" },
-    { "file": "AccesoTarjeta.dc.html", "x": 2820, "y": 0, "w": 390, "h": 844, "title": "5 · Tarjeta flotante",   "page": "page-1" },
-    { "file": "Sistema.dc.html",       "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
+    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",           "page": "page-1" },
+    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",           "page": "page-1" },
+    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",       "page": "page-1" },
+    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",      "page": "page-1" },
+    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Acceso",          "page": "page-1" },
+    { "file": "Sistema.dc.html",     "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
   ],
   "annotations": [
     {
@@ -23,12 +21,12 @@
       "text": "Dirección: «conversación en dos voces».\nEl logo ya dice de qué se trata la app: una burbuja azul con una mano (seña) y una gris oscura con una onda (voz). Ese par pasa a ser el sistema entero — azul es siempre el lado que seña, grafito siempre el que habla — y sus formas redondeadas dan el radio de tarjetas y botones. Cada pantalla muestra el producto real: la mano con landmarks, la conversación de ida y vuelta, el teléfono cerrado."
     },
     {
-      "id": "opciones-acceso",
+      "id": "acceso-google",
       "x": 1880,
       "y": -230,
-      "w": 1330,
+      "w": 390,
       "page": "page-1",
-      "text": "Fuera la hoja que subía desde abajo. En las tres versiones cada superficie cierra dentro de la pantalla: nada queda cortado contra el borde inferior.\n\nClaro — mismo fondo y mismo lenguaje de tarjeta que las pantallas 2, 3 y 4: la marca vive en un bloque celeste con sus cuatro esquinas redondeadas y los botones apoyan sobre el papel. Es la que mejor cierra la serie.\nFondo de marca — todo oscuro de borde a borde, sin costura posible. El botón blanco sobre el azul profundo es el contraste más alto de las tres. Rompe con el resto del onboarding.\nTarjeta flotante — el fondo oscuro sigue del splash, pero la superficie blanca es una tarjeta con margen en los cuatro lados y sombra. Mantiene la continuidad sin que nada se corte."
+      "text": "El fondo de marca sigue del splash, así que las dos pantallas se leen como un solo movimiento.\n\nEl logo de Google está redibujado a mano para el mockup. Al implementar hay que usar el asset oficial de Google (o el botón que ya trae Clerk): sus lineamientos de marca exigen el logo original, no una versión propia."
     }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
