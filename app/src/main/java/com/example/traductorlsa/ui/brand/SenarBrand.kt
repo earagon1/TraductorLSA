@@ -261,8 +261,11 @@ private fun DrawScope.mano(color: Color, x: Float, y: Float, escala: Float) {
         redondeado(color, 46.5f, 13f, 13f, 53f, 6.5f) // mayor
         redondeado(color, 61f, 19f, 13f, 47f, 6.5f)  // anular
         redondeado(color, 75.5f, 29f, 13f, 37f, 6.5f) // meñique
-        withTransform({ rotate(-28f, Offset(16.5f, 61f)) }) {
-            redondeado(color, 10f, 44f, 13f, 34f, 6.5f) // pulgar
+        // Ojo: esta geometría está replicada en res/drawable/ic_launcher_foreground.xml.
+        // El pulgar tiene que solaparse con la palma; si se despega se lee como
+        // una mancha suelta, sobre todo a tamaño de ícono.
+        withTransform({ rotate(-30f, Offset(17.5f, 62f)) }) {
+            redondeado(color, 11f, 42f, 14f, 44f, 7f) // pulgar
         }
     }
 }

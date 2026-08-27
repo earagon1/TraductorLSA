@@ -17,16 +17,15 @@ import kotlinx.coroutines.withContext
  */
 object AssetWarmup {
 
-    /** Cada asset con la fracción de progreso que representa al terminarlo. */
     private val ASSETS = listOf(
-        "words.json" to 0.10f,
-        "actions_15_f32.tflite" to 0.28f,
-        "hand_landmarker.task" to 1.00f,
+        "words.json",
+        "actions_15_f32.tflite",
+        "hand_landmarker.task",
     )
 
-    suspend fun precargar(context: Context, onProgreso: suspend (Float) -> Unit) {
+    suspend fun precargar(context: Context) {
         val buffer = ByteArray(64 * 1024)
-        for ((nombre, avance) in ASSETS) {
+        for (nombre in ASSETS) {
             withContext(Dispatchers.IO) {
                 try {
                     context.assets.open(nombre).use { entrada ->
@@ -38,7 +37,6 @@ object AssetWarmup {
                     Log.w("AssetWarmup", "No se pudo precargar $nombre: ${t.message}")
                 }
             }
-            onProgreso(avance)
         }
     }
 }
