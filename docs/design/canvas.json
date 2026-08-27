@@ -4,14 +4,14 @@
     { "id": "page-2", "name": "Sistema visual" }
   ],
   "artboards": [
-    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",           "page": "page-1" },
-    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",           "page": "page-1" },
-    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",       "page": "page-1" },
-    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",      "page": "page-1" },
-    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5A · Dos filas",      "page": "page-1" },
-    { "file": "AccesoB.dc.html",     "x": 2350, "y": 0, "w": 390, "h": 844, "title": "5B · Una sola acción", "page": "page-1" },
-    { "file": "AccesoC.dc.html",     "x": 2820, "y": 0, "w": 390, "h": 844, "title": "5C · Dos mosaicos",   "page": "page-1" },
-    { "file": "Sistema.dc.html",     "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
+    { "file": "Main.dc.html",          "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",              "page": "page-1" },
+    { "file": "Onboarding1.dc.html",   "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",              "page": "page-1" },
+    { "file": "Onboarding2.dc.html",   "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",          "page": "page-1" },
+    { "file": "Onboarding3.dc.html",   "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",         "page": "page-1" },
+    { "file": "Acceso.dc.html",        "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Claro",              "page": "page-1" },
+    { "file": "AccesoOscuro.dc.html",  "x": 2350, "y": 0, "w": 390, "h": 844, "title": "5 · Fondo de marca",     "page": "page-1" },
+    { "file": "AccesoTarjeta.dc.html", "x": 2820, "y": 0, "w": 390, "h": 844, "title": "5 · Tarjeta flotante",   "page": "page-1" },
+    { "file": "Sistema.dc.html",       "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
   ],
   "annotations": [
     {
@@ -28,7 +28,7 @@
       "y": -230,
       "w": 1330,
       "page": "page-1",
-      "text": "Tres formas de resolver la hoja blanca. El fondo oscuro se mantiene en las tres: viene del splash y la hoja sube encima, así las dos pantallas se leen como un solo movimiento.\n\n5A — dos filas descriptivas. Cada opción explica lo suyo en dos renglones. Es la más informativa y la más pesada: dos bloques con la misma anatomía se parecen a una lista de ajustes.\n5B — una sola acción. Un botón manda y la cuenta baja a un enlace. Es la más limpia y la que más marca deja ver, pero esconde la sincronización casi por completo.\n5C — dos mosaicos. Convierte el paso en una elección visual con un «recomendado» explícito. La más rápida de leer, aunque le da a la cuenta tanto espacio como al modo invitada y obliga a textos cortísimos."
+      "text": "Fuera la hoja que subía desde abajo. En las tres versiones cada superficie cierra dentro de la pantalla: nada queda cortado contra el borde inferior.\n\nClaro — mismo fondo y mismo lenguaje de tarjeta que las pantallas 2, 3 y 4: la marca vive en un bloque celeste con sus cuatro esquinas redondeadas y los botones apoyan sobre el papel. Es la que mejor cierra la serie.\nFondo de marca — todo oscuro de borde a borde, sin costura posible. El botón blanco sobre el azul profundo es el contraste más alto de las tres. Rompe con el resto del onboarding.\nTarjeta flotante — el fondo oscuro sigue del splash, pero la superficie blanca es una tarjeta con margen en los cuatro lados y sombra. Mantiene la continuidad sin que nada se corte."
     }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
