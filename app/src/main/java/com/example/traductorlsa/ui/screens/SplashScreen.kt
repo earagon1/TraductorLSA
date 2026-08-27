@@ -1,6 +1,8 @@
 package com.example.traductorlsa.ui.screens
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -26,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,12 +68,24 @@ private const val TIEMPO_MINIMO_MS = 2_200L
 /** Techo de espera: si la precarga se hace larga, entramos igual. */
 private const val TIEMPO_MAXIMO_MS = 5_000L
 
+/** La barra empieza a llenarse recién cuando terminó de aparecer. */
+private const val RETARDO_BARRA_MS = 320L
+
+/**
+ * Hasta dónde sube la barra sola. El tramo que queda no se completa hasta que
+ * los assets están realmente leídos: así nunca dice "listo" antes de tiempo.
+ */
+private const val TOPE_BARRA = 0.90f
+
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     SenarSystemBars(iconosOscuros = false)
 
     val context = LocalContext.current
-    var objetivo by remember { mutableFloatStateOf(0f) }
+
+    // La barra arranca vacía y sube sola. Los tres assets terminan a saltos, así
+    // que atarla al progreso real se veía como dos tirones, no como una carga.
+    val relleno = remember { Animatable(0f) }
 
     // La entrada arranca en cuanto la pantalla se compone: el isotipo aparece
     // creciendo y el texto lo sigue, un poco después.
@@ -99,11 +112,6 @@ fun SplashScreen(onFinished: () -> Unit) {
         animationSpec = tween(durationMillis = 520, delayMillis = 260, easing = FastOutSlowInEasing),
         label = "desplazamientoTexto",
     )
-    val progreso by animateFloatAsState(
-        targetValue = objetivo,
-        animationSpec = tween(durationMillis = 420),
-        label = "progresoPrecarga",
-    )
 
     val version = remember {
         runCatching {
@@ -113,12 +121,26 @@ fun SplashScreen(onFinished: () -> Unit) {
 
     LaunchedEffect(Unit) {
         val minimo = launch { delay(TIEMPO_MINIMO_MS) }
-        withTimeoutOrNull(TIEMPO_MAXIMO_MS) {
-            AssetWarmup.precargar(context) { objetivo = it }
+        val avance = launch {
+            relleno.animateTo(
+                targetValue = TOPE_BARRA,
+                animationSpec = tween(
+                    durationMillis = (TIEMPO_MINIMO_MS - RETARDO_BARRA_MS).toInt(),
+                    delayMillis = RETARDO_BARRA_MS.toInt(),
+                    easing = LinearEasing,
+                ),
+            )
         }
-        objetivo = 1f
+
+        withTimeoutOrNull(TIEMPO_MAXIMO_MS) { AssetWarmup.precargar(context) }
         minimo.join()
-        delay(220)
+
+        avance.cancel()
+        relleno.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        )
+        delay(140)
         onFinished()
     }
 
@@ -205,7 +227,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 ) {
                     Box(
                         Modifier
-                            .fillMaxWidth(progreso.coerceIn(0.06f, 1f))
+                            .fillMaxWidth(relleno.value)
                             .fillMaxHeight()
                             .clip(CircleShape)
                             .background(SenarAzul500)
