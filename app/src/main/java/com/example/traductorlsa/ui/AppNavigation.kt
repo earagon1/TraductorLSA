@@ -170,6 +170,8 @@ fun AppNavHost(navController: NavHostController) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun TrainingAccessGate(
     navController: NavHostController,
     content: @Composable () -> Unit
@@ -224,7 +226,6 @@ private fun TrainingAccessGate(
     }
 }
 
-@Composable
 /* ----------------- Dataset ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
