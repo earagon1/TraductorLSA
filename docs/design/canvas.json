@@ -1,0 +1,33 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Flujo de entrada" },
+    { "id": "page-2", "name": "Sistema visual" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",        "page": "page-1" },
+    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",        "page": "page-1" },
+    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",    "page": "page-1" },
+    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",   "page": "page-1" },
+    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Acceso",       "page": "page-1" },
+    { "file": "Sistema.dc.html",     "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
+  ],
+  "annotations": [
+    {
+      "id": "direccion",
+      "x": 0,
+      "y": -230,
+      "w": 860,
+      "page": "page-1",
+      "text": "Dirección: «conversación en dos voces».\nEl logo ya dice de qué se trata la app: una burbuja azul con una mano (seña) y una gris oscura con una onda (voz). Ese par pasa a ser el sistema entero — azul es siempre el lado que seña, grafito siempre el que habla — y sus formas redondeadas dan el radio de tarjetas y botones. Cada pantalla muestra el producto real: la mano con landmarks, la conversación de ida y vuelta, el teléfono cerrado."
+    },
+    {
+      "id": "continuidad",
+      "x": 1880,
+      "y": -230,
+      "w": 390,
+      "page": "page-1",
+      "text": "Continuidad splash → acceso: el fondo oscuro se mantiene y la hoja blanca sube sobre él. Hoy las dos pantallas son casi idénticas y la transición parece un error."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}
