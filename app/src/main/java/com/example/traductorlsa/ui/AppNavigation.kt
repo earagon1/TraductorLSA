@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.traductorlsa.ui.brand.SenarLogotipo
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
 import com.example.traductorlsa.ui.screens.OnboardingScreen
 import com.example.traductorlsa.ui.screens.SplashScreen
@@ -75,9 +76,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 
-
-// Si tenés tu propio Theme (TraductorLSATheme, etc.),
-// podrás envolver todo esto adentro de ese tema en vez de MaterialTheme.
 
 @Composable
 fun LsaTranslatorApp() {
@@ -1135,10 +1133,10 @@ fun AboutScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Traductor LSA",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+            SenarLogotipo(
+                estilo = MaterialTheme.typography.headlineSmall,
+                colorTexto = MaterialTheme.colorScheme.onSurface,
+                colorEne = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(8.dp))
             Text(

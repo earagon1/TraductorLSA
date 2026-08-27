@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TraductorLSA</string>
+    <!-- Nombre que aparece bajo el ícono en el dispositivo. Corto a propósito:
+         los launchers cortan las etiquetas largas. -->
+    <string name="app_name">SeÑAR</string>
 </resources>
