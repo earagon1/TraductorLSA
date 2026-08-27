@@ -112,6 +112,33 @@
       "h": 1300,
       "title": "Tokens y componentes",
       "page": "page-2"
+    },
+    {
+      "file": "Diccionario.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Diccionario · palabras",
+      "page": "page-3"
+    },
+    {
+      "file": "DiccionarioLetras.dc.html",
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Diccionario · letras",
+      "page": "page-3"
+    },
+    {
+      "file": "DiccionarioDetalle.dc.html",
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Diccionario · detalle",
+      "page": "page-3"
     }
   ],
   "annotations": [
@@ -154,6 +181,14 @@
       "w": 860,
       "page": "page-3",
       "text": "Los dos estados del avatar están repartidos a propósito: «Traducir voz · listo» muestra el genérico de invitada y el resto, el de sesión iniciada. Con foto de Clerk se muestra la foto; sin foto, las iniciales sobre el azul de marca.\n\nLo único que perdés al sacar el engranaje es visibilidad: hay que saber que Ajustes está detrás del avatar. Es el patrón de Gmail y Chrome, y con Cuenta arriba de todo se entiende al primer toque. Si preferís el engranaje al lado del avatar, es un cambio de dos minutos."
+    },
+    {
+      "id": "nota-diccionario-2",
+      "x": 2350,
+      "y": 900,
+      "w": 1330,
+      "page": "page-3",
+      "text": "Cuatro cosas del diccionario actual.\n\n1. Las imágenes se recortan. DictionaryCard usa ContentScale.Crop, por eso a «adiós» le corta la cabeza. En una seña, la posición del brazo respecto del cuerpo ES la información: recortar destruye lo que la tarjeta viene a enseñar. Va contain, sobre blanco y con aire.\n2. La grilla se adapta a lo que muestra. Las palabras necesitan ver el cuerpo entero, así que van de a dos; las letras y los números son configuraciones fijas de la mano y entran cuatro por fila. Hoy son tres para todo, y las palabras quedan chiquitas.\n3. Las etiquetas salen crudas de words.json, que no tiene tildes: «adios», «como estas?». Hace falta un mapa de nombres para mostrar, aparte de los ids del modelo.\n4. La banda lila de las tarjetas es surfaceVariant de Material, resto del tema viejo.\n\nEl detalle suma «Practicar esta seña», que abre la cámara esperando justo esa. Es la propuesta más grande de la pantalla: decime si va o la saco."
     }
   ],
   "launch": {
