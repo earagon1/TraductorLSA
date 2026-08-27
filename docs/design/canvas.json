@@ -4,11 +4,13 @@
     { "id": "page-2", "name": "Sistema visual" }
   ],
   "artboards": [
-    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",        "page": "page-1" },
-    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",        "page": "page-1" },
-    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",    "page": "page-1" },
-    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",   "page": "page-1" },
-    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Acceso",       "page": "page-1" },
+    { "file": "Main.dc.html",        "x": 0,    "y": 0, "w": 390, "h": 844, "title": "1 · Splash",           "page": "page-1" },
+    { "file": "Onboarding1.dc.html", "x": 470,  "y": 0, "w": 390, "h": 844, "title": "2 · Señas",           "page": "page-1" },
+    { "file": "Onboarding2.dc.html", "x": 940,  "y": 0, "w": 390, "h": 844, "title": "3 · Dos modos",       "page": "page-1" },
+    { "file": "Onboarding3.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Privacidad",      "page": "page-1" },
+    { "file": "Acceso.dc.html",      "x": 1880, "y": 0, "w": 390, "h": 844, "title": "5A · Dos filas",      "page": "page-1" },
+    { "file": "AccesoB.dc.html",     "x": 2350, "y": 0, "w": 390, "h": 844, "title": "5B · Una sola acción", "page": "page-1" },
+    { "file": "AccesoC.dc.html",     "x": 2820, "y": 0, "w": 390, "h": 844, "title": "5C · Dos mosaicos",   "page": "page-1" },
     { "file": "Sistema.dc.html",     "x": 0,    "y": 0, "w": 1080, "h": 1100, "title": "Tokens y componentes", "page": "page-2" }
   ],
   "annotations": [
@@ -21,12 +23,12 @@
       "text": "Dirección: «conversación en dos voces».\nEl logo ya dice de qué se trata la app: una burbuja azul con una mano (seña) y una gris oscura con una onda (voz). Ese par pasa a ser el sistema entero — azul es siempre el lado que seña, grafito siempre el que habla — y sus formas redondeadas dan el radio de tarjetas y botones. Cada pantalla muestra el producto real: la mano con landmarks, la conversación de ida y vuelta, el teléfono cerrado."
     },
     {
-      "id": "continuidad",
+      "id": "opciones-acceso",
       "x": 1880,
       "y": -230,
-      "w": 390,
+      "w": 1330,
       "page": "page-1",
-      "text": "Continuidad splash → acceso: el fondo oscuro se mantiene y la hoja blanca sube sobre él. Hoy las dos pantallas son casi idénticas y la transición parece un error."
+      "text": "Tres formas de resolver la hoja blanca. El fondo oscuro se mantiene en las tres: viene del splash y la hoja sube encima, así las dos pantallas se leen como un solo movimiento.\n\n5A — dos filas descriptivas. Cada opción explica lo suyo en dos renglones. Es la más informativa y la más pesada: dos bloques con la misma anatomía se parecen a una lista de ajustes.\n5B — una sola acción. Un botón manda y la cuenta baja a un enlace. Es la más limpia y la que más marca deja ver, pero esconde la sincronización casi por completo.\n5C — dos mosaicos. Convierte el paso en una elección visual con un «recomendado» explícito. La más rápida de leer, aunque le da a la cuenta tanto espacio como al modo invitada y obliga a textos cortísimos."
     }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
