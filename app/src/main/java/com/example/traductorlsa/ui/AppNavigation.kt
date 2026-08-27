@@ -4,15 +4,12 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.foundation.background
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 
-import androidx.compose.ui.graphics.vector.ImageVector
 
 import androidx.compose.ui.unit.dp
 
@@ -21,30 +18,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.traductorlsa.ui.brand.SenarLogotipo
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
+import com.example.traductorlsa.ui.screens.HomeScreen
+import com.example.traductorlsa.ui.screens.SettingsScreen
+import com.example.traductorlsa.ui.screens.TrainingHomeScreen
+import com.example.traductorlsa.ui.screens.TranslateVoiceScreen
 import com.example.traductorlsa.ui.screens.OnboardingScreen
 import com.example.traductorlsa.ui.screens.SplashScreen
 import com.example.traductorlsa.ui.theme.SenarTheme
-import kotlinx.coroutines.delay
 
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.clerk.api.Clerk
 import com.clerk.ui.auth.AuthView
-import com.clerk.ui.userbutton.UserButton
 // CORRECCIóN 1: Nombre correcto del componente de Clerk
-import com.clerk.ui.userprofile.UserProfileView
 
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
-import com.example.traductorlsa.voice.VoiceToText
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -180,91 +170,6 @@ fun AppNavHost(navController: NavHostController) {
 }
 
 
-/* ----------------- Home / Dashboard ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomeScreen(
-    onTranslateSign: () -> Unit,
-    onTranslateVoice: () -> Unit,
-    onTraining: () -> Unit,
-    onDictionary: () -> Unit,
-    onSettings: () -> Unit
-) {
-    val user by Clerk.userFlow.collectAsStateWithLifecycle()
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("SeÑAR") },
-                actions = {
-                    if (user != null) {
-                        // Placeholder del botón de perfil para futuro Clerk UI
-                        IconButton(onClick = { /* TODO: pantalla de perfil / cuenta */ }) {
-                            Icon(
-                                imageVector = Icons.Filled.Face,
-                                contentDescription = "Perfil"
-                            )
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "¿Qué querés hacer hoy?",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            FeatureCard(
-                title = "Traducir señas",
-                description = "LSA a texto y voz",
-                icon = Icons.Filled.Videocam,
-                onClick = onTranslateSign
-            )
-
-            FeatureCard(
-                title = "Traducir voz",
-                description = "Voz a texto en pantalla",
-                icon = Icons.Filled.Mic,
-                onClick = onTranslateVoice
-            )
-
-            if (user != null) {
-                FeatureCard(
-                    title = "Modo entrenamiento",
-                    description = "Practicar, grabar nuevas muestras y revisar el dataset",
-                    icon = Icons.Filled.School,
-                    onClick = onTraining
-                )
-            }
-
-            FeatureCard(
-                title = "Diccionario de señas",
-                description = "Ver las señas soportadas por el modelo",
-                icon = Icons.Filled.MenuBook,
-                onClick = onDictionary
-            )
-
-            FeatureCard(
-                title = "Ajustes",
-                description = "Voz, sensibilidad, información de la app",
-                icon = Icons.Filled.Settings,
-                onClick = onSettings
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun TrainingAccessGate(
     navController: NavHostController,
     content: @Composable () -> Unit
@@ -320,181 +225,6 @@ private fun TrainingAccessGate(
 }
 
 @Composable
-private fun FeatureCard(
-    title: String,
-    description: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
-
-/* ----------------- Pantalla Traducción de voz ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TranslateVoiceScreen(navController: NavHostController) {
-    val context = LocalContext.current
-    var recognizedText by remember { mutableStateOf("Presiona el micrófono y habla...") }
-    var isRecording by remember { mutableStateOf(false) }
-
-    val vtt = remember {
-        VoiceToText(
-            context = context,
-            onPartial = { recognizedText = it },
-            onFinal = {
-                recognizedText = it
-                isRecording = false
-            },
-            onError = {
-                recognizedText = "Error: $it"
-                isRecording = false
-            }
-        )
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            isRecording = true
-            vtt.start()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Traducir voz") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        vtt.stop() // Detener si se vuelve atrás
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = recognizedText,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            Button(
-                onClick = {
-                    if (!isRecording) {
-                        val hasPermission = ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-
-                        if (hasPermission) {
-                            isRecording = true
-                            vtt.start()
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    } else {
-                        isRecording = false
-                        vtt.stop()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(if (isRecording) Icons.Default.Stop else Icons.Default.Mic, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(if (isRecording) "Detener" else "Escuchar")
-            }
-        }
-    }
-}
-
-/* ----------------- Modo entrenamiento: menú ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TrainingHomeScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Modo entrenamiento") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            FeatureCard(
-                title = "Grabar nuevas muestras",
-                description = "Capturar gestos para ampliar el dataset",
-                icon = Icons.Filled.Videocam,
-                onClick = { navController.navigate(AppDestination.TrainingCapture.route) }
-            )
-
-            FeatureCard(
-                title = "Ver dataset",
-                description = "Etiquetas y cantidad de muestras",
-                icon = Icons.Filled.TableChart,
-                onClick = { navController.navigate(AppDestination.Dataset.route) }
-            )
-        }
-    }
-}
-
 /* ----------------- Dataset ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1028,83 +758,6 @@ private fun normalizeForFileName(input: String): String {
         .replace("[^a-z0-9_ ]".toRegex(), "")
         .replace("\\s+".toRegex(), "_")
 }
-/* ----------------- Ajustes ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Ajustes") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Acá vamos a controlar cosas como:",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text("- Velocidad de la voz", style = MaterialTheme.typography.bodySmall)
-            Text("- Umbral de confianza de las predicciones", style = MaterialTheme.typography.bodySmall)
-            Text("- Mostrar / ocultar overlay de landmarks", style = MaterialTheme.typography.bodySmall)
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { navController.navigate(AppDestination.About.route) }
-            ) {
-                Icon(Icons.Filled.Info, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Acerca de la app")
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            //BOTóN DE CERRAR SESIóN
-            val scope = rememberCoroutineScope()
-
-            OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        try {
-                            // Cierra sesión en Clerk
-                            Clerk.signOut()
-
-                            // Limpia el back stack y vuelve al flujo de auth
-                            navController.navigate(AppDestination.AuthEntry.route) {
-                                popUpTo(AppDestination.Home.route) { inclusive = true }
-                            }
-                        } catch (e: Exception) {
-                            // Si querés, podrás loguear el error
-                            e.printStackTrace()
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors()
-            ) {
-                Icon(Icons.Filled.Cloud, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Cerrar sesión")
-            }
-        }
-    }
-}
-
 /* ----------------- Acerca de ----------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
