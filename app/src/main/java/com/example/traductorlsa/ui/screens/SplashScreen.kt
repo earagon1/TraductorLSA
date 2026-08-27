@@ -1,5 +1,7 @@
 package com.example.traductorlsa.ui.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -23,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,8 +57,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Tiempo mínimo en pantalla, para que la marca no aparezca como un parpadeo. */
-private const val TIEMPO_MINIMO_MS = 1_200L
+/**
+ * Tiempo mínimo en pantalla. Es el número a tocar si querés que la
+ * presentación dure más o menos: cuenta desde que arranca la animación de
+ * entrada, que termina a los 780 ms.
+ */
+private const val TIEMPO_MINIMO_MS = 2_200L
 
 /** Techo de espera: si la precarga se hace larga, entramos igual. */
 private const val TIEMPO_MAXIMO_MS = 5_000L
@@ -65,6 +73,32 @@ fun SplashScreen(onFinished: () -> Unit) {
 
     val context = LocalContext.current
     var objetivo by remember { mutableFloatStateOf(0f) }
+
+    // La entrada arranca en cuanto la pantalla se compone: el isotipo aparece
+    // creciendo y el texto lo sigue, un poco después.
+    var entro by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entro = true }
+
+    val escalaIsotipo by animateFloatAsState(
+        targetValue = if (entro) 1f else 0.86f,
+        animationSpec = tween(durationMillis = 620, easing = FastOutSlowInEasing),
+        label = "escalaIsotipo",
+    )
+    val opacidadIsotipo by animateFloatAsState(
+        targetValue = if (entro) 1f else 0f,
+        animationSpec = tween(durationMillis = 520),
+        label = "opacidadIsotipo",
+    )
+    val opacidadTexto by animateFloatAsState(
+        targetValue = if (entro) 1f else 0f,
+        animationSpec = tween(durationMillis = 520, delayMillis = 260),
+        label = "opacidadTexto",
+    )
+    val desplazamientoTexto by animateDpAsState(
+        targetValue = if (entro) 0.dp else 12.dp,
+        animationSpec = tween(durationMillis = 520, delayMillis = 260, easing = FastOutSlowInEasing),
+        label = "desplazamientoTexto",
+    )
     val progreso by animateFloatAsState(
         targetValue = objetivo,
         animationSpec = tween(durationMillis = 420),
@@ -126,6 +160,11 @@ fun SplashScreen(onFinished: () -> Unit) {
             ) {
                 SenarIsotipo(
                     ancho = 186.dp,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = escalaIsotipo
+                        scaleY = escalaIsotipo
+                        alpha = opacidadIsotipo
+                    },
                     burbujaVoz = SenarAzul100,
                     glifoVoz = SenarGrafito900,
                 )
@@ -134,6 +173,9 @@ fun SplashScreen(onFinished: () -> Unit) {
                     estilo = MaterialTheme.typography.displayLarge,
                     colorTexto = SenarBlanco,
                     colorEne = SenarAzul300,
+                    modifier = Modifier
+                        .offset(y = desplazamientoTexto)
+                        .graphicsLayer { alpha = opacidadTexto },
                 )
                 Spacer(Modifier.height(16.dp))
                 Text(
@@ -141,13 +183,17 @@ fun SplashScreen(onFinished: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = SenarSobreMarca,
                     textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .offset(y = desplazamientoTexto)
+                        .graphicsLayer { alpha = opacidadTexto },
                 )
             }
 
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 44.dp),
+                    .padding(bottom = 44.dp)
+                    .graphicsLayer { alpha = opacidadTexto },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
