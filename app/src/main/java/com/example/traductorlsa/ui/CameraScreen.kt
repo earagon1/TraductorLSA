@@ -47,6 +47,7 @@ import androidx.navigation.NavHostController
 import com.example.traductorlsa.camera.CameraManager
 import com.example.traductorlsa.camera.FrameAnalyzer
 import com.example.traductorlsa.detection.HandTrackerImpl
+import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.features.FeatureBuilderImpl
 import com.example.traductorlsa.features.SequenceBufferImpl
 import com.example.traductorlsa.ml.GestureEngine
@@ -173,7 +174,8 @@ fun CameraScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val trainingMode = mode == CameraScreenMode.TRAINING
-    var isFrontCamera by rememberSaveable { mutableStateOf(true) }
+    val ajustes by ajustesSenar()
+    var isFrontCamera by rememberSaveable { mutableStateOf(ajustes.camaraFrontal) }
 
     val overlayState = remember { mutableStateOf(OverlayData()) }
     var lastHandsAt by remember { mutableStateOf(0L) }
@@ -212,7 +214,10 @@ fun CameraScreen(
     val cameraManager = remember { CameraManager(context, camController) }
     val executor = remember { Executors.newSingleThreadExecutor() }
 
-    val handTracker = remember { HandTrackerImpl(context) }
+    // La sensibilidad se toma al entrar a la pantalla y no en vivo: recrear el
+    // detector recarga los 8 MB del modelo, y el deslizador de Ajustes dispara
+    // en cada movimiento. Cambiarla tiene efecto la próxima vez que se abre.
+    val handTracker = remember { HandTrackerImpl(context, ajustes.sensibilidadDeteccion) }
     val featureBuilder = remember { FeatureBuilderImpl() }
     val sequenceBuffer = remember { SequenceBufferImpl() }
     val labelProvider = remember { LabelProviderImpl(context) }
@@ -227,6 +232,10 @@ fun CameraScreen(
             classifier = classifier,
             labelProvider = labelProvider
         )
+    }
+
+    LaunchedEffect(ajustes.velocidadVoz, ajustes.tonoVoz, ajustes.variante) {
+        speechManager.configurar(ajustes.velocidadVoz, ajustes.tonoVoz, ajustes.variante.locale)
     }
 
     val snack = remember { SnackbarHostState() }
@@ -250,8 +259,8 @@ fun CameraScreen(
 
         engine.onPrediction = { prediction ->
             if (!trainingMode) {
-                speechManager.speak(prediction.gesture)
-                if (prediction.confidence > 0.5f &&
+                if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)
+                if (prediction.confidence >= ajustes.confianzaMinima &&
                     prediction.gesture != "Unknown" &&
                     prediction.gesture != "Sin datos"
                 ) {
@@ -331,6 +340,7 @@ fun CameraScreen(
             engine.onCaptureStats = null
             engine.onTopPredictions = null
             speechManager.release()
+            handTracker.close()
         }
     }
 
@@ -345,10 +355,12 @@ fun CameraScreen(
     }
 
     val configuration = LocalConfiguration.current
-    LaunchedEffect(hasPermission, lifecycleOwner, isFrontCamera) {
+    LaunchedEffect(hasPermission, lifecycleOwner, isFrontCamera, ajustes.calidad) {
         if (!hasPermission) return@LaunchedEffect
         val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-        val targetSize = if (isPortrait) Size(480, 640) else Size(640, 480)
+        val corto = ajustes.calidad.ladoCorto
+        val largo = ajustes.calidad.ladoLargo
+        val targetSize = if (isPortrait) Size(corto, largo) else Size(largo, corto)
 
         cameraManager.configure(
             lensFacingFront = isFrontCamera,
@@ -386,7 +398,9 @@ fun CameraScreen(
             }
         )
 
-        com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
+        if (ajustes.mostrarLandmarks) {
+            com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
+        }
 
         // Barra superior
         Row(

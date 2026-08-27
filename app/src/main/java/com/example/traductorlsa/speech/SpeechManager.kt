@@ -4,38 +4,59 @@ import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import java.util.*
+import java.util.Locale
 
 class SpeechManager(context: Context) {
 
     private var tts: TextToSpeech? = null
     private var ready = false
 
+    // Los ajustes pueden llegar antes de que el motor esté listo, así que se
+    // guardan y se aplican en cuanto inicializa.
+    private var velocidad = 1.0f
+    private var tono = 1.0f
+    private var locale: Locale = Locale("es", "AR")
+
     init {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val res = tts?.setLanguage(Locale("es", "MX"))
-                ready = res == TextToSpeech.LANG_AVAILABLE || res == TextToSpeech.LANG_COUNTRY_AVAILABLE
-                Log.d("SpeechManager", "TTS inicializado. Ready=$ready")
+                ready = true
+                aplicar()
+                Log.d("SpeechManager", "TTS inicializado")
             } else {
                 Log.e("SpeechManager", "Error inicializando TTS: status=$status")
             }
         }
-        tts?.setSpeechRate(1.0f)  // velocidad normal (1.0f = default)
-        tts?.setPitch(1.0f)       // tono normal
+    }
+
+    /** Velocidad, tono y variante del español, desde Ajustes. */
+    fun configurar(velocidad: Float, tono: Float, locale: Locale) {
+        this.velocidad = velocidad
+        this.tono = tono
+        this.locale = locale
+        if (ready) aplicar()
+    }
+
+    private fun aplicar() {
+        val motor = tts ?: return
+        val res = motor.setLanguage(locale)
+        if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+            // El dispositivo no tiene esa variante instalada: caemos a español a secas.
+            Log.w("SpeechManager", "Variante $locale no disponible, se usa español neutro")
+            motor.setLanguage(Locale("es"))
+        }
+        motor.setSpeechRate(velocidad)
+        motor.setPitch(tono)
     }
 
     fun speak(text: String) {
         if (!ready || text.isBlank() || text == "-" || text == "Sin datos" || text == "Unknown") {
-            Log.d("SpeechManager", "⚠️ No se pronuncia: $text")
+            Log.d("SpeechManager", "No se pronuncia: $text")
             return
         }
-        Log.d("SpeechManager", "🔊 Hablando: $text")
         val params = Bundle()
-
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "prediction_id")
-
     }
 
     fun release() {
