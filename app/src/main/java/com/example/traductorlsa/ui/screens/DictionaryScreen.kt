@@ -250,8 +250,10 @@ fun DictionaryScreen(navController: NavHostController) {
 
 /* ---------------- detalle ---------------- */
 
+// Extiende ColumnScope porque la tarjeta de la imagen usa weight para
+// quedarse con el alto que sobra.
 @Composable
-private fun DetalleDeSena(
+private fun ColumnScope.DetalleDeSena(
     entrada: DictionaryEntry,
     onVolver: () -> Unit,
     onPracticar: () -> Unit,
