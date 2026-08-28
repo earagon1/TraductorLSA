@@ -159,18 +159,22 @@ def cabecera_camara(nombre, n):
   </div>'''
 
 def referencia():
-    return ('  <div style="position:absolute;right:18px;top:192px;width:92px;box-sizing:border-box;padding:8px;'
-            'border-radius:18px;background:rgba(255,255,255,0.93);box-shadow:0 8px 22px rgba(0,0,0,0.28);">'
-            + thumb(76, 12, "#F5F7FB", "#E7EBF4", "#5C6474").replace("width:76px", "width:100%")
-            + '<div style="margin-top:6px;font-size:10px;font-weight:600;letter-spacing:0.4px;text-align:center;color:#5C6474;">REFERENCIA</div></div>')
+    return ('  <div style="position:absolute;right:16px;top:196px;width:66px;height:66px;box-sizing:border-box;padding:4px;'
+            'border-radius:17px;background:rgba(255,255,255,0.86);box-shadow:0 6px 18px rgba(0,0,0,0.30);">'
+            + thumb(58, 13, "#FFFFFF", "rgba(0,0,0,0)", "#3F4553").replace("width:58px", "width:100%").replace("height:58px", "height:100%")
+            + '<div style="position:absolute;right:-5px;bottom:-5px;display:flex;align-items:center;justify-content:center;'
+            'width:22px;height:22px;border-radius:999px;background:#1E2230;border:2px solid rgba(255,255,255,0.86);">'
+            '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+            '<path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>'
+            '</svg></div></div>')
 
-def guia(color, texto, fondo_texto):
+def guia(color, texto=None, fondo_texto=""):
+    cartel = "" if texto is None else f'''
+    <div style="position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;">
+      <span style="padding:7px 14px;border-radius:999px;background:{fondo_texto};font-size:12px;font-weight:600;color:#FFFFFF;">{texto}</span>
+    </div>'''
     return f'''  <div style="position:absolute;left:34px;right:34px;top:150px;bottom:296px;">
-    <div style="position:absolute;inset:0;border-radius:20px;border:1.5px solid rgba(255,255,255,0.16);"></div>
-    {esquinas(color)}
-    <div style="position:absolute;left:0;right:0;top:14px;display:flex;justify-content:center;">
-      <span style="padding:6px 13px;border-radius:999px;background:{fondo_texto};font-size:11.5px;font-weight:600;color:#FFFFFF;">{texto}</span>
-    </div>
+    {esquinas(color)}{cartel}
     <div style="position:absolute;left:50%;bottom:0;width:186px;height:216px;transform:translateX(-50%);">{SILUETA}</div>
   </div>'''
 
@@ -196,8 +200,8 @@ capturando = f'''    <div style="display:flex;align-items:center;gap:11px;">
         <span style="width:12px;height:12px;border-radius:999px;background:#FFFFFF;"></span>
       </span>
       <div style="flex-grow:1;min-width:0;">
-        <div style="font-size:16.5px;font-weight:600;color:#FFFFFF;">Grabando… sostené la seña</div>
-        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">9 de 15 cuadros</div>
+        <div style="font-size:16.5px;font-weight:600;color:#FFFFFF;">No bajes las manos</div>
+        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">Grabando cuadro 9 de 15</div>
       </div>
     </div>
     <div style="margin-top:14px;">{barrita(0.6, 6, "#5D8EF9", "rgba(255,255,255,0.16)")}</div>
@@ -205,7 +209,7 @@ capturando = f'''    <div style="display:flex;align-items:center;gap:11px;">
     <div style="margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,0.10);font-size:12.5px;color:rgba(255,255,255,0.55);">4 muestras grabadas en esta sesión</div>'''
 
 escribir("EntrenamientoCaptura.dc.html",
-         escena() + cabecera_camara("hola", 6) + guia("#7FA6FF", "Encuadre correcto", "rgba(59,106,232,0.85)")
+         escena() + cabecera_camara("hola", 6) + guia("#7FA6FF")
          + referencia() + panel(capturando), envoltura=suelto)
 
 guardada = f'''    <div style="display:flex;align-items:center;gap:11px;">
@@ -214,7 +218,7 @@ guardada = f'''    <div style="display:flex;align-items:center;gap:11px;">
       </span>
       <div style="flex-grow:1;min-width:0;">
         <div style="font-size:16px;font-weight:600;color:#FFFFFF;white-space:nowrap;">Muestra 7 guardada</div>
-        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">hola: 7 de {META} muestras</div>
+        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">15 cuadros · hola 7 de {META}</div>
       </div>
       <button style="padding:8px 13px;border:1px solid rgba(255,255,255,0.24);border-radius:14px;background:transparent;cursor:pointer;flex-shrink:0;">
         <span class="b" style="font-size:13px;font-weight:600;color:#FFFFFF;">Deshacer</span>
@@ -225,7 +229,7 @@ guardada = f'''    <div style="display:flex;align-items:center;gap:11px;">
     <div style="margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,0.10);font-size:12.5px;color:rgba(255,255,255,0.55);">5 muestras grabadas en esta sesión</div>'''
 
 escribir("EntrenamientoGuardada.dc.html",
-         escena() + cabecera_camara("hola", 7) + guia("rgba(255,255,255,0.32)", "Bajá las manos para seguir", "rgba(24,29,44,0.86)")
+         escena() + cabecera_camara("hola", 7) + guia("rgba(255,255,255,0.30)", "Bajá las manos para la siguiente", "rgba(24,29,44,0.88)")
          + referencia() + panel(guardada), envoltura=suelto)
 
 print("listo")
