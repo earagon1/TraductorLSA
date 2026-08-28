@@ -139,6 +139,51 @@
       "h": 844,
       "title": "Diccionario · detalle",
       "page": "page-3"
+    },
+    {
+      "file": "Dataset.dc.html",
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Dataset · con muestras",
+      "page": "page-3"
+    },
+    {
+      "file": "DatasetVacio.dc.html",
+      "x": 4230,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Dataset · vacío",
+      "page": "page-3"
+    },
+    {
+      "file": "ElegirSena.dc.html",
+      "x": 4700,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Elegí la seña",
+      "page": "page-3"
+    },
+    {
+      "file": "EntrenamientoCaptura.dc.html",
+      "x": 5170,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Entrenamiento · grabando",
+      "page": "page-3"
+    },
+    {
+      "file": "EntrenamientoGuardada.dc.html",
+      "x": 5640,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Entrenamiento · guardada",
+      "page": "page-3"
     }
   ],
   "annotations": [
@@ -189,6 +234,14 @@
       "w": 1330,
       "page": "page-3",
       "text": "Cuatro cosas del diccionario actual.\n\n1. Las imágenes se recortan. DictionaryCard usa ContentScale.Crop, por eso a «adiós» le corta la cabeza. En una seña, la posición del brazo respecto del cuerpo ES la información: recortar destruye lo que la tarjeta viene a enseñar. Va contain, sobre blanco y con aire.\n2. La grilla se adapta a lo que muestra. Las palabras necesitan ver el cuerpo entero, así que van de a dos; las letras y los números son configuraciones fijas de la mano y entran cuatro por fila. Hoy son tres para todo, y las palabras quedan chiquitas.\n3. Las etiquetas salen crudas de words.json, que no tiene tildes: «adios», «como estas?». Hace falta un mapa de nombres para mostrar, aparte de los ids del modelo.\n4. La banda lila de las tarjetas es surfaceVariant de Material, resto del tema viejo.\n\nEl detalle suma «Practicar esta seña», que abre la cámara esperando justo esa. Es la propuesta más grande de la pantalla: decime si va o la saco."
+    },
+    {
+      "id": "nota-entrenamiento",
+      "x": 3760,
+      "y": -300,
+      "w": 1870,
+      "page": "page-3",
+      "text": "El hilo de las tres pantallas es uno solo: cuántas muestras le falta a cada seña.\n\n1. Una meta por seña. Hoy el dataset muestra números crudos («hola 3») que no dicen nada: 3 puede ser mucho o casi nada. Con una meta, 3 de 20 se lee solo. Puse 20 como valor de trabajo — el número real tiene que salir del script de entrenamiento en Python, decime cuántas repeticiones por clase necesita y lo cambio.\n\n2. La lista ordena por lo que falta y se toca. La seña con menos muestras va primero y tocarla abre la cámara ya entrenando esa seña. El dataset deja de ser una tabla de solo lectura y pasa a ser la lista de tareas.\n\n3. Exportar deja de estar siempre encendido. Hoy el botón funciona con cero muestras y genera un JSON vacío. En la pantalla vacía directamente no aparece: si no hay nada que exportar, el botón es ruido.\n\n4. El selector muestra el dato con el que se elige. La hoja actual repite «Seña oficial» en las 24 filas — información que no ayuda a decidir — y esconde la única que importa, las muestras que ya tenés. Además entran los dibujos del diccionario: la misma imagen que la usuaria ya vio ahí. El «Tuya» solo aparece en las señas propias, que son la excepción.\n\n5. La cámara muestra los estados que el motor ya tiene. GestureEngine pasa por IDLE → WAITING(500 ms) → CAPTURING(15 cuadros) → DONE, y la interfaz solo dibuja una barrita verde cuando ya empezó. Sobre todo falta lo último: después de guardar hay que bajar las manos para que vuelva a IDLE y arranque otra captura. Nadie lo dice. Por eso «Bajá las manos para seguir» va dentro del encuadre, que es donde la persona está mirando.\n\n6. Guía de encuadre. En tus capturas la cámara apunta al techo y la muestra se guarda igual: entra ruido al dataset y el modelo lo aprende. El recuadro con esquinas pide torso y manos, y las esquinas se ponen azules cuando el encuadre sirve.\n\n7. La referencia deja de ser un botón. «Ver referencia» abre un modal y se apaga cuando la seña no tiene imagen, justo cuando más falta hace mirarla. Acá la miniatura queda fija en pantalla: se consulta mientras se seña, no antes."
     }
   ],
   "launch": {
