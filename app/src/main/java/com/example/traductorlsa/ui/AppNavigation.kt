@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.traductorlsa.ui.screens.AboutScreen
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
+import com.example.traductorlsa.ui.screens.DatasetScreen
 import com.example.traductorlsa.ui.screens.DictionaryScreen
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
 import com.example.traductorlsa.ui.screens.HomeScreen
@@ -44,6 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import android.net.Uri
 
 
 
@@ -73,7 +77,21 @@ sealed class AppDestination(val route: String) {
     object TranslateSign : AppDestination("translate_sign")
     object TranslateVoice : AppDestination("translate_voice")
     object TrainingHome : AppDestination("training_home")
-    object TrainingCapture : AppDestination("training_capture")
+    object TrainingCapture : AppDestination("training_capture") {
+        const val ARG_SENA = "sena"
+
+        /**
+         * Ruta registrada en el NavHost. El argumento es opcional: entrar desde
+         * «Grabar nuevas muestras» sigue navegando a `route` pelada y el
+         * selector se abre solo, como antes.
+         */
+        val rutaConSena = "training_capture?$ARG_SENA={$ARG_SENA}"
+
+        /** Abre la camara ya entrenando esta sena. Lo usa el dataset. */
+        fun paraSena(etiqueta: String) =
+            "training_capture?$ARG_SENA=${Uri.encode(etiqueta)}"
+    }
+
     object Dataset : AppDestination("dataset")
     object Dictionary : AppDestination("dictionary")
     object Settings : AppDestination("settings")
@@ -138,8 +156,18 @@ fun AppNavHost(navController: NavHostController) {
         composable(AppDestination.TrainingHome.route) {
             TrainingAccessGate(navController) { TrainingHomeScreen(navController) }
         }
-        composable(AppDestination.TrainingCapture.route) {
-            TrainingAccessGate(navController) { TrainingCaptureScreen(navController) }
+        composable(
+            route = AppDestination.TrainingCapture.rutaConSena,
+            arguments = listOf(
+                navArgument(AppDestination.TrainingCapture.ARG_SENA) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            ),
+        ) { entrada ->
+            val sena = entrada.arguments?.getString(AppDestination.TrainingCapture.ARG_SENA)
+            TrainingAccessGate(navController) { TrainingCaptureScreen(navController, sena) }
         }
         composable(AppDestination.Dataset.route) {
             TrainingAccessGate(navController) { DatasetScreen(navController) }
@@ -202,98 +230,6 @@ private fun TrainingAccessGate(
             Spacer(Modifier.height(24.dp))
             Button(onClick = { navController.navigate(AppDestination.AuthClerk.route) }) {
                 Text("Iniciar sesión")
-            }
-        }
-    }
-}
-
-/* ----------------- Dataset ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DatasetScreen(navController: NavHostController) {
-    val context = LocalContext.current
-    var counts by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-    var totalSamples by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        counts = loadDatasetCountsByLabel(context)
-        totalSamples = counts.values.sum()
-    }
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Dataset de señas") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Revisá cuántas muestras hay por seña y exportá el dataset cuando lo necesites.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Resumen del dataset", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = if (totalSamples > 0) {
-                            "$totalSamples muestras guardadas en total."
-                        } else {
-                            "Todavía no hay muestras guardadas."
-                        },
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Button(onClick = { shareDatasetJsonFile(context) }) {
-                        Text("Exportar dataset (JSON)")
-                    }
-                }
-            }
-
-            if (counts.isEmpty()) {
-                Text(
-                    text = "Cuando guardes muestras desde entrenamiento, acá vas a poder revisar cuántas hay por seña.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                Text("Muestras por seña", style = MaterialTheme.typography.titleMedium)
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(counts.toList()) { (label, count) ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(nombreParaMostrar(label), style = MaterialTheme.typography.bodyLarge)
-                                Text("$count", style = MaterialTheme.typography.titleMedium)
-                            }
-                        }
-                    }
-                }
             }
         }
     }
