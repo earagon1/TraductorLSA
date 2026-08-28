@@ -3,6 +3,7 @@ package com.example.traductorlsa.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,3 +107,31 @@ fun TituloDePagina(
 /** Separación vertical, para no repetir Spacer(Modifier.height(...)). */
 @Composable
 fun Aire(alto: Int) = Spacer(Modifier.height(alto.dp))
+
+/**
+ * Chip de filtro: seleccionado en grafito, el resto en blanco con borde.
+ *
+ * Lo usan el dataset y el selector de senas del entrenamiento, que filtran la
+ * misma lista con los mismos criterios.
+ */
+@Composable
+fun ChipDeFiltro(
+    texto: String,
+    activo: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(999.dp),
+        color = if (activo) SenarGrafito900 else SenarBlanco,
+        border = if (activo) null else BorderStroke(1.dp, SenarBorde),
+    ) {
+        Text(
+            text = texto,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (activo) SenarBlanco else SenarGrafito700,
+            maxLines = 1,
+        )
+    }
+}
