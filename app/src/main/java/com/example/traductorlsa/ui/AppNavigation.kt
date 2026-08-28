@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.traductorlsa.ui.brand.SenarLogotipo
+import com.example.traductorlsa.ui.screens.AboutScreen
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
 import com.example.traductorlsa.ui.screens.DictionaryScreen
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
@@ -295,53 +295,6 @@ fun DatasetScreen(navController: NavHostController) {
                     }
                 }
             }
-        }
-    }
-}
-
-/* ----------------- Acerca de ----------------- */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AboutScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Acerca de") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            SenarLogotipo(
-                estilo = MaterialTheme.typography.headlineSmall,
-                colorTexto = MaterialTheme.colorScheme.onSurface,
-                colorEne = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Proyecto de Tesina de Evelin Aragón.\nLengua de Señas Argentina Texto y Voz.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = "Tecnologías: Kotlin, Jetpack Compose, CameraX, MediaPipe, TensorFlow Lite.",
-                style = MaterialTheme.typography.bodySmall
-            )
         }
     }
 }
