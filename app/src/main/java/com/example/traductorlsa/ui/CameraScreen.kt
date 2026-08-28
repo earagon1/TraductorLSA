@@ -241,6 +241,9 @@ fun CameraScreen(
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var frameCount by remember { mutableStateOf(0) }
+    // GestureEngine ajusta su objetivo de cuadros segun los fps que mide (10, 15 o 20),
+    // asi que la barra tiene que seguir ese numero y no uno fijo.
+    var frameTarget by remember { mutableStateOf(15) }
 
     LaunchedEffect(Unit) {
         officialWords.clear()
@@ -273,8 +276,9 @@ fun CameraScreen(
             }
         }
 
-        engine.onCaptureProgress = { count, _ ->
+        engine.onCaptureProgress = { count, target ->
             frameCount = count
+            if (target > 0) frameTarget = target
         }
 
         engine.onCaptureStats = { cap, inf, fps, newTarget ->
@@ -456,6 +460,7 @@ fun CameraScreen(
                         selectedWord = selectedWord,
                         sessionSavedCount = sessionSavedCount,
                         frameCount = frameCount,
+                        frameTarget = frameTarget,
                         hasHands = overlayState.value.hands.isNotEmpty(),
                         onShowReference = { showReference = true },
                         onChangeWord = { showWordPicker = true }
@@ -579,6 +584,7 @@ private fun TrainingCapturePanel(
     selectedWord: TrainingWordOption?,
     sessionSavedCount: Int,
     frameCount: Int,
+    frameTarget: Int,
     hasHands: Boolean,
     onShowReference: () -> Unit,
     onChangeWord: () -> Unit
@@ -646,7 +652,7 @@ private fun TrainingCapturePanel(
 
             if (frameCount > 0) {
                 LinearProgressIndicator(
-                    progress = { (frameCount / 15f).coerceIn(0f, 1f) },
+                    progress = { (frameCount.toFloat() / frameTarget.coerceAtLeast(1)).coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth().height(8.dp),
                     color = Color(0xFF34D399),
                 )
