@@ -343,6 +343,17 @@ fun CameraScreen(
             engine.onCaptureProgress = null
             engine.onCaptureStats = null
             engine.onTopPredictions = null
+        }
+    }
+
+    // Los recursos nativos duran lo que dura la pantalla, no lo que dura la sena
+    // elegida. Antes se cerraban en el efecto de arriba, que tiene selectedWord
+    // entre sus claves: al elegir una sena en el selector, Compose lo desechaba y
+    // volvia a lanzarlo, cerrando el HandLandmarker mientras la camara le seguia
+    // mandando cuadros. La siguiente deteccion contra el objeto nativo ya cerrado
+    // tiraba la app abajo. Por eso el cierre va en su propio efecto sin claves.
+    DisposableEffect(Unit) {
+        onDispose {
             speechManager.release()
             handTracker.close()
         }
