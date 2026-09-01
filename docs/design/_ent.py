@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Artboards: dataset, elegir seña y captura de entrenamiento."""
 from _g import (CAB, ISO, AVA, BARRA, titulo, barrita, marco, suelto, pie, escribir,
-                thumb, chip, fila_sena, SILUETA, escena, esquinas, TILDE)
+                thumb, chip, fila_sena, SILUETA, escena, esquinas, TILDE, velo,
+                pie_flotante, rotulo, boton_redondo, G_CAMBIAR, G_GIRAR, G_DESHACER)
 
 META = 20
 
@@ -140,96 +141,69 @@ hoja = f'''{escena("#3A4766")}
 
 escribir("ElegirSena.dc.html", hoja, envoltura=suelto)
 
-# ── 4 y 5 · Cámara de entrenamiento ─────────────────────────────────────────
+# ── 4 y 5 · Camara de entrenamiento ─────────────────────────────────────────
+# Las senas de LSA se hacen con las dos manos y ocupan del torso para arriba y
+# el ancho de los hombros. Cada pixel que se lleva la interfaz obliga a la
+# persona a alejarse, y cuanto mas lejos esta, mas chicas le quedan las manos al
+# detector. Por eso no hay tarjeta: un degradado y dos lineas de texto.
+
 def cabecera_camara(nombre, n):
-    return f'''  <div style="position:absolute;left:0;right:0;top:0;padding:52px 18px 22px;background:linear-gradient(180deg,rgba(8,11,20,0.80) 0%,rgba(8,11,20,0) 100%);">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,0.14);flex-shrink:0;">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    return f'''  <div style="position:absolute;left:0;right:0;top:0;padding:50px 16px 16px;background:linear-gradient(180deg,rgba(8,11,20,0.72) 0%,rgba(8,11,20,0) 100%);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,0.14);flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       </div>
-      <div style="flex-grow:1;min-width:0;">
-        <div style="font-size:10.5px;font-weight:600;letter-spacing:1.3px;color:rgba(255,255,255,0.55);">ENTRENANDO</div>
-        <div class="d" style="margin-top:2px;font-size:21px;font-weight:700;letter-spacing:-0.4px;color:#FFFFFF;">{nombre}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:15px;font-weight:600;color:#FFFFFF;">{n}<span style="color:rgba(255,255,255,0.5);"> / {META}</span></div>
-        <div style="width:62px;margin-top:6px;">{barrita(n/META, 4, "#7FA6FF", "rgba(255,255,255,0.18)")}</div>
+      <span class="d" style="flex-grow:1;min-width:0;font-size:16px;font-weight:700;letter-spacing:-0.2px;color:rgba(255,255,255,0.92);">Entrenando {nombre}</span>
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 13px;border-radius:999px;background:rgba(255,255,255,0.13);flex-shrink:0;">
+        <span style="font-size:13px;font-weight:700;color:#FFFFFF;">{n}<span style="color:rgba(255,255,255,0.5);font-weight:500;">/{META}</span></span>
+        <div style="width:38px;">{barrita(n/META, 4, "#7FA6FF", "rgba(255,255,255,0.20)")}</div>
       </div>
     </div>
   </div>'''
 
 def referencia():
-    return ('  <div style="position:absolute;right:16px;top:196px;width:66px;height:66px;box-sizing:border-box;padding:4px;'
-            'border-radius:17px;background:rgba(255,255,255,0.86);box-shadow:0 6px 18px rgba(0,0,0,0.30);">'
-            + thumb(58, 13, "#FFFFFF", "rgba(0,0,0,0)", "#3F4553").replace("width:58px", "width:100%").replace("height:58px", "height:100%")
-            + '<div style="position:absolute;right:-5px;bottom:-5px;display:flex;align-items:center;justify-content:center;'
-            'width:22px;height:22px;border-radius:999px;background:#1E2230;border:2px solid rgba(255,255,255,0.86);">'
-            '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-            '<path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>'
-            '</svg></div></div>')
+    return ('  <div style="position:absolute;right:16px;top:180px;width:58px;height:58px;box-sizing:border-box;padding:4px;'
+            'border-radius:16px;background:rgba(255,255,255,0.86);">'
+            + thumb(50, 12, "#FFFFFF", "rgba(0,0,0,0)", "#3F4553").replace("width:50px", "width:100%").replace("height:50px", "height:100%")
+            + '</div>')
 
-def guia(color, texto=None, fondo_texto=""):
-    cartel = "" if texto is None else f'''
-    <div style="position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;">
-      <span style="padding:7px 14px;border-radius:999px;background:{fondo_texto};font-size:12px;font-weight:600;color:#FFFFFF;">{texto}</span>
+def guia(color, cartel=None):
+    texto = "" if cartel is None else f'''
+    <div style="position:absolute;left:0;right:0;top:12px;display:flex;justify-content:center;">
+      <span style="padding:6px 13px;border-radius:999px;background:rgba(20,25,40,0.82);font-size:11.5px;font-weight:600;color:#FFFFFF;">{cartel}</span>
     </div>'''
-    return f'''  <div style="position:absolute;left:34px;right:34px;top:150px;bottom:296px;">
-    {esquinas(color)}{cartel}
-    <div style="position:absolute;left:50%;bottom:0;width:186px;height:216px;transform:translateX(-50%);">{SILUETA}</div>
+    return f'''  <div style="position:absolute;left:20px;right:20px;top:112px;bottom:118px;">
+    {esquinas(color)}{texto}
+    <div style="position:absolute;left:50%;bottom:0;width:216px;height:250px;transform:translateX(-50%);">{SILUETA}</div>
   </div>'''
 
-def panel(interior):
-    return (f'  <div style="position:absolute;left:16px;right:16px;bottom:26px;box-sizing:border-box;padding:18px;'
-            f'border-radius:26px;background:rgba(16,21,36,0.88);border:1px solid rgba(255,255,255,0.10);">\n{interior}\n  </div>')
+BOTONES_ENT = ('<div style="display:flex;gap:8px;flex-shrink:0;">'
+               + boton_redondo(G_CAMBIAR) + boton_redondo(G_GIRAR) + '</div>')
 
-BOTONES = '''    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button style="display:flex;align-items:center;justify-content:center;gap:7px;flex:1;height:46px;border:1px solid rgba(255,255,255,0.20);border-radius:16px;background:rgba(255,255,255,0.08);cursor:pointer;">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 9h12.5a3.5 3.5 0 0 1 0 7H12m-8-7 3.5-3.5M4 9l3.5 3.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        <span class="b" style="font-size:14px;font-weight:600;color:#FFFFFF;">Cambiar seña</span>
-      </button>
-      <button style="display:flex;align-items:center;justify-content:center;width:46px;height:46px;border:1px solid rgba(255,255,255,0.20);border-radius:16px;background:rgba(255,255,255,0.08);cursor:pointer;flex-shrink:0;">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15.5 8.5 20 5v14l-4.5-3.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><rect x="3" y="6" width="12.5" height="12" rx="3" stroke="#FFFFFF" stroke-width="1.9"></rect></svg>
-      </button>
-      <button style="display:flex;align-items:center;justify-content:center;width:46px;height:46px;border:1px solid rgba(255,255,255,0.20);border-radius:16px;background:rgba(255,255,255,0.08);cursor:pointer;flex-shrink:0;">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="3" stroke="#FFFFFF" stroke-width="1.9"></rect><path d="M9 4v16M15 4v16M3.5 9.5h17" stroke="#FFFFFF" stroke-width="1.9"></path></svg>
-      </button>
+capturando = f'''{rotulo("#3B6AE8", "GRABANDO · CUADRO 9 DE 15", glow=True)}
+    <div style="display:flex;align-items:flex-end;gap:12px;margin-top:7px;">
+      <div style="flex-grow:1;min-width:0;">
+        <div style="font-size:19px;font-weight:600;line-height:1.25;color:#FFFFFF;">No bajes las manos</div>
+        <div style="margin-top:9px;">{barrita(0.6, 4, "#5D8EF9", "rgba(255,255,255,0.20)")}</div>
+      </div>
+      {BOTONES_ENT}
     </div>'''
 
-capturando = f'''    <div style="display:flex;align-items:center;gap:11px;">
-      <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#3B6AE8;flex-shrink:0;">
-        <span style="width:12px;height:12px;border-radius:999px;background:#FFFFFF;"></span>
-      </span>
-      <div style="flex-grow:1;min-width:0;">
-        <div style="font-size:16.5px;font-weight:600;color:#FFFFFF;">No bajes las manos</div>
-        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">Grabando cuadro 9 de 15</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;">{barrita(0.6, 6, "#5D8EF9", "rgba(255,255,255,0.16)")}</div>
-{BOTONES}
-    <div style="margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,0.10);font-size:12.5px;color:rgba(255,255,255,0.55);">4 muestras grabadas en esta sesión</div>'''
-
 escribir("EntrenamientoCaptura.dc.html",
-         escena() + cabecera_camara("hola", 6) + guia("#7FA6FF")
-         + referencia() + panel(capturando), envoltura=suelto)
+         escena() + guia("#7FA6FF") + velo(170) + cabecera_camara("hola", 6) + referencia() + pie_flotante(capturando),
+         envoltura=suelto)
 
-guardada = f'''    <div style="display:flex;align-items:center;gap:11px;">
-      <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:#3B6AE8;flex-shrink:0;">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 12.5 9.5 17 19 7.5" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-      </span>
+guardada = f'''{rotulo("#3B6AE8", "MUESTRA 7 GUARDADA")}
+    <div style="display:flex;align-items:flex-end;gap:12px;margin-top:7px;">
       <div style="flex-grow:1;min-width:0;">
-        <div style="font-size:16px;font-weight:600;color:#FFFFFF;white-space:nowrap;">Muestra 7 guardada</div>
-        <div style="margin-top:3px;font-size:12.5px;color:rgba(255,255,255,0.60);">15 cuadros · hola 7 de {META}</div>
+        <div style="font-size:19px;font-weight:600;line-height:1.25;color:#FFFFFF;">Bajá las manos</div>
+        <div style="margin-top:9px;">{barrita(1.0, 4, "#3B6AE8", "rgba(255,255,255,0.20)")}</div>
       </div>
-      <button style="padding:8px 13px;border:1px solid rgba(255,255,255,0.24);border-radius:14px;background:transparent;cursor:pointer;flex-shrink:0;">
-        <span class="b" style="font-size:13px;font-weight:600;color:#FFFFFF;">Deshacer</span>
-      </button>
-    </div>
-    <div style="margin-top:14px;">{barrita(1.0, 6, "#3B6AE8", "rgba(255,255,255,0.16)")}</div>
-{BOTONES}
-    <div style="margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,0.10);font-size:12.5px;color:rgba(255,255,255,0.55);">5 muestras grabadas en esta sesión</div>'''
+      <div style="display:flex;gap:8px;flex-shrink:0;">{boton_redondo(G_DESHACER)}{boton_redondo(G_CAMBIAR)}{boton_redondo(G_GIRAR)}</div>
+    </div>'''
 
 escribir("EntrenamientoGuardada.dc.html",
-         escena() + cabecera_camara("hola", 7) + guia("rgba(255,255,255,0.30)", "Bajá las manos para la siguiente", "rgba(24,29,44,0.88)")
-         + referencia() + panel(guardada), envoltura=suelto)
+         escena() + guia("rgba(255,255,255,0.30)") + velo(170) + cabecera_camara("hola", 7) + referencia() + pie_flotante(guardada),
+         envoltura=suelto)
 
 print("listo")
