@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,7 @@ import com.example.traductorlsa.camera.CameraManager
 import com.example.traductorlsa.camera.FrameAnalyzer
 import com.example.traductorlsa.detection.HandTrackerImpl
 import com.example.traductorlsa.settings.ajustesSenar
+import com.example.traductorlsa.settings.repositorioAjustes
 import com.example.traductorlsa.features.FeatureBuilderImpl
 import com.example.traductorlsa.features.SequenceBufferImpl
 import com.example.traductorlsa.ml.GestureEngine
@@ -79,6 +81,10 @@ import com.example.traductorlsa.ui.theme.SenarBordeSuave
 import com.example.traductorlsa.ui.theme.SenarGrafito300
 import com.example.traductorlsa.ui.theme.SenarPapel
 import com.example.traductorlsa.ui.theme.SenarPista
+import com.example.traductorlsa.ui.theme.SenarAmbar
+import com.example.traductorlsa.ui.theme.SenarAzul500
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import com.example.traductorlsa.ui.components.ChipDeFiltro
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
@@ -290,6 +296,10 @@ fun CameraScreen(
     // entero varias veces por minuto.
     var conteoPorSena by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var recienGuardada by remember { mutableStateOf(false) }
+    // Cuando la prediccion no llega al minimo de Ajustes, la pantalla lo dice en
+    // vez de quedarse muda. -1 significa que no hay ninguna descartada.
+    var confianzaDescartada by remember { mutableStateOf(-1f) }
+    val repoAjustes = repositorioAjustes()
 
     LaunchedEffect(trainingMode) {
         if (trainingMode) {
@@ -344,16 +354,24 @@ fun CameraScreen(
 
         engine.onPrediction = { prediction ->
             if (!trainingMode) {
-                if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)
-                if (prediction.confidence >= ajustes.confianzaMinima &&
-                    prediction.gesture != "Unknown" &&
-                    prediction.gesture != "Sin datos"
-                ) {
+                val sinNombre = prediction.gesture == "Unknown" || prediction.gesture == "Sin datos"
+                val valida = !sinNombre && prediction.confidence >= ajustes.confianzaMinima
+
+                if (valida) {
+                    confianzaDescartada = -1f
                     val last = recentTranslations.lastOrNull()
                     if (last != prediction.gesture) {
                         currentTranslation = prediction.gesture
-                        recentTranslations = (recentTranslations + prediction.gesture).takeLast(3)
+                        recentTranslations = (recentTranslations + prediction.gesture).takeLast(6)
+                        // La voz dice exactamente lo que la pantalla muestra. Antes
+                        // el speak estaba fuera de este if: decia "Unknown" y las
+                        // predicciones de baja confianza en voz alta, y repetia la
+                        // misma palabra en cada ciclo de captura.
+                        if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)
                     }
+                } else {
+                    // Sin nombre no hay porcentaje que valga la pena mostrar.
+                    confianzaDescartada = if (sinNombre) 0f else prediction.confidence
                 }
             }
         }
@@ -361,7 +379,10 @@ fun CameraScreen(
         engine.onCaptureProgress = { count, target ->
             frameCount = count
             if (target > 0) frameTarget = target
-            if (count > 0) recienGuardada = false
+            if (count > 0) {
+                recienGuardada = false
+                confianzaDescartada = -1f
+            }
         }
 
         engine.onCaptureStats = { cap, inf, fps, newTarget ->
@@ -480,91 +501,96 @@ fun CameraScreen(
             com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
         }
 
-        if (trainingMode) {
-            val senaElegida = selectedWord
-            val muestrasDeLaSena = senaElegida?.let { conteoPorSena[it.label] ?: 0 } ?: 0
+        val senaElegida = selectedWord
+        val muestrasDeLaSena = senaElegida?.let { conteoPorSena[it.label] ?: 0 } ?: 0
+        val hayManos = overlayState.value.hands.isNotEmpty()
 
-            EncabezadoEntrenamiento(
-                nombre = senaElegida?.let { nombreParaMostrar(it.label) },
-                muestras = muestrasDeLaSena,
+        // El velo va debajo del encuadre: al reves le apagaba las esquinas de
+        // abajo, que son justo las que dicen hasta donde llega el cuadro.
+        VeloInferior(Modifier.align(Alignment.BottomCenter))
+
+        // El encuadre ocupa casi todo lo que queda entre la cabecera y el pie.
+        // Las senas de LSA se hacen con las dos manos y toman del torso para
+        // arriba: cuanto mas grande es el recuadro, mas cerca puede estar la
+        // persona y mas grandes le quedan las manos al detector.
+        if (!trainingMode || senaElegida != null) {
+            GuiaDeEncuadre(
+                encuadreCorrecto = hayManos,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 62.dp, bottom = 126.dp),
+            )
+        }
+
+        if (trainingMode) {
+            CabeceraCamara(
+                titulo = senaElegida?.let { "Entrenando ${nombreParaMostrar(it.label)}" }
+                    ?: "Modo entrenamiento",
                 onVolver = onBack,
                 modifier = Modifier.align(Alignment.TopCenter),
-            )
+            ) {
+                if (senaElegida != null) InsigniaDeProgreso(muestrasDeLaSena)
+            }
 
-            if (senaElegida != null) {
-                // Proporcional y no en dp fijos: el encuadre tiene que caer en el
-                // mismo lugar de la persona en una tablet y en un telefono chico.
-                GuiaDeEncuadre(
-                    encuadreCorrecto = overlayState.value.hands.isNotEmpty(),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth(0.84f)
-                        .fillMaxHeight(0.44f),
-                )
+            if (senaElegida?.imageAssetPath != null) {
                 ReferenciaFija(
                     assetPath = senaElegida.imageAssetPath,
                     onAmpliar = { showReference = true },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .statusBarsPadding()
-                        .padding(top = 84.dp, end = 16.dp),
+                        .padding(top = 118.dp, end = 16.dp),
                 )
             }
 
-            PanelDeCaptura(
-                sena = senaElegida?.let { nombreParaMostrar(it.label) },
+            PieDeCaptura(
+                haySena = senaElegida != null,
                 muestrasDeLaSena = muestrasDeLaSena,
-                muestrasDeLaSesion = sessionSavedCount,
                 frameCount = frameCount,
                 frameTarget = frameTarget,
-                hayManos = overlayState.value.hands.isNotEmpty(),
+                hayManos = hayManos,
                 recienGuardada = recienGuardada,
                 onCambiarSena = { showWordPicker = true },
                 onGirarCamara = { isFrontCamera = !isFrontCamera },
                 onDeshacer = { deshacerUltimaMuestra() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         } else {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            CabeceraCamara(
+                titulo = "Traducir señas",
+                onVolver = onBack,
+                modifier = Modifier.align(Alignment.TopCenter),
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = Color.Black.copy(alpha = 0.40f)
-                ) {
-                    IconButton(onClick = { isFrontCamera = !isFrontCamera }) {
-                        Icon(
-                            Icons.Default.Cameraswitch,
-                            contentDescription = if (isFrontCamera) "Cambiar a cámara trasera" else "Cambiar a cámara frontal",
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
-
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                com.example.traductorlsa.ui.widgets.PredictionCard(
-                    currentTranslation = currentTranslation,
-                    recentTranslations = recentTranslations
+                BotonRedondo(
+                    icono = Icons.Default.Cameraswitch,
+                    descripcion = if (isFrontCamera) "Cambiar a cámara trasera" else "Cambiar a cámara frontal",
+                    onClick = { isFrontCamera = !isFrontCamera },
+                    tamano = 38.dp,
+                )
+                Spacer(Modifier.width(8.dp))
+                PildoraDeVoz(
+                    activa = ajustes.leerEnVozAlta,
+                    onClick = { repoAjustes.actualizar { it.copy(leerEnVozAlta = !it.leerEnVozAlta) } },
                 )
             }
+
+            PieDeTraduccion(
+                frase = recentTranslations,
+                hayManos = hayManos,
+                frameCount = frameCount,
+                confianzaDescartada = confianzaDescartada,
+                onRepetir = {
+                    val texto = recentTranslations.joinToString(" ") { nombreParaMostrar(it) }
+                    if (texto.isNotBlank()) speechManager.speak(texto)
+                },
+                onLimpiar = {
+                    recentTranslations = emptyList()
+                    currentTranslation = ""
+                    confianzaDescartada = -1f
+                },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
 
         if (trainingMode && showWordPicker) {
@@ -674,79 +700,164 @@ private fun TrainingPanel(
 }
 
 /**
- * Cabecera del visor en modo entrenamiento.
+ * Cabecera de las dos camaras: volver, titulo y una insignia a la derecha.
  *
- * Dice tres cosas que antes no estaban en ningun lado: que sena se esta
- * entrenando, cuantas muestras tiene ya y cuantas le faltan para la meta.
+ * Una sola linea. Cada franja que ocupa la interfaz obliga a la persona a
+ * alejarse de la camara, y de lejos las manos le quedan chicas al detector.
  */
 @Composable
-private fun EncabezadoEntrenamiento(
-    nombre: String?,
-    muestras: Int,
+private fun CabeceraCamara(
+    titulo: String,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
+    insignia: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xCC080B14), Color(0x00080B14))
-                )
+                Brush.verticalGradient(listOf(Color(0xB8080B14), Color(0x00080B14)))
             )
             .statusBarsPadding()
-            .padding(start = 8.dp, end = 18.dp, top = 6.dp, bottom = 26.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onVolver) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
-        }
-        Spacer(Modifier.width(4.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = "ENTRENANDO",
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.3.sp,
-                color = Color.White.copy(alpha = 0.55f),
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = nombre ?: "Elegí una seña",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (nombre != null) {
-            Spacer(Modifier.width(12.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = buildAnnotatedString {
-                        pushStyle(SpanStyle(fontWeight = FontWeight.SemiBold))
-                        append(muestras.toString())
-                        pop()
-                        pushStyle(SpanStyle(color = Color.White.copy(alpha = 0.5f)))
-                        append(" / $MUESTRAS_OBJETIVO")
-                        pop()
-                    },
-                    color = Color.White,
-                    fontSize = 15.sp,
+        BotonRedondo(
+            icono = Icons.Default.ArrowBack,
+            descripcion = "Volver",
+            onClick = onVolver,
+            tamano = 38.dp,
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White.copy(alpha = 0.92f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(10.dp))
+        insignia()
+    }
+}
+
+/** Muestras guardadas de la sena que se esta entrenando, con su barra. */
+@Composable
+private fun InsigniaDeProgreso(muestras: Int) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(Color.White.copy(alpha = 0.13f))
+            .padding(start = 13.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = buildAnnotatedString {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(muestras.toString()) }
+                withStyle(SpanStyle(color = Color.White.copy(alpha = 0.5f))) { append("/$MUESTRAS_OBJETIVO") }
+            },
+            color = Color.White,
+            fontSize = 13.sp,
+        )
+        Spacer(Modifier.width(8.dp))
+        LinearProgressIndicator(
+            progress = { (muestras.toFloat() / MUESTRAS_OBJETIVO).coerceIn(0f, 1f) },
+            modifier = Modifier.width(38.dp).height(4.dp).clip(RoundedCornerShape(999.dp)),
+            color = SenarAzul300,
+            trackColor = Color.White.copy(alpha = 0.20f),
+            strokeCap = StrokeCap.Round,
+        )
+    }
+}
+
+/** Interruptor de voz, a mano durante la conversacion y no enterrado en Ajustes. */
+@Composable
+private fun PildoraDeVoz(activa: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (activa) SenarAzul600 else Color.White.copy(alpha = 0.14f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (activa) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+            contentDescription = if (activa) "Apagar la voz" else "Encender la voz",
+            tint = Color.White,
+            modifier = Modifier.size(15.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text("Voz", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+    }
+}
+
+/**
+ * Degradado inferior en lugar de una tarjeta.
+ *
+ * Es el recurso de los subtitulos: deja el texto legible sobre cualquier video
+ * sin recortarle un tercio de pantalla al visor.
+ */
+@Composable
+private fun VeloInferior(modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(190.dp)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0x00060910), Color(0xBD060910), Color(0xF0060910))
                 )
-                Spacer(Modifier.height(6.dp))
-                LinearProgressIndicator(
-                    progress = { (muestras.toFloat() / MUESTRAS_OBJETIVO).coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .width(62.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(999.dp)),
-                    color = SenarAzul300,
-                    trackColor = Color.White.copy(alpha = 0.18f),
-                    strokeCap = StrokeCap.Round,
-                )
-            }
-        }
+            )
+    )
+}
+
+@Composable
+private fun BotonRedondo(
+    icono: ImageVector,
+    descripcion: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    primario: Boolean = false,
+    tamano: Dp = 42.dp,
+) {
+    Box(
+        modifier
+            .size(tamano)
+            .clip(CircleShape)
+            .background(if (primario) SenarAzul600 else Color.White.copy(alpha = 0.13f))
+            .then(
+                if (primario) Modifier
+                else Modifier.border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icono,
+            contentDescription = descripcion,
+            tint = Color.White,
+            modifier = Modifier.size(tamano * 0.42f),
+        )
+    }
+}
+
+/** Rotulo de estado: un punto de color y una linea en versalitas. */
+@Composable
+private fun RotuloDeEstado(color: Color, texto: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = texto,
+            fontSize = 10.5.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.2.sp,
+            color = Color.White.copy(alpha = 0.68f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -763,7 +874,7 @@ private fun GuiaDeEncuadre(
     encuadreCorrecto: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (encuadreCorrecto) SenarAzul300 else Color.White.copy(alpha = 0.34f)
+    val color = if (encuadreCorrecto) SenarAzul300 else Color.White.copy(alpha = 0.30f)
     Canvas(modifier) {
         val largo = 30.dp.toPx()
         val grosor = 3.dp.toPx()
@@ -797,53 +908,34 @@ private fun ReferenciaFija(
 ) {
     if (assetPath == null) return
 
-    Box(modifier.size(66.dp)) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(17.dp))
-                .background(SenarBlanco.copy(alpha = 0.88f))
-                .clickable(onClick = onAmpliar)
-                .padding(4.dp)
-        ) {
-            DictionaryAssetImage(
-                assetPath = assetPath,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit,
-            )
-        }
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 5.dp, y = 5.dp)
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(SenarGrafito900),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Default.OpenInFull,
-                contentDescription = "Ampliar la referencia",
-                tint = Color.White,
-                modifier = Modifier.size(11.dp),
-            )
-        }
+    Box(
+        modifier
+            .size(58.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SenarBlanco.copy(alpha = 0.86f))
+            .clickable(onClick = onAmpliar)
+            .padding(4.dp)
+    ) {
+        DictionaryAssetImage(
+            assetPath = assetPath,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
     }
 }
 
 /**
- * Panel de captura.
+ * Pie del modo entrenamiento.
  *
- * Pone en pantalla los estados que GestureEngine ya tenia y no mostraba. Los
- * dos que faltaban son los importantes: que bajar las manos en plena captura la
- * descarta entera, y que despues de guardar hay que bajarlas para que arranque
- * la siguiente.
+ * Dos lineas y los controles en redondo, alineados con el texto. Nombra los
+ * estados que GestureEngine ya tenia y no mostraba; los dos que faltaban son
+ * que bajar las manos en plena captura la descarta entera, y que despues de
+ * guardar hay que bajarlas para que arranque la siguiente.
  */
 @Composable
-private fun PanelDeCaptura(
-    sena: String?,
+private fun PieDeCaptura(
+    haySena: Boolean,
     muestrasDeLaSena: Int,
-    muestrasDeLaSesion: Int,
     frameCount: Int,
     frameTarget: Int,
     hayManos: Boolean,
@@ -854,146 +946,203 @@ private fun PanelDeCaptura(
     modifier: Modifier = Modifier,
 ) {
     val grabando = frameCount > 0
-    val forma = RoundedCornerShape(26.dp)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .widthIn(max = 560.dp)
-            .clip(forma)
-            .background(Color(0xE0101524))
-            .border(1.dp, Color.White.copy(alpha = 0.10f), forma)
-            .padding(18.dp),
+            .navigationBarsPadding()
+            .padding(start = 18.dp, end = 18.dp, bottom = 22.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(if (sena == null) Color.White.copy(alpha = 0.14f) else SenarAzul600),
-                contentAlignment = Alignment.Center,
-            ) {
-                when {
-                    sena == null -> Icon(
-                        Icons.Default.PanTool, contentDescription = null,
-                        tint = Color.White, modifier = Modifier.size(16.dp),
-                    )
-                    recienGuardada -> Icon(
-                        Icons.Default.Check, contentDescription = null,
-                        tint = Color.White, modifier = Modifier.size(19.dp),
-                    )
-                    grabando -> Box(
-                        Modifier.size(12.dp).clip(CircleShape).background(Color.White)
-                    )
-                    else -> Icon(
-                        Icons.Default.Videocam, contentDescription = null,
-                        tint = Color.White, modifier = Modifier.size(17.dp),
-                    )
-                }
-            }
+        RotuloDeEstado(
+            color = when {
+                !haySena -> Color.White.copy(alpha = 0.40f)
+                grabando || recienGuardada -> SenarAzul600
+                else -> Color.White.copy(alpha = 0.40f)
+            },
+            texto = when {
+                !haySena -> "SIN SEÑA ELEGIDA"
+                grabando -> "GRABANDO · CUADRO $frameCount DE $frameTarget"
+                recienGuardada -> "MUESTRA $muestrasDeLaSena GUARDADA"
+                hayManos -> "TE VEO"
+                else -> "ESPERANDO"
+            },
+        )
 
-            Spacer(Modifier.width(11.dp))
-
+        Row(
+            modifier = Modifier.padding(top = 7.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
             Column(Modifier.weight(1f)) {
                 Text(
                     text = when {
-                        sena == null -> "Elegí una seña para empezar"
+                        !haySena -> "Elegí una seña para empezar"
                         grabando -> "No bajes las manos"
-                        recienGuardada -> "Muestra $muestrasDeLaSena guardada"
-                        hayManos -> "Sostené la seña"
+                        recienGuardada -> "Bajá las manos"
                         else -> "Mostrá la seña frente a la cámara"
                     },
-                    fontSize = 16.5.sp,
+                    fontSize = 19.sp,
                     fontWeight = FontWeight.SemiBold,
+                    lineHeight = 24.sp,
                     color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = when {
-                        sena == null -> "El entrenamiento necesita saber qué seña estás grabando"
-                        grabando -> "Grabando cuadro $frameCount de $frameTarget"
-                        recienGuardada -> "Bajá las manos para la siguiente"
-                        else -> "$sena · $muestrasDeLaSena de $MUESTRAS_OBJETIVO muestras"
-                    },
-                    fontSize = 12.5.sp,
-                    color = Color.White.copy(alpha = 0.60f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-
-            if (recienGuardada) {
-                Spacer(Modifier.width(10.dp))
-                OutlinedButton(
-                    onClick = onDeshacer,
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.24f)),
-                    contentPadding = PaddingValues(horizontal = 13.dp, vertical = 8.dp),
-                ) {
-                    Text("Deshacer", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                if (grabando || recienGuardada) {
+                    LinearProgressIndicator(
+                        progress = {
+                            if (recienGuardada) 1f
+                            else (frameCount.toFloat() / frameTarget.coerceAtLeast(1)).coerceIn(0f, 1f)
+                        },
+                        modifier = Modifier
+                            .padding(top = 9.dp)
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(999.dp)),
+                        color = if (recienGuardada) SenarAzul600 else SenarAzul500,
+                        trackColor = Color.White.copy(alpha = 0.20f),
+                        strokeCap = StrokeCap.Round,
+                    )
                 }
             }
-        }
 
-        if (grabando || recienGuardada) {
-            Spacer(Modifier.height(14.dp))
-            LinearProgressIndicator(
-                progress = {
-                    if (recienGuardada) 1f
-                    else (frameCount.toFloat() / frameTarget.coerceAtLeast(1)).coerceIn(0f, 1f)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(999.dp)),
-                color = SenarAzul600,
-                trackColor = Color.White.copy(alpha = 0.16f),
-                strokeCap = StrokeCap.Round,
-            )
-        }
+            Spacer(Modifier.width(12.dp))
 
-        Spacer(Modifier.height(16.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(
-                onClick = onCambiarSena,
-                modifier = Modifier.weight(1f).height(46.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
-            ) {
-                Icon(
-                    Icons.Default.SwapHoriz, contentDescription = null,
-                    tint = Color.White, modifier = Modifier.size(18.dp),
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (recienGuardada) {
+                    BotonRedondo(
+                        icono = Icons.Default.Undo,
+                        descripcion = "Deshacer la última muestra",
+                        onClick = onDeshacer,
+                    )
+                }
+                BotonRedondo(
+                    icono = Icons.Default.SwapHoriz,
+                    descripcion = "Cambiar de seña",
+                    onClick = onCambiarSena,
                 )
-                Spacer(Modifier.width(7.dp))
-                Text(
-                    text = if (sena == null) "Elegir seña" else "Cambiar seña",
-                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
-                )
-            }
-            OutlinedButton(
-                onClick = onGirarCamara,
-                modifier = Modifier.size(46.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Icon(
-                    Icons.Default.Cameraswitch, contentDescription = "Girar la cámara",
-                    tint = Color.White, modifier = Modifier.size(19.dp),
+                BotonRedondo(
+                    icono = Icons.Default.Cameraswitch,
+                    descripcion = "Girar la cámara",
+                    onClick = onGirarCamara,
                 )
             }
         }
+    }
+}
 
-        if (muestrasDeLaSesion > 0) {
-            Spacer(Modifier.height(14.dp))
+/**
+ * Pie del modo traduccion.
+ *
+ * La frase se lee como subtitulo: azul-300 para lo ya dicho, que es el color de
+ * quien sena en todo el sistema, y la ultima palabra en blanco y negrita. Se
+ * distingue por peso y color y no por tamano, asi la linea nunca salta de alto.
+ */
+@Composable
+private fun PieDeTraduccion(
+    frase: List<String>,
+    hayManos: Boolean,
+    frameCount: Int,
+    confianzaDescartada: Float,
+    onRepetir: () -> Unit,
+    onLimpiar: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val descartada = confianzaDescartada >= 0f
+    val porcentaje = (confianzaDescartada * 100).toInt()
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(start = 18.dp, end = 18.dp, bottom = 22.dp),
+    ) {
+        RotuloDeEstado(
+            color = when {
+                descartada -> SenarAmbar
+                frase.isNotEmpty() -> SenarAzul600
+                else -> Color.White.copy(alpha = 0.40f)
+            },
+            texto = when {
+                descartada && confianzaDescartada > 0f -> "NO LA RECONOCÍ · $porcentaje%"
+                descartada -> "NO LA RECONOCÍ"
+                frameCount > 0 -> "LEYENDO LA SEÑA…"
+                frase.isNotEmpty() -> "TRADUCIENDO"
+                hayManos -> "TE VEO"
+                else -> "ESPERANDO SEÑAS"
+            },
+        )
+
+        if (descartada) {
             Text(
-                text = "$muestrasDeLaSesion muestras grabadas en esta sesión",
+                text = "Repetila un poco más despacio.",
                 fontSize = 12.5.sp,
-                color = Color.White.copy(alpha = 0.55f),
+                color = Color.White.copy(alpha = 0.58f),
+                modifier = Modifier.padding(top = 6.dp),
             )
+        }
+
+        if (frase.isEmpty() && !descartada) {
+            Text(
+                text = if (hayManos) "Hacé la seña" else "Ubicate en el recuadro",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.82f),
+                modifier = Modifier.padding(top = 7.dp),
+            )
+            Text(
+                text = "Torso y las dos manos. Arranca sola.",
+                fontSize = 12.5.sp,
+                color = Color.White.copy(alpha = 0.50f),
+                modifier = Modifier.padding(top = 3.dp),
+            )
+        } else {
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        frase.forEachIndexed { i, palabra ->
+                            if (i > 0) {
+                                withStyle(SpanStyle(color = Color.White.copy(alpha = 0.28f))) {
+                                    append("  ·  ")
+                                }
+                            }
+                            val ultima = i == frase.lastIndex && !descartada
+                            withStyle(
+                                SpanStyle(
+                                    color = if (ultima) Color.White else SenarAzul300,
+                                    fontWeight = if (ultima) FontWeight.Bold else FontWeight.Medium,
+                                )
+                            ) {
+                                append(nombreParaMostrar(palabra))
+                            }
+                        }
+                    },
+                    fontSize = 21.sp,
+                    lineHeight = 28.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+
+                if (frase.isNotEmpty()) {
+                    Spacer(Modifier.width(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BotonRedondo(
+                            icono = Icons.Default.VolumeUp,
+                            descripcion = "Repetir en voz alta",
+                            onClick = onRepetir,
+                            primario = true,
+                        )
+                        BotonRedondo(
+                            icono = Icons.Default.Delete,
+                            descripcion = "Borrar la frase",
+                            onClick = onLimpiar,
+                        )
+                    }
+                }
+            }
         }
     }
 }
