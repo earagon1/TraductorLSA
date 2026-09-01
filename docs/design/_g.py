@@ -139,3 +139,42 @@ def esquinas(color="#7FA6FF", grosor=3, largo=30):
         e += (f'<div style="position:absolute;{v}:-2px;{h}:-2px;width:{largo}px;height:{largo}px;'
               f'{rv}:{grosor}px solid {color};{rh}:{grosor}px solid {color};border-radius:{rad};"></div>')
     return e
+
+
+def velo(alto=200):
+    """Degradado inferior en lugar de tarjeta: el texto se lee sin tapar el visor."""
+    return (f'<div style="position:absolute;left:0;right:0;bottom:0;height:{alto}px;'
+            f'background:linear-gradient(0deg,rgba(6,9,16,0.94) 0%,rgba(6,9,16,0.74) 34%,rgba(6,9,16,0) 100%);"></div>')
+
+
+def pie_flotante(interior, abajo=28):
+    return (f'  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 18px {abajo}px;">\n'
+            f'{interior}\n  </div>')
+
+
+def rotulo(color_punto, texto, glow=False):
+    extra = "box-shadow:0 0 0 4px rgba(59,106,232,0.28);" if glow else ""
+    return ('    <div style="display:flex;align-items:center;gap:8px;">'
+            f'<span style="width:8px;height:8px;border-radius:999px;background:{color_punto};{extra}flex-shrink:0;"></span>'
+            f'<span style="font-size:10.5px;font-weight:700;letter-spacing:1.2px;color:rgba(255,255,255,0.68);">{texto}</span></div>')
+
+
+def boton_redondo(glifo, primario=False, tam=42):
+    fondo = "#3B6AE8" if primario else "rgba(255,255,255,0.13)"
+    borde = "none" if primario else "1px solid rgba(255,255,255,0.22)"
+    return (f'<button style="display:flex;align-items:center;justify-content:center;width:{tam}px;height:{tam}px;'
+            f'border:{borde};border-radius:999px;background:{fondo};cursor:pointer;flex-shrink:0;padding:0;">{glifo}</button>')
+
+
+G_VOZ = ('<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+         '<path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z" fill="#FFFFFF"></path>'
+         '<path d="M15.4 9.6a3.4 3.4 0 0 1 0 4.8M17.9 7.1a6.9 6.9 0 0 1 0 9.8" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round"></path></svg>')
+G_BORRAR = ('<svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+            '<path d="M5 7h14M10 7V5.5h4V7M8 7l.8 12h6.4L16 7" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>')
+G_CAMBIAR = ('<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+             '<path d="M4 9h12.5a3.5 3.5 0 0 1 0 7H12m-8-7 3.5-3.5M4 9l3.5 3.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>')
+G_GIRAR = ('<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+           '<rect x="3" y="6.5" width="18" height="12.5" rx="3" stroke="#FFFFFF" stroke-width="1.8"></rect>'
+           '<path d="M9.5 12.8h5m0 0-1.8-1.8m1.8 1.8-1.8 1.8" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>')
+G_DESHACER = ('<svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+              '<path d="M9 5.5 4.5 10 9 14.5M4.5 10h9.8a5.2 5.2 0 0 1 0 10.4H9" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>')
