@@ -92,6 +92,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.clerk.api.Clerk
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -407,7 +408,8 @@ fun CameraScreen(
                         context = context,
                         samples = listOf(TrainingSample(label = selected.label, seq = savedFrames)),
                         T = tUsed,
-                        D = dUsed
+                        D = dUsed,
+                        clientId = clientIdActual()
                     )
                     sessionSavedCount += 1
                     conteoPorSena = conteoPorSena.toMutableMap().apply {
@@ -1493,7 +1495,23 @@ fun loadOrInitDataset(context: Context, T: Int, D: Int): JSONObject {
     }
 }
 
-fun appendSamplesByDate(context: Context, samples: List<TrainingSample>, T: Int, D: Int): File {
+/**
+ * Guarda muestras en el dataset local, agrupadas por fecha.
+ *
+ * Cada muestra lleva `client_id`: el id de la cuenta que la grabo. Sin ese
+ * campo no hay forma de saber de quien es cada gesto, y el dataset no sirve
+ * para el experimento de aprendizaje federado, que necesita justamente
+ * agrupar las muestras por persona. Tampoco serviria para medir generalizacion
+ * interusuario. Se omite la clave si no hay sesion, asi las muestras sin
+ * atribucion quedan identificables en lugar de mezclarse con las demas.
+ */
+fun appendSamplesByDate(
+    context: Context,
+    samples: List<TrainingSample>,
+    T: Int,
+    D: Int,
+    clientId: String? = null,
+): File {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     val root = loadOrInitDataset(context, T, D)
     val byDate = root.getJSONObject("by_date")
@@ -1501,13 +1519,23 @@ fun appendSamplesByDate(context: Context, samples: List<TrainingSample>, T: Int,
     samples.forEach { s ->
         val seqJson = JSONArray()
         s.seq.forEach { f -> val fArr = JSONArray(); f.forEach { v -> fArr.put(v) }; seqJson.put(fArr) }
-        arr.put(JSONObject().put("label", s.label).put("seq", seqJson))
+        val muestra = JSONObject().put("label", s.label).put("seq", seqJson)
+        if (!clientId.isNullOrBlank()) muestra.put("client_id", clientId)
+        arr.put(muestra)
     }
     byDate.put(today, arr)
     val out = datasetFile(context)
     out.writeText(root.toString())
     return out
 }
+
+/**
+ * Id de la cuenta activa, o null si no hay sesion.
+ *
+ * Se lee del StateFlow en el momento de guardar y no por composicion, para que
+ * la lambda de captura no se quede con un valor viejo.
+ */
+fun clientIdActual(): String? = Clerk.userFlow.value?.id
 
 fun removeLastDatasetSample(context: Context): String? {
     val file = datasetFile(context)
