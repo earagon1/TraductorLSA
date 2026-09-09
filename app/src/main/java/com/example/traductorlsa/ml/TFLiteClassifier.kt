@@ -21,9 +21,22 @@ class TFLiteClassifier(
         private set
 
     init {
+        // El cuantizado va primero a proposito.
+        //
+        // Antes ganaba el float32 y el cuantizado viajaba en el APK sin que se
+        // lo usara nunca, asi que la cuantizacion que la propuesta compromete
+        // no llegaba al dispositivo. La medicion (benchmark_cuantizacion.py)
+        // dice que el dinamico pesa 72 % menos -- 182 KB contra 648 -- con la
+        // misma accuracy y sin cambiar una sola prediccion. Los ~0.4 ms extra
+        // de inferencia no se notan al lado de los segundos que tarda capturar
+        // la secuencia.
+        //
+        // La variante entera (int8 con calibracion) quedo descartada: mismo
+        // tamano que la dinamica pero 26 veces mas lenta, porque TFLite no
+        // tiene kernels int8 para LSTM y las capas caen al delegate Flex.
         val modelName = when {
-            assetExists("actions_15_f32.tflite") -> "actions_15_f32.tflite"
             assetExists("actions_15_opt.tflite") -> "actions_15_opt.tflite"
+            assetExists("actions_15_f32.tflite") -> "actions_15_f32.tflite"
             assetExists("modelo.tflite")        -> "modelo.tflite"
             assetExists("model.tflite")         -> "model.tflite"
             else                                -> "actions_15_f32.tflite"
