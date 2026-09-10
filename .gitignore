@@ -26,3 +26,6 @@ build/
 # Bytecode de los scripts de docs/design
 __pycache__/
 *.pyc
+
+# Respaldos de modelos: git ya guarda las versiones anteriores de assets/
+/model_backups
