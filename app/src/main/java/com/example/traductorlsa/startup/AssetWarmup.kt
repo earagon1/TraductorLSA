@@ -17,8 +17,13 @@ import kotlinx.coroutines.withContext
  */
 object AssetWarmup {
 
+    // Mismo orden de preferencia que TFLiteClassifier: primero el cuantizado,
+    // que es el que se carga, y despues el float32 por si algun build no lo
+    // incluyera. Entre los dos no llegan a 1 MB, asi que precargar los dos
+    // sale mas barato que arriesgarse a que las dos listas se desincronicen.
     private val ASSETS = listOf(
         "words.json",
+        "actions_15_opt.tflite",
         "actions_15_f32.tflite",
         "hand_landmarker.task",
     )
