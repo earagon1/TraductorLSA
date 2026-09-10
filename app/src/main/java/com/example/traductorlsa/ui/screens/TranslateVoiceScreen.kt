@@ -103,7 +103,7 @@ fun TranslateVoiceScreen(navController: NavHostController) {
         if (concedido) {
             error = null
             escuchando = true
-            vtt.start(ajustes.variante.etiquetaBcp47)
+            vtt.start(ajustes.variante.etiquetaBcp47, ajustes.reconocimientoSoloLocal)
         } else {
             error = "Sin permiso de micrófono no se puede escuchar."
         }
@@ -232,7 +232,7 @@ fun TranslateVoiceScreen(navController: NavHostController) {
                     if (tienePermiso) {
                         error = null
                         escuchando = true
-                        vtt.start(ajustes.variante.etiquetaBcp47)
+                        vtt.start(ajustes.variante.etiquetaBcp47, ajustes.reconocimientoSoloLocal)
                     } else {
                         pedirPermiso.launch(Manifest.permission.RECORD_AUDIO)
                     }

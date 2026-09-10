@@ -49,6 +49,14 @@ data class AjustesSenar(
     val tonoVoz: Float = 1.0f,
     val variante: VarianteEspanol = VarianteEspanol.ARGENTINA,
     val confianzaMinima: Float = 0.7f,
+    /**
+     * Pide que el reconocimiento de voz se resuelva en el dispositivo.
+     *
+     * Viene activado porque el procesamiento local es la premisa del
+     * proyecto: con esto apagado, el audio de la conversacion puede
+     * viajar a los servidores de Google.
+     */
+    val reconocimientoSoloLocal: Boolean = true,
 )
 
 /**
@@ -77,6 +85,7 @@ class RepositorioAjustes private constructor(context: Context) {
         tonoVoz = prefs.getFloat(TONO, 1.0f),
         variante = enumPorNombre(prefs.getString(VARIANTE, null), VarianteEspanol.ARGENTINA),
         confianzaMinima = prefs.getFloat(CONFIANZA, 0.7f),
+        reconocimientoSoloLocal = prefs.getBoolean(RECONOCIMIENTO_LOCAL, true),
     )
 
     fun actualizar(cambio: (AjustesSenar) -> AjustesSenar) {
@@ -91,6 +100,7 @@ class RepositorioAjustes private constructor(context: Context) {
             .putFloat(TONO, nuevo.tonoVoz)
             .putString(VARIANTE, nuevo.variante.name)
             .putFloat(CONFIANZA, nuevo.confianzaMinima)
+            .putBoolean(RECONOCIMIENTO_LOCAL, nuevo.reconocimientoSoloLocal)
             .apply()
         _estado.value = nuevo
     }
@@ -107,6 +117,7 @@ class RepositorioAjustes private constructor(context: Context) {
         private const val TONO = "tono"
         private const val VARIANTE = "variante"
         private const val CONFIANZA = "confianza"
+        private const val RECONOCIMIENTO_LOCAL = "reconocimiento_local"
 
         @Volatile
         private var instancia: RepositorioAjustes? = null

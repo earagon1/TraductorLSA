@@ -25,7 +25,7 @@ Variante del español, usada en las dos puntas: para leer en voz alta y para rec
 - Expone `locale` para el `TextToSpeech` y `etiquetaBcp47` para el `SpeechRecognizer`.
 
 #### **`AjustesSenar` (data class)**
-Los nueve valores, con sus valores de fábrica:
+Los diez valores, con sus valores de fábrica:
 
 - `calidad` = `EQUILIBRIO`
 - `camaraFrontal` = `true`
@@ -35,6 +35,7 @@ Los nueve valores, con sus valores de fábrica:
 - `velocidadVoz` = `1.0`, `tonoVoz` = `1.0`
 - `variante` = `ARGENTINA`
 - `confianzaMinima` = `0.7`
+- `reconocimientoSoloLocal` = `true` — pide que la transcripción de voz se resuelva en el dispositivo. Viene activado porque el procesamiento local es la premisa del proyecto
 
 #### **`RepositorioAjustes`**
 Singleton con doble verificación que persiste en `SharedPreferences` y publica un `StateFlow`.
@@ -43,7 +44,7 @@ Singleton con doble verificación que persiste en `SharedPreferences` y publica 
 - `restaurar()` vuelve a los valores de fábrica.
 - Si un valor guardado ya no existe en el enum (por ejemplo tras un *rename*), se cae al de fábrica en lugar de romper.
 
-Se eligió `SharedPreferences` a propósito: son nueve valores sueltos y viene con la plataforma. Si alguna vez hicieran falta migraciones o escrituras concurrentes, se cambia por DataStore sin tocar a quien lo consume.
+Se eligió `SharedPreferences` a propósito: son diez valores sueltos y viene con la plataforma. Si alguna vez hicieran falta migraciones o escrituras concurrentes, se cambia por DataStore sin tocar a quien lo consume.
 
 #### **Composables**
 - **`ajustesSenar()`** → `State<AjustesSenar>`, para **leer** desde cualquier pantalla.
@@ -55,4 +56,4 @@ Se eligió `SharedPreferences` a propósito: son nueve valores sueltos y viene c
 - `ui/screens/SettingsScreen.kt` es la pantalla que los edita.
 - `ui/CameraScreen.kt` usa la calidad, la cámara, la sensibilidad, el overlay de landmarks y la confianza mínima.
 - `speech/SpeechManager.kt` toma velocidad, tono y variante.
-- `voice/VoiceToText.kt` toma la variante para el reconocimiento.
+- `voice/VoiceToText.kt` toma la variante y el modo sin conexión para el reconocimiento.

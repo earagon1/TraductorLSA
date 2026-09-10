@@ -254,7 +254,7 @@ fun SettingsScreen(navController: NavHostController) {
                     onCambio = { v -> repo.actualizar { it.copy(tonoVoz = v) } },
                 )
             }
-            CeldaAjuste(ultima = true) {
+            CeldaAjuste {
                 EtiquetaAjuste("Variante del español")
                 Aire(12)
                 SelectorSegmentado(
@@ -263,6 +263,14 @@ fun SettingsScreen(navController: NavHostController) {
                     onSeleccion = { i -> repo.actualizar { it.copy(variante = VarianteEspanol.entries[i]) } },
                 )
                 AyudaAjuste("Se usa para las dos cosas: para leer en voz alta y para reconocer lo que dicen.")
+            }
+            CeldaAjuste(ultima = true) {
+                FilaInterruptor(
+                    titulo = "Reconocer la voz sin conexión",
+                    ayuda = "El audio no sale del teléfono. Necesita el paquete de voz del idioma instalado en Android; si lo apagás, la transcripción puede resolverse en los servidores de Google.",
+                    marcado = ajustes.reconocimientoSoloLocal,
+                    onCambio = { v -> repo.actualizar { it.copy(reconocimientoSoloLocal = v) } },
+                )
             }
         }
 
