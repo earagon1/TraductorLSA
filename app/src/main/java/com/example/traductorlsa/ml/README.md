@@ -49,3 +49,38 @@ Carga las **etiquetas del modelo** desde el archivo `words.json`.
 ```kotlin
 val labelProvider = LabelProviderImpl(context)
 val etiquetas = labelProvider.labels
+```
+
+---
+
+### **3. `TFLiteClassifier.kt`**
+Ejecuta la inferencia con **TensorFlow Lite** y devuelve las probabilidades de cada clase.
+
+#### **Elección del modelo**
+Recorre los assets en orden de preferencia y carga el primero que encuentra:
+
+1. `actions_15_opt.tflite` — cuantización dinámica. **Es el que se usa.**
+2. `actions_15_f32.tflite` — float32, de respaldo.
+3. `modelo.tflite` / `model.tflite` — nombres heredados.
+
+El cuantizado va primero a propósito. Antes ganaba el float32 y el optimizado viajaba en el APK sin que se lo usara nunca, así que la cuantización que compromete la propuesta no llegaba al dispositivo. Medido con `benchmark_cuantizacion.py` (repo `Modelo_LSA`): **182 KB contra 648**, con la misma accuracy y sin cambiar una sola predicción, a cambio de unos 0,4 ms más por inferencia.
+
+> Si cambiás este orden, actualizá también `startup/AssetWarmup.kt`, que precarga los mismos archivos.
+
+#### **Forma de la entrada**
+`T` y `D` se leen del tensor de entrada del modelo (15 × 126), no están escritos a mano: si el modelo cambia de longitud de secuencia, no hay que tocar código.
+
+#### **Funciones**
+- **`inferTop(seqT, labels)`** → `Triple(índice, probabilidad, vector completo)`
+  - Arma un `ByteBuffer` directo de `4 × T × D` en orden nativo.
+  - Rellena con ceros los frames que falten.
+  - Si la salida no suma ≈ 1, aplica un softmax estabilizado (resta el máximo antes de exponenciar). Es una red de seguridad por si el modelo se exportara sin la capa softmax.
+- **`infer(seqT, labels)`** → `Pair(índice, probabilidad)`. Atajo sobre `inferTop`.
+- **`close()`** libera el intérprete.
+
+---
+
+## **Relación con otros módulos**
+- Recibe las secuencias normalizadas de `SequenceBuffer` (en `features/`).
+- `GestureEngine` es quien lo invoca; nadie más habla con el intérprete directamente.
+- Las etiquetas salen de `LabelProvider`, que lee el mismo `words.json` con el que se entrenó el modelo. **El orden importa**: los índices de salida de la red corresponden a las posiciones de ese arreglo.
