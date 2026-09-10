@@ -45,6 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 import androidx.navigation.NavHostController
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.traductorlsa.settings.EstadoDeEntrada
+import kotlinx.coroutines.delay
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import android.net.Uri
@@ -98,6 +101,9 @@ sealed class AppDestination(val route: String) {
     object About : AppDestination("about")
 }
 
+/** Techo de espera de Clerk una vez terminada la presentacion. */
+private const val ESPERA_MAXIMA_CLERK_MS = 2_500L
+
 /* ----------------- NavHost principal ----------------- */
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -106,18 +112,61 @@ fun AppNavHost(navController: NavHostController) {
         startDestination = AppDestination.Splash.route
     ) {
         composable(AppDestination.Splash.route) {
-            SplashScreen(
-                onFinished = {
-                    navController.navigate(AppDestination.Onboarding.route) {
-                        popUpTo(AppDestination.Splash.route) { inclusive = true }
-                    }
+            val context = LocalContext.current
+            val estado = remember(context) { EstadoDeEntrada.de(context) }
+            val clerkListo by Clerk.isInitialized.collectAsStateWithLifecycle(false)
+            val usuaria by Clerk.userFlow.collectAsStateWithLifecycle()
+
+            var terminoLaPresentacion by rememberSaveable { mutableStateOf(false) }
+            var seAgotoLaEspera by rememberSaveable { mutableStateOf(false) }
+
+            SplashScreen(onFinished = { terminoLaPresentacion = true })
+
+            // Clerk arranca en isInitialized = false y userFlow = null, asi que
+            // decidir sin esperarlo mandaria a acceso a alguien que ya tiene
+            // sesion, para rebotarla al inicio un instante despues: un parpadeo
+            // del login en cada arranque. Se lo espera, con un techo por si no
+            // llega a inicializar (sin red, por ejemplo) para no dejar a nadie
+            // mirando el splash para siempre.
+            LaunchedEffect(terminoLaPresentacion) {
+                if (!terminoLaPresentacion) return@LaunchedEffect
+                delay(ESPERA_MAXIMA_CLERK_MS)
+                seAgotoLaEspera = true
+            }
+
+            LaunchedEffect(terminoLaPresentacion, clerkListo, usuaria, seAgotoLaEspera) {
+                if (!terminoLaPresentacion) return@LaunchedEffect
+                if (!clerkListo && !seAgotoLaEspera) return@LaunchedEffect
+
+                val haySesion = usuaria != null
+
+                // Quien ya tiene sesion abierta paso por la presentacion antes de
+                // que existiera esta marca: al actualizar la app no corresponde
+                // volver a mostrarle el tutorial.
+                if (haySesion && !estado.vioLaPresentacion) estado.vioLaPresentacion = true
+
+                val destino = when {
+                    !estado.vioLaPresentacion -> AppDestination.Onboarding.route
+                    haySesion || estado.eligioSinCuenta -> AppDestination.Home.route
+                    else -> AppDestination.AuthEntry.route
                 }
-            )
+
+                navController.navigate(destino) {
+                    popUpTo(AppDestination.Splash.route) { inclusive = true }
+                }
+            }
         }
 
         composable(AppDestination.Onboarding.route) {
+            val context = LocalContext.current
+            val estado = remember(context) { EstadoDeEntrada.de(context) }
+
             OnboardingScreen(
                 onFinish = {
+                    // El tutorial se ve una vez en la vida de la instalacion. No se
+                    // borra al cerrar sesion: quien cierra sesion no se olvido de
+                    // que hace la app.
+                    estado.vioLaPresentacion = true
                     navController.navigate(AppDestination.AuthEntry.route) {
                         popUpTo(AppDestination.Onboarding.route) { inclusive = true }
                     }

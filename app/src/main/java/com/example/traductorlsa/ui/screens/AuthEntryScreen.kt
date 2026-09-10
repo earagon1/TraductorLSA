@@ -28,8 +28,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -42,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.clerk.api.Clerk
 import com.example.traductorlsa.R
+import com.example.traductorlsa.settings.EstadoDeEntrada
 import com.example.traductorlsa.ui.AppDestination
 import com.example.traductorlsa.ui.brand.SenarBurbujasContorno
 import com.example.traductorlsa.ui.brand.SenarConstelacion
@@ -74,7 +77,13 @@ fun AuthEntryScreen(navController: NavHostController) {
         }
     }
 
+    val context = LocalContext.current
+    val estadoDeEntrada = remember(context) { EstadoDeEntrada.de(context) }
+
     val entrarComoInvitada = {
+        // Sin esto la próxima vez que abra la app no hay sesión de Clerk que
+        // mirar y esta pantalla le vuelve a preguntar algo que ya contestó.
+        estadoDeEntrada.eligioSinCuenta = true
         navController.navigate(AppDestination.Home.route) {
             popUpTo(AppDestination.AuthEntry.route) { inclusive = true }
         }

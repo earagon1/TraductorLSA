@@ -47,6 +47,7 @@ import com.example.traductorlsa.settings.VarianteEspanol
 import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
 import com.example.traductorlsa.speech.SpeechManager
+import com.example.traductorlsa.settings.EstadoDeEntrada
 import com.example.traductorlsa.ui.AppDestination
 import com.example.traductorlsa.ui.components.Aire
 import com.example.traductorlsa.ui.components.AyudaAjuste
@@ -159,6 +160,11 @@ fun SettingsScreen(navController: NavHostController) {
                         scope.launch {
                             try {
                                 Clerk.signOut()
+                                // Cerrar sesión es volver a elegir cómo usar la
+                                // app: si no se olvida el modo invitada, el
+                                // próximo arranque entraría derecho al inicio y
+                                // cerrar sesión no habría servido de nada.
+                                EstadoDeEntrada.de(context).olvidarLaDecision()
                                 navController.navigate(AppDestination.AuthEntry.route) {
                                     popUpTo(AppDestination.Home.route) { inclusive = true }
                                 }
