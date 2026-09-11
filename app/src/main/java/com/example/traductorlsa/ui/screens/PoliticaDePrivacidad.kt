@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.traductorlsa.ui.theme.SenarAmbar
@@ -242,7 +243,7 @@ fun HojaDePrivacidad(
         // Sin onAceptar la hoja es de solo lectura: se abre desde «Acerca de»
         // para releerla, y ahi no hay nada que aceptar de nuevo.
         if (onAceptar == null) {
-            Spacer(Modifier.height(12.dp))
+            SalidaDeLaHoja(texto = "Cerrar", onCerrar = onCerrar)
             return@ModalBottomSheet
         }
 
@@ -315,7 +316,47 @@ fun HojaDePrivacidad(
                     Text("Aceptar y volver", style = MaterialTheme.typography.labelLarge)
                 }
             }
+
+            // Sin esto la única salida es la X de la esquina, y abajo queda un
+            // botón apagado que dice «volver»: la pantalla termina diciendo que
+            // para salir hay que aceptar. Aceptar o no aceptar tienen que ser dos
+            // caminos, no uno y una pared.
+            Spacer(Modifier.height(if (llegoAlFinal) 8.dp else 12.dp))
+            Text(
+                text = "Volver sin aceptar",
+                style = MaterialTheme.typography.labelLarge,
+                color = SenarGrafito500,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onCerrar)
+                    .padding(vertical = 12.dp),
+            )
         }
+    }
+}
+
+/** Botón de salida al pie de la hoja, para que cerrar no dependa solo de la X. */
+@Composable
+private fun SalidaDeLaHoja(texto: String, onCerrar: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SenarBlanco)
+            .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 26.dp),
+    ) {
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.labelLarge,
+            color = SenarGrafito500,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(onClick = onCerrar)
+                .padding(vertical = 12.dp),
+        )
     }
 }
 
