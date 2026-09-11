@@ -211,6 +211,15 @@
       "h": 844,
       "title": "Traducir señas · no reconocida",
       "page": "page-3"
+    },
+    {
+      "file": "AccesoBloqueado.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5b · Acceso sin aceptar",
+      "page": "page-1"
     }
   ],
   "annotations": [
@@ -277,6 +286,14 @@
       "w": 1250,
       "page": "page-3",
       "text": "Traducir señas es la pantalla que da nombre a la app y era la que menos diseño tenía: una barra negra de esquinas rectas pegada abajo, con «Traducción actual» encima de «ESPERANDO SEÑAS…».\n\nLA REGLA DE ESTAS DOS CÁMARAS: la interfaz ocupa lo mínimo. Las señas de LSA se hacen con las dos manos y toman del torso para arriba y el ancho de los hombros. Cada franja que se lleva la interfaz obliga a la persona a alejarse de la cámara, y cuanto más lejos está, más chicas le quedan las manos al detector: se traduce peor. Por eso acá no hay tarjeta. Hay un degradado —como los subtítulos de un video— y dos líneas de texto. Las acciones son botones redondos de 42 px alineados con la última línea, no una fila que cruza la pantalla. Entre eso y el encuadre más grande, el visor libre pasa de poco más de la mitad de la pantalla a casi tres cuartos.\n\n1. El mismo encuadre de cuatro esquinas que entrenamiento. En tu captura la cámara apunta al techo y la pantalla dice «esperando señas», que suena a que la app está fallando cuando en realidad no hay nadie en cuadro. El estado pasa a decir qué hacer: «Ubicate en el recuadro».\n\n2. «ESPERANDO SEÑAS…» y una palabra traducida se veían exactamente igual: mismo tamaño, mismo color, mismas mayúsculas. El momento más importante de la app no tenía ninguna distinción visual. Ahora el estado es un rótulo de 10,5 px con un punto de color y la frase vive abajo, a 21 px.\n\n3. Aparece la frase. Antes eran tres palabras en gris de 12 px separadas por puntos: se leían como metadatos, no como lo que dijo la persona. Van en azul-300, el color de quien seña en todo el sistema, y la última entra en blanco y negrita: se distingue por peso y color, no por tamaño, así la línea nunca cambia de alto ni salta.\n\n4. «Repetir en voz alta» es el botón que faltaba. La app promete señas a texto Y voz, pero la voz no tenía ningún control en pantalla: si la otra persona no llegó a escuchar, no había forma de repetir. La píldora «Voz» de la cabecera la apaga sin salir de la conversación.\n\n5. El estado de baja confianza deja de ser silencio. Cuando la predicción no llega al mínimo de Ajustes hoy no pasa absolutamente nada, y la persona no sabe si la seña salió mal, si la app se colgó o si no la conoce.\n\nBUG aparte, de una línea (CameraScreen.kt:347): «if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)» está ANTES del filtro de confianza. La app dice en voz alta «Unknown», «Sin datos» y cualquier predicción de baja confianza, justo las que la pantalla se niega a mostrar. Y repite la misma palabra en cada ciclo de captura, porque el descarte de repetidos está adentro del if. La voz dice cosas que el texto no dice."
+    },
+    {
+      "id": "nota-consentimiento",
+      "x": 1880,
+      "y": 900,
+      "w": 860,
+      "page": "page-1",
+      "text": "El acuerdo explícito reemplaza al «Al continuar aceptás los Términos y la Política de privacidad» que estaba al pie, en gris chico, donde nadie lo lee y que además no compromete a nada.\n\nVa ARRIBA de los botones a propósito. Debajo se leería después de haber decidido, que es tarde, y dejaría dos botones apagados arriba de un texto que no se sabe para qué está.\n\nDice lo que la app realmente hace, en tres afirmaciones verificables contra el código: la cámara graba video, el reconocimiento corre entero en el dispositivo (HandTracker y TFLiteClassifier son locales, no hay ninguna llamada de red en el camino) y las muestras de entrenamiento se guardan con la cuenta, que desde el commit del client_id es literalmente cierto. Esa tercera línea no estaba escrita en ningún lado de la app.\n\nDos cosas de implementación que importan más de lo que parecen:\n\n1. Los botones NO son botones muertos. Se ven apagados, pero se pueden tocar: al tocarlos sin aceptar, la casilla se resalta en ámbar y aparece «Necesitamos que aceptes para seguir». Un botón deshabilitado de verdad no responde y no explica por qué, y con TalkBack se anuncia «desactivado» sin ningún motivo. En una app de accesibilidad eso no va.\n\n2. La casilla arranca SIEMPRE vacía. Una casilla premarcada no es un consentimiento.\n\nLos enlaces de Términos y Política siguen sin apuntar a ningún lado: son el TODO que ya estaba en AuthEntryScreen. El texto de la casilla es descripción en castellano llano de lo que hace la app, no un documento legal, y la redacción final la tiene que firmar Evelin."
     }
   ],
   "launch": {
