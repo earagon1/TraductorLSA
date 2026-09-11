@@ -169,6 +169,13 @@ internal fun normalizeTrainingLabel(input: String): String {
         .trim('_')
 }
 
+/**
+ * Normaliza una etiqueta para ORDENAR, no para mostrar.
+ *
+ * Saca los guiones bajos pero no pone tildes ni signos, asi que "como_estas"
+ * queda "como estas" y no "¿Cómo estás?". Para texto visible o hablado va
+ * `nombreParaMostrar`, que es el unico lugar donde vive esa traduccion.
+ */
 internal fun displayTrainingLabel(label: String): String =
     label.replace("_", " ").replace("\\s+".toRegex(), " ").trim()
 
@@ -368,7 +375,11 @@ fun CameraScreen(
                         // el speak estaba fuera de este if: decia "Unknown" y las
                         // predicciones de baja confianza en voz alta, y repetia la
                         // misma palabra en cada ciclo de captura.
-                        if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)
+                        // Pasa por nombreParaMostrar igual que el subtitulo: el id
+                        // que devuelve el modelo es "por_favor", no "Por favor".
+                        if (ajustes.leerEnVozAlta) {
+                            speechManager.speak(nombreParaMostrar(prediction.gesture))
+                        }
                     }
                 } else {
                     // Sin nombre no hay porcentaje que valga la pena mostrar.
@@ -692,7 +703,11 @@ private fun TrainingPanel(
                     (0 until 3).forEach { i ->
                         val pred = top3.getOrNull(i)
                         Button(onClick = { pred?.let { onPick(it.gesture) } }, enabled = pred != null, modifier = Modifier.weight(1f)) {
-                            Text(pred?.gesture ?: "â€”", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                text = pred?.let { nombreParaMostrar(it.gesture) } ?: "—",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
@@ -1460,11 +1475,11 @@ private fun TrainingReferenceDialog(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(displayTrainingLabel(label), style = MaterialTheme.typography.titleLarge)
+                Text(nombreParaMostrar(label), style = MaterialTheme.typography.titleLarge)
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap!!.asImageBitmap(),
-                        contentDescription = displayTrainingLabel(label),
+                        contentDescription = nombreParaMostrar(label),
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 220.dp, max = 420.dp)

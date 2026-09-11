@@ -560,9 +560,8 @@ private val NOMBRES_PARA_MOSTRAR = mapOf(
     "bien" to "Bien",
     "como_estas" to "¿Cómo estás?",
     "gracias" to "Gracias",
-    "muchasgracias" to "Muchas gracias",
-    "minombrees" to "Mi nombre es",
-    "porfavor" to "Por favor",
+    "mi_nombre_es" to "Mi nombre es",
+    "por_favor" to "Por favor",
 )
 
 internal fun nombreParaMostrar(raw: String): String {
