@@ -6,7 +6,7 @@ Este paquete implementa el **modo voz a texto**: el sentido inverso del traducto
 
 ## **Archivos**
 
-### **`VoiceToText.kt`**
+### **1. `VoiceToText.kt`**
 Envoltorio sobre el `SpeechRecognizer` de Android, con una interfaz de tres callbacks.
 
 ```kotlin
@@ -28,6 +28,42 @@ VoiceToText(
 - Traduce los códigos de error a mensajes en castellano: permisos insuficientes, error de red, servicio ocupado, no se detectó voz, etc.
 - Comprueba `isRecognitionAvailable()` antes de empezar, porque no todos los dispositivos traen el servicio.
 - Es reentrante: si ya está escuchando, `start()` no vuelve a arrancar.
+
+---
+
+### **2. `LimpiezaDeTexto.kt`**
+La tercera caja del flujo voz a texto — captura, reconocimiento, **limpieza**, visualización — que hasta ahora no existía: la pantalla pegaba lo que llegaba del reconocedor sin tocarlo.
+
+Importa más de lo que parece. Quien lee es una persona hipoacúsica siguiendo una conversación en vivo, y el reconocedor entrega texto corrido, sin mayúscula inicial ni punto final: tres o cuatro enunciados seguidos se vuelven un bloque sin respiro justo cuando hay que leer rápido.
+
+#### **Funciones**
+- **`limpiar(crudo)`** — normaliza un enunciado ya confirmado.
+- **`unir(acumulado, enunciado)`** — encadena el enunciado nuevo al texto anterior.
+
+#### **Qué corrige**
+- Colapsa espacios, tabulaciones y saltos de línea.
+- Descarta muletillas (`eh`, `mmm`, `em`…).
+- Quita el espacio que a veces queda antes de un signo.
+- Completa la apertura `¿` o `¡` cuando el reconocedor entregó solo el cierre.
+- Capitaliza la primera letra y cierra con punto si no había signo final.
+
+#### **Qué NO toca, a propósito**
+**Se corrige la forma, nunca el contenido.**
+
+- **No colapsa repeticiones de palabras**, que era la otra candidata obvia. En castellano la repetición significa —"no, no", "muy muy bien"— y un reconocedor que tartamudea hace menos daño que un traductor que borra lo que la persona dijo.
+- **La lista de muletillas deja afuera las ambiguas**: `este` es también un demostrativo, y `ah` o `ajá` son respuestas válidas.
+- **No borra un `eh` que lleva signo**: `¿eh?` es una pregunta real.
+- **No adivina si una frase es pregunta.** Solo completa el par cuando el signo de cierre ya vino en el texto.
+
+#### **Dónde se aplica**
+Solo al texto **confirmado**. El parcial se muestra crudo porque cambia con cada palabra reconocida, y verlo ganar y perder un punto en cada actualización distrae más de lo que ayuda.
+
+#### **Tests**
+Son funciones puras, sin dependencias de Android, así que se testean en la JVM: `app/src/test/.../voice/LimpiezaDeTextoTest.kt`, 14 casos. La mitad verifica que la limpieza **no** toque lo que no le corresponde, que es tan importante como lo que sí corrige.
+
+```bash
+./gradlew :app:testDebugUnitTest
+```
 
 ---
 

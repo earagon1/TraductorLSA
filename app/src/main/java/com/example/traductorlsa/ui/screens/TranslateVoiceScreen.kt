@@ -62,6 +62,7 @@ import com.example.traductorlsa.ui.theme.SenarGrafito500
 import com.example.traductorlsa.ui.theme.SenarGrafito700
 import com.example.traductorlsa.ui.theme.SenarGrafito900
 import com.example.traductorlsa.ui.theme.SenarPapelHundido
+import com.example.traductorlsa.voice.LimpiezaDeTexto
 import com.example.traductorlsa.voice.VoiceToText
 
 private val ROJO_DETENER = androidx.compose.ui.graphics.Color(0xFFC0392B)
@@ -83,9 +84,11 @@ fun TranslateVoiceScreen(navController: NavHostController) {
             context = context,
             onPartial = { textoParcial = it },
             onFinal = {
-                if (it.isNotBlank()) {
-                    textoFinal = if (textoFinal.isBlank()) it else "$textoFinal $it"
-                }
+                // La limpieza se aplica solo al texto confirmado. El parcial se
+                // deja crudo a proposito: cambia con cada palabra reconocida, y
+                // verlo ganar y perder un punto en cada actualizacion distrae
+                // mas de lo que ayuda.
+                textoFinal = LimpiezaDeTexto.unir(textoFinal, LimpiezaDeTexto.limpiar(it))
                 textoParcial = ""
                 escuchando = false
             },
