@@ -79,12 +79,11 @@ private data class SeccionDePolitica(
  * El texto de la política.
  *
  * Cada afirmación está verificada contra el código, no escrita de memoria. La
- * del micrófono es la que más importa: VoiceToText usa el SpeechRecognizer de
- * Android con ACTION_RECOGNIZE_SPEECH y sin EXTRA_PREFER_OFFLINE, así que el
- * reconocimiento lo hace el servicio del dispositivo —en la mayoría de los
- * Android, el de Google— y ese servicio puede mandar el audio a sus servidores.
- * El propio VoiceToText maneja ERROR_NETWORK, que lo confirma. Decir que nada
- * sale del teléfono sería falso, y una política falsa es peor que no tenerla.
+ * del micrófono es la que más importa y hay que mantenerla al día: VoiceToText
+ * pide EXTRA_PREFER_OFFLINE y `soloLocal` viene activado, con interruptor en
+ * Ajustes > VOZ. Pero es una preferencia que el servicio puede ignorar, así que
+ * la política dice eso y no «el audio nunca sale»: una política que prometa de
+ * más es peor que no tenerla.
  *
  * Esto es descripción en castellano llano de lo que hace la app, no un
  * documento legal. Los términos formales, si hacen falta, son aparte.
@@ -103,9 +102,10 @@ private val POLITICA = listOf(
     SeccionDePolitica(
         titulo = "El micrófono y la voz",
         cuerpo = "Para traducir voz a texto, SeÑAR le pide el trabajo al servicio de reconocimiento " +
-            "de voz de tu teléfono, que en la mayoría de los Android es el de Google. Ese servicio " +
-            "puede enviar el audio a sus servidores para transcribirlo. No pasa por SeÑAR y no lo " +
-            "controlamos. Si preferís que no ocurra, no uses el modo de traducir voz.",
+            "de tu teléfono, y le pide que lo resuelva sin conexión. Es una preferencia, no una " +
+            "garantía: el servicio puede ignorarla y transcribir en sus servidores. La app nunca " +
+            "reintenta por internet a tus espaldas, y podés apagar la preferencia en Ajustes. Para " +
+            "comprobarlo, poné el teléfono en modo avión y fijate si sigue transcribiendo.",
         destacada = true,
     ),
     SeccionDePolitica(

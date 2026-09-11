@@ -81,10 +81,11 @@ CUERPO = (
     + seccion("El reconocimiento de señas", "Los dos modelos viven adentro de la app. Corren en tu teléfono, no consultan "
                                             "ningún servidor y funcionan en modo avión.")
     + seccion("El micrófono y la voz",
-              "Para traducir voz a texto, SeÑAR le pide el trabajo al servicio de reconocimiento de voz de tu teléfono, que "
-              "en la mayoría de los Android es el de Google. <b style=\"color:#1E2230;\">Ese servicio puede enviar el audio a "
-              "sus servidores para transcribirlo.</b> No pasa por SeÑAR y no lo controlamos. Si preferís que no ocurra, no "
-              "uses el modo de traducir voz.", acento="#B07800")
+              "Para traducir voz a texto, SeÑAR le pide el trabajo al servicio de reconocimiento de tu teléfono, y le "
+              "pide que lo resuelva sin conexión. <b style=\"color:#1E2230;\">Es una preferencia, no una garantía: el servicio "
+              "puede ignorarla y transcribir en sus servidores.</b> La app nunca reintenta por internet a tus espaldas, y "
+              "podés apagar la preferencia en Ajustes. Para comprobarlo, poné el teléfono en modo avión y fijate si sigue "
+              "transcribiendo.", acento="#B07800")
     + seccion("Tu cuenta", "Sincronizar con Google es opcional. Si lo hacés, se guardan tu nombre, tu foto y tu correo a "
                            "través de Clerk, que es quien maneja el inicio de sesión.")
     + seccion("Las muestras de entrenamiento", "Si grabás señas en el modo entrenamiento, quedan en un archivo dentro de tu "
