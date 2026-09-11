@@ -220,6 +220,24 @@
       "h": 844,
       "title": "5b · Acceso sin aceptar",
       "page": "page-1"
+    },
+    {
+      "file": "TerminosLeyendo.dc.html",
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5c · Privacidad, leyendo",
+      "page": "page-1"
+    },
+    {
+      "file": "TerminosFinal.dc.html",
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5d · Privacidad, al final",
+      "page": "page-1"
     }
   ],
   "annotations": [
@@ -291,9 +309,9 @@
       "id": "nota-consentimiento",
       "x": 1880,
       "y": 900,
-      "w": 860,
+      "w": 1800,
       "page": "page-1",
-      "text": "El acuerdo explícito reemplaza al «Al continuar aceptás los Términos y la Política de privacidad» que estaba al pie, en gris chico, donde nadie lo lee y que además no compromete a nada.\n\nVa ARRIBA de los botones a propósito. Debajo se leería después de haber decidido, que es tarde, y dejaría dos botones apagados arriba de un texto que no se sabe para qué está.\n\nDice lo que la app realmente hace, en tres afirmaciones verificables contra el código: la cámara graba video, el reconocimiento corre entero en el dispositivo (HandTracker y TFLiteClassifier son locales, no hay ninguna llamada de red en el camino) y las muestras de entrenamiento se guardan con la cuenta, que desde el commit del client_id es literalmente cierto. Esa tercera línea no estaba escrita en ningún lado de la app.\n\nDos cosas de implementación que importan más de lo que parecen:\n\n1. Los botones NO son botones muertos. Se ven apagados, pero se pueden tocar: al tocarlos sin aceptar, la casilla se resalta en ámbar y aparece «Necesitamos que aceptes para seguir». Un botón deshabilitado de verdad no responde y no explica por qué, y con TalkBack se anuncia «desactivado» sin ningún motivo. En una app de accesibilidad eso no va.\n\n2. La casilla arranca SIEMPRE vacía. Una casilla premarcada no es un consentimiento.\n\nLos enlaces de Términos y Política siguen sin apuntar a ningún lado: son el TODO que ya estaba en AuthEntryScreen. El texto de la casilla es descripción en castellano llano de lo que hace la app, no un documento legal, y la redacción final la tiene que firmar Evelin."
+      "text": "El acuerdo reemplaza al «Al continuar aceptás los Términos y la Política de privacidad» que estaba al pie, en gris chico, donde nadie lo lee y que además no compromete a nada.\n\nEn la pantalla de acceso queda UNA línea, para no tapar la primera impresión. Tocarla abre la política en una card modal, y ahí sí está el texto completo con todo el espacio que necesite. La casilla de aceptar vive dentro de la card, al final: hay que leer hasta abajo para llegar.\n\nDOS COSAS QUE CAMBIÉ RESPECTO DE LO PEDIDO, y se pueden volver atrás:\n\n1. La casilla del final no aparece de la nada al llegar abajo: está desde el principio, apagada, con el motivo escrito («Seguí leyendo hasta el final para poder aceptar») y un botón «Ir al final». Un control que aparece de golpe deja a la persona sin saber que existe ni qué le falta, y obligar a arrastrar un texto largo sin atajo es un problema real con TalkBack o con un switch. Así se ve el camino completo desde el primer momento.\n\n2. Los botones de la pantalla de acceso se ven apagados pero se pueden tocar: al tocarlos sin aceptar, la fila se resalta en ámbar y dice por qué. Un botón deshabilitado de verdad no responde y no explica nada.\n\nEL HALLAZGO IMPORTANTE, que es de código y no de diseño. Escribiendo este texto fui a verificar cada afirmación contra el código y encontré que NO es cierto que nada salga del teléfono. VoiceToText usa el SpeechRecognizer de Android con ACTION_RECOGNIZE_SPEECH y sin EXTRA_PREFER_OFFLINE: el reconocimiento de voz lo hace el servicio del dispositivo, que en la mayoría de los Android es el de Google, y ese servicio puede mandar el audio a sus servidores. El propio código maneja ERROR_NETWORK, que lo confirma. Las señas sí son 100% locales (MediaPipe y TensorFlow Lite van adentro de la app), pero la voz no. La sección del micrófono lo dice de frente, porque una política de privacidad que afirme lo contrario sería falsa.\n\nLos enlaces siguen sin apuntar a ningún lado: es el TODO que ya estaba en AuthEntryScreen. Y esto es descripción en castellano llano de lo que hace la app, no un documento legal: la redacción final la tiene que firmar Evelin."
     }
   ],
   "launch": {
