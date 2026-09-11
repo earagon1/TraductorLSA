@@ -10,20 +10,18 @@ import android.content.Context
  * presentación» y le haría reaparecer el tutorial. Esto no son preferencias,
  * es estado de la app, así que vive en su propio archivo.
  *
- * Son dos preguntas distintas y por eso son dos marcas distintas:
+ * [vioLaPresentacion] responde «¿ya sabe qué hace esta app?». Se contesta una
+ * vez en la vida de la instalación, y no se borra al cerrar sesión: quien
+ * cierra sesión no se olvidó del tutorial.
  *
- * - [vioLaPresentacion] responde «¿ya sabe qué hace esta app?». Se contesta una
- *   vez en la vida de la instalación, y no se borra al cerrar sesión: quien
- *   cierra sesión no se olvidó del tutorial.
- * - [aceptoLaPrivacidad] responde «¿ya leyó y aceptó qué hace la app con sus
- *   datos?». También se contesta una vez por instalación: es sobre la app, no
- *   sobre la sesión, así que cerrar sesión no la borra.
+ * Hay dos cosas que a propósito NO se recuerdan:
  *
- * Lo que NO se recuerda es el modo invitada. Quien entra sin cuenta no deja
- * sesión, así que no hay nada que recordar: al volver a abrir la app vuelve a
- * ver el acceso. Es un toque más por arranque, y el empujón hacia crear una
- * cuenta importa porque el entrenamiento la exige y las muestras se guardan
- * atribuidas a ella.
+ * - El modo invitada. Quien entra sin cuenta no deja sesión, así que no hay
+ *   nada que recordar: al volver a abrir la app vuelve a ver el acceso.
+ * - El consentimiento de privacidad. Vive lo que dura la visita a la pantalla
+ *   de acceso: si estás parada ahí es porque estás decidiendo cómo entrar, y la
+ *   casilla arranca vacía cada vez. Guardarlo hacía que apareciera tildada de
+ *   entrada y sin forma de destildarla.
  */
 class EstadoDeEntrada private constructor(context: Context) {
 
@@ -36,16 +34,9 @@ class EstadoDeEntrada private constructor(context: Context) {
             prefs.edit().putBoolean(PRESENTACION, valor).apply()
         }
 
-    var aceptoLaPrivacidad: Boolean
-        get() = prefs.getBoolean(PRIVACIDAD, false)
-        set(valor) {
-            prefs.edit().putBoolean(PRIVACIDAD, valor).apply()
-        }
-
     companion object {
         private const val ARCHIVO = "senar_entrada"
         private const val PRESENTACION = "vio_presentacion"
-        private const val PRIVACIDAD = "acepto_privacidad"
 
         @Volatile
         private var instancia: EstadoDeEntrada? = null

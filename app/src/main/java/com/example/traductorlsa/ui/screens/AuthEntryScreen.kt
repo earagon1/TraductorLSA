@@ -94,7 +94,10 @@ fun AuthEntryScreen(navController: NavHostController) {
         }
     }
 
-    var acepto by rememberSaveable { mutableStateOf(estadoDeEntrada.aceptoLaPrivacidad) }
+    // Arranca vacía siempre: el consentimiento dura lo que dura la visita a esta
+    // pantalla. Sembrarla del valor guardado la mostraba tildada de entrada y sin
+    // forma de destildarla, que es justo lo contrario de un consentimiento.
+    var acepto by rememberSaveable { mutableStateOf(false) }
     var mostrarPolitica by rememberSaveable { mutableStateOf(false) }
     var faltaAceptar by rememberSaveable { mutableStateOf(false) }
 
@@ -265,8 +268,8 @@ fun AuthEntryScreen(navController: NavHostController) {
     if (mostrarPolitica) {
         HojaDePrivacidad(
             onCerrar = { mostrarPolitica = false },
+            aceptadaAlAbrir = acepto,
             onAceptar = {
-                estadoDeEntrada.aceptoLaPrivacidad = true
                 acepto = true
                 faltaAceptar = false
                 mostrarPolitica = false

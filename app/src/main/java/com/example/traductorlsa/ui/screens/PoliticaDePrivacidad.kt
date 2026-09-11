@@ -139,11 +139,14 @@ private val POLITICA = listOf(
 @Composable
 fun HojaDePrivacidad(
     onCerrar: () -> Unit,
+    aceptadaAlAbrir: Boolean = false,
     onAceptar: (() -> Unit)? = null,
 ) {
     val scroll = rememberScrollState()
     val alcance = rememberCoroutineScope()
-    var marcada by remember { mutableStateOf(false) }
+    // Si la hoja se reabre ya aceptada, la casilla muestra el estado real en
+    // vez de mentir que está vacía.
+    var marcada by remember { mutableStateOf(aceptadaAlAbrir) }
 
     // maxValue arranca en Int.MAX_VALUE hasta que se mide el contenido; sin ese
     // resguardo la comparación daría true antes de dibujar nada. Si el texto
