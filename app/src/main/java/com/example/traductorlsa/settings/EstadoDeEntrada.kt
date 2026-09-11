@@ -15,10 +15,15 @@ import android.content.Context
  * - [vioLaPresentacion] responde «¿ya sabe qué hace esta app?». Se contesta una
  *   vez en la vida de la instalación, y no se borra al cerrar sesión: quien
  *   cierra sesión no se olvidó del tutorial.
- * - [eligioSinCuenta] responde «¿ya decidió cómo quiere usarla?». Sin esta
- *   marca, quien elige «continuar sin cuenta» no tiene sesión de Clerk y la
- *   pantalla de acceso le volvería a preguntar en cada arranque algo que ya
- *   contestó. Se borra al cerrar sesión, que es justamente volver a decidir.
+ * - [aceptoLaPrivacidad] responde «¿ya leyó y aceptó qué hace la app con sus
+ *   datos?». También se contesta una vez por instalación: es sobre la app, no
+ *   sobre la sesión, así que cerrar sesión no la borra.
+ *
+ * Lo que NO se recuerda es el modo invitada. Quien entra sin cuenta no deja
+ * sesión, así que no hay nada que recordar: al volver a abrir la app vuelve a
+ * ver el acceso. Es un toque más por arranque, y el empujón hacia crear una
+ * cuenta importa porque el entrenamiento la exige y las muestras se guardan
+ * atribuidas a ella.
  */
 class EstadoDeEntrada private constructor(context: Context) {
 
@@ -31,21 +36,16 @@ class EstadoDeEntrada private constructor(context: Context) {
             prefs.edit().putBoolean(PRESENTACION, valor).apply()
         }
 
-    var eligioSinCuenta: Boolean
-        get() = prefs.getBoolean(SIN_CUENTA, false)
+    var aceptoLaPrivacidad: Boolean
+        get() = prefs.getBoolean(PRIVACIDAD, false)
         set(valor) {
-            prefs.edit().putBoolean(SIN_CUENTA, valor).apply()
+            prefs.edit().putBoolean(PRIVACIDAD, valor).apply()
         }
-
-    /** Cerrar sesión es volver a elegir: la próxima vez se pregunta de nuevo. */
-    fun olvidarLaDecision() {
-        eligioSinCuenta = false
-    }
 
     companion object {
         private const val ARCHIVO = "senar_entrada"
         private const val PRESENTACION = "vio_presentacion"
-        private const val SIN_CUENTA = "eligio_sin_cuenta"
+        private const val PRIVACIDAD = "acepto_privacidad"
 
         @Volatile
         private var instancia: EstadoDeEntrada? = null

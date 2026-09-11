@@ -211,6 +211,33 @@
       "h": 844,
       "title": "Traducir señas · no reconocida",
       "page": "page-3"
+    },
+    {
+      "file": "AccesoBloqueado.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5b · Acceso sin aceptar",
+      "page": "page-1"
+    },
+    {
+      "file": "TerminosLeyendo.dc.html",
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5c · Privacidad, leyendo",
+      "page": "page-1"
+    },
+    {
+      "file": "TerminosFinal.dc.html",
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5d · Privacidad, al final",
+      "page": "page-1"
     }
   ],
   "annotations": [
@@ -277,6 +304,14 @@
       "w": 1250,
       "page": "page-3",
       "text": "Traducir señas es la pantalla que da nombre a la app y era la que menos diseño tenía: una barra negra de esquinas rectas pegada abajo, con «Traducción actual» encima de «ESPERANDO SEÑAS…».\n\nLA REGLA DE ESTAS DOS CÁMARAS: la interfaz ocupa lo mínimo. Las señas de LSA se hacen con las dos manos y toman del torso para arriba y el ancho de los hombros. Cada franja que se lleva la interfaz obliga a la persona a alejarse de la cámara, y cuanto más lejos está, más chicas le quedan las manos al detector: se traduce peor. Por eso acá no hay tarjeta. Hay un degradado —como los subtítulos de un video— y dos líneas de texto. Las acciones son botones redondos de 42 px alineados con la última línea, no una fila que cruza la pantalla. Entre eso y el encuadre más grande, el visor libre pasa de poco más de la mitad de la pantalla a casi tres cuartos.\n\n1. El mismo encuadre de cuatro esquinas que entrenamiento. En tu captura la cámara apunta al techo y la pantalla dice «esperando señas», que suena a que la app está fallando cuando en realidad no hay nadie en cuadro. El estado pasa a decir qué hacer: «Ubicate en el recuadro».\n\n2. «ESPERANDO SEÑAS…» y una palabra traducida se veían exactamente igual: mismo tamaño, mismo color, mismas mayúsculas. El momento más importante de la app no tenía ninguna distinción visual. Ahora el estado es un rótulo de 10,5 px con un punto de color y la frase vive abajo, a 21 px.\n\n3. Aparece la frase. Antes eran tres palabras en gris de 12 px separadas por puntos: se leían como metadatos, no como lo que dijo la persona. Van en azul-300, el color de quien seña en todo el sistema, y la última entra en blanco y negrita: se distingue por peso y color, no por tamaño, así la línea nunca cambia de alto ni salta.\n\n4. «Repetir en voz alta» es el botón que faltaba. La app promete señas a texto Y voz, pero la voz no tenía ningún control en pantalla: si la otra persona no llegó a escuchar, no había forma de repetir. La píldora «Voz» de la cabecera la apaga sin salir de la conversación.\n\n5. El estado de baja confianza deja de ser silencio. Cuando la predicción no llega al mínimo de Ajustes hoy no pasa absolutamente nada, y la persona no sabe si la seña salió mal, si la app se colgó o si no la conoce.\n\nBUG aparte, de una línea (CameraScreen.kt:347): «if (ajustes.leerEnVozAlta) speechManager.speak(prediction.gesture)» está ANTES del filtro de confianza. La app dice en voz alta «Unknown», «Sin datos» y cualquier predicción de baja confianza, justo las que la pantalla se niega a mostrar. Y repite la misma palabra en cada ciclo de captura, porque el descarte de repetidos está adentro del if. La voz dice cosas que el texto no dice."
+    },
+    {
+      "id": "nota-consentimiento",
+      "x": 1880,
+      "y": 900,
+      "w": 1800,
+      "page": "page-1",
+      "text": "El acuerdo reemplaza al «Al continuar aceptás los Términos y la Política de privacidad» que estaba al pie, en gris chico, donde nadie lo lee y que además no compromete a nada.\n\nEn la pantalla de acceso queda UNA línea, para no tapar la primera impresión. Tocarla abre la política en una card modal, y ahí sí está el texto completo con todo el espacio que necesite. La casilla de aceptar vive dentro de la card, al final: hay que leer hasta abajo para llegar.\n\nDOS COSAS QUE CAMBIÉ RESPECTO DE LO PEDIDO, y se pueden volver atrás:\n\n1. La casilla del final no aparece de la nada al llegar abajo: está desde el principio, apagada, con el motivo escrito («Seguí leyendo hasta el final para poder aceptar») y un botón «Ir al final». Un control que aparece de golpe deja a la persona sin saber que existe ni qué le falta, y obligar a arrastrar un texto largo sin atajo es un problema real con TalkBack o con un switch. Así se ve el camino completo desde el primer momento.\n\n2. Los botones de la pantalla de acceso se ven apagados pero se pueden tocar: al tocarlos sin aceptar, la fila se resalta en ámbar y dice por qué. Un botón deshabilitado de verdad no responde y no explica nada.\n\nEL HALLAZGO IMPORTANTE, que es de código y no de diseño. Escribiendo este texto fui a verificar cada afirmación contra el código y encontré que NO es cierto que nada salga del teléfono. VoiceToText usa el SpeechRecognizer de Android con ACTION_RECOGNIZE_SPEECH y sin EXTRA_PREFER_OFFLINE: el reconocimiento de voz lo hace el servicio del dispositivo, que en la mayoría de los Android es el de Google, y ese servicio puede mandar el audio a sus servidores. El propio código maneja ERROR_NETWORK, que lo confirma. Las señas sí son 100% locales (MediaPipe y TensorFlow Lite van adentro de la app), pero la voz no. La sección del micrófono lo dice de frente, porque una política de privacidad que afirme lo contrario sería falsa.\n\nLos enlaces siguen sin apuntar a ningún lado: es el TODO que ya estaba en AuthEntryScreen. Y esto es descripción en castellano llano de lo que hace la app, no un documento legal: la redacción final la tiene que firmar Evelin."
     }
   ],
   "launch": {
