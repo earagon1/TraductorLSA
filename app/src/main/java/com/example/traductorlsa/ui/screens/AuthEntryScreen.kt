@@ -267,7 +267,14 @@ fun AuthEntryScreen(navController: NavHostController) {
 
     if (mostrarPolitica) {
         HojaDePrivacidad(
-            onCerrar = { mostrarPolitica = false },
+            // Toda salida que no sea «Aceptar y volver» deja el consentimiento sin
+            // dar: la X, el botón atrás, el velo y «Volver sin aceptar». Si no,
+            // reabrir la hoja estando ya aceptada y salir por «Volver sin aceptar»
+            // dejaba la casilla tildada, o sea que el botón mentía.
+            onCerrar = {
+                acepto = false
+                mostrarPolitica = false
+            },
             aceptadaAlAbrir = acepto,
             onAceptar = {
                 acepto = true
