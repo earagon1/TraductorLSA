@@ -82,6 +82,9 @@ fun AuthEntryScreen(navController: NavHostController) {
     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle(false)
     val user by Clerk.userFlow.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val estadoDeEntrada = remember(context) { EstadoDeEntrada.de(context) }
+
     // Si ya hay sesión abierta, no tiene sentido mostrar esta pantalla.
     LaunchedEffect(isInitialized, user) {
         if (isInitialized && user != null) {
@@ -90,9 +93,6 @@ fun AuthEntryScreen(navController: NavHostController) {
             }
         }
     }
-
-    val context = LocalContext.current
-    val estadoDeEntrada = remember(context) { EstadoDeEntrada.de(context) }
 
     var acepto by rememberSaveable { mutableStateOf(estadoDeEntrada.aceptoLaPrivacidad) }
     var mostrarPolitica by rememberSaveable { mutableStateOf(false) }
