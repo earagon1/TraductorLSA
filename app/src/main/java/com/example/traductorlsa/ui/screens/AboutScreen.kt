@@ -2,6 +2,7 @@ package com.example.traductorlsa.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -47,6 +53,7 @@ private val TECNOLOGIAS = listOf(
 @Composable
 fun AboutScreen(navController: NavHostController) {
     val context = LocalContext.current
+    var mostrarPolitica by rememberSaveable { mutableStateOf(false) }
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -116,7 +123,7 @@ fun AboutScreen(navController: NavHostController) {
 
         Aire(26)
         Text(
-            text = "El reconocimiento corre en tu dispositivo. No se sube ningún video a la nube.",
+            text = "El reconocimiento de señas corre en tu dispositivo. No se sube ningún video a la nube.",
             style = MaterialTheme.typography.bodySmall,
             color = SenarGrafito500,
             textAlign = TextAlign.Center,
@@ -125,7 +132,28 @@ fun AboutScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp),
         )
 
+        Aire(14)
+        // La política tiene que poder releerse. Antes solo se veía una vez, en el
+        // acceso, y quien ya estaba adentro no tenía cómo volver a ella.
+        Text(
+            text = "Leer la política de privacidad",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline,
+            ),
+            color = SenarAzul600,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { mostrarPolitica = true }
+                .padding(vertical = 6.dp),
+        )
+
         Aire(24)
+    }
+
+    if (mostrarPolitica) {
+        HojaDePrivacidad(onCerrar = { mostrarPolitica = false })
     }
 }
 

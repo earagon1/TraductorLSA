@@ -104,6 +104,16 @@ sealed class AppDestination(val route: String) {
 /** Techo de espera de Clerk una vez terminada la presentacion. */
 private const val ESPERA_MAXIMA_CLERK_MS = 2_500L
 
+/**
+ * Adonde se va despues de resolver el acceso, sea entrando con cuenta o sin
+ * ella. El tutorial se ve una vez por instalacion: no es una pregunta sobre
+ * quien sos sino sobre si ya sabes que hace la app.
+ *
+ * Lo usan la pantalla de acceso y la de Clerk, que son las dos puertas.
+ */
+internal fun destinoDespuesDelAcceso(estado: EstadoDeEntrada): String =
+    if (estado.vioLaPresentacion) AppDestination.Home.route else AppDestination.Onboarding.route
+
 /* ----------------- NavHost principal ----------------- */
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -145,11 +155,11 @@ fun AppNavHost(navController: NavHostController) {
                 // volver a mostrarle el tutorial.
                 if (haySesion && !estado.vioLaPresentacion) estado.vioLaPresentacion = true
 
-                val destino = when {
-                    !estado.vioLaPresentacion -> AppDestination.Onboarding.route
-                    haySesion || estado.eligioSinCuenta -> AppDestination.Home.route
-                    else -> AppDestination.AuthEntry.route
-                }
+                // Con sesion se entra derecho. Sin sesion se pasa por el acceso,
+                // que es la unica puerta: el modo invitada no deja marca, asi que
+                // la decision se vuelve a tomar en cada arranque.
+                val destino =
+                    if (haySesion) AppDestination.Home.route else AppDestination.AuthEntry.route
 
                 navController.navigate(destino) {
                     popUpTo(AppDestination.Splash.route) { inclusive = true }
@@ -165,9 +175,10 @@ fun AppNavHost(navController: NavHostController) {
                 onFinish = {
                     // El tutorial se ve una vez en la vida de la instalacion. No se
                     // borra al cerrar sesion: quien cierra sesion no se olvido de
-                    // que hace la app.
+                    // que hace la app. Llega despues del acceso, asi que de aca se
+                    // sale al inicio.
                     estado.vioLaPresentacion = true
-                    navController.navigate(AppDestination.AuthEntry.route) {
+                    navController.navigate(AppDestination.Home.route) {
                         popUpTo(AppDestination.Onboarding.route) { inclusive = true }
                     }
                 }
@@ -290,10 +301,14 @@ fun AuthClerkScreen(navController: NavHostController) {
     val isInitialized by Clerk.isInitialized.collectAsStateWithLifecycle(false)
     val user by Clerk.userFlow.collectAsStateWithLifecycle()
 
-    // Cuando Clerk está listo y hay usuaria ir al Home
+    val context = LocalContext.current
+    val estadoDeEntrada = remember(context) { EstadoDeEntrada.de(context) }
+
+    // Cuando Clerk está listo y hay usuaria, sale del flujo de acceso: al inicio
+    // si ya vio el tutorial, y si no, al tutorial primero.
     LaunchedEffect(isInitialized, user) {
         if (isInitialized && user != null) {
-            navController.navigate(AppDestination.Home.route) {
+            navController.navigate(destinoDespuesDelAcceso(estadoDeEntrada)) {
                 // limpiamos el flujo de auth del back stack
                 popUpTo(AppDestination.AuthEntry.route) { inclusive = true }
             }
