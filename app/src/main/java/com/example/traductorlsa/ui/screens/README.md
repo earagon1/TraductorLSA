@@ -38,7 +38,7 @@ El modo **voz a texto**. Usa `voice/VoiceToText`.
 El catálogo de señas, con búsqueda, categorías y el dibujo de cada una.
 
 - **`categorizeWord`** agrupa en categorías (`WordCategory`).
-- **`loadWordsFromAssets`** lee `words.json`, que guarda los ids con los que entrena el modelo: sin tildes ni signos (`adios`, `como_estas`). Esos ids **no pueden llegar tal cual a la pantalla**, así que se traducen a un nombre legible. Al agregar una seña nueva hay que sumarla también a esa traducción.
+- **`loadWordsFromAssets`** lee `words.json`, que guarda los ids con los que entrena el modelo: en minúsculas, sin tildes ni signos, y con espacio donde la frase lo lleva (`adios`, `como estas`, `por favor`). Esos ids **no pueden llegar tal cual a la pantalla**, así que se traducen a un nombre legible en `NOMBRES_PARA_MOSTRAR`. Al agregar una seña nueva hay que sumarla también a esa traducción, o se muestra el id crudo.
 - **`findWordImageInAssets`** busca el dibujo en `assets/dictionary/`, normalizando el nombre a minúsculas, sin tildes y con `_` en lugar de espacios.
 
 ---

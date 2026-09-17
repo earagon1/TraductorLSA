@@ -158,6 +158,14 @@ internal fun loadAllLabels(context: Context): List<String> {
     }
 }
 
+/**
+ * Lleva una etiqueta escrita a mano al formato de id del modelo.
+ *
+ * Minusculas, sin tildes ni signos, y CON espacios: "Por Favor" queda
+ * "por favor", igual que la carpeta en frame_actions/ y la entrada de
+ * words.json. Los espacios NO se convierten en guion bajo; eso es solo para
+ * armar nombres de archivo, y de eso se ocupa `archivoDeSena`.
+ */
 internal fun normalizeTrainingLabel(input: String): String {
     val lower = input.trim().lowercase(Locale.getDefault())
     val noAccents = Normalizer.normalize(lower, Normalizer.Form.NFD)
@@ -165,22 +173,31 @@ internal fun normalizeTrainingLabel(input: String): String {
 
     return noAccents
         .replace("[^a-z0-9_ ]".toRegex(), "")
-        .replace("\\s+".toRegex(), "_")
-        .trim('_')
+        .replace("\\s+".toRegex(), " ")
+        .trim()
 }
 
 /**
  * Normaliza una etiqueta para ORDENAR, no para mostrar.
  *
- * Saca los guiones bajos pero no pone tildes ni signos, asi que "como_estas"
- * queda "como estas" y no "¿Cómo estás?". Para texto visible o hablado va
+ * No pone tildes ni signos, asi que "como estas" queda igual
+ * y no "¿Cómo estás?". Para texto visible o hablado va
  * `nombreParaMostrar`, que es el unico lugar donde vive esa traduccion.
  */
 internal fun displayTrainingLabel(label: String): String =
     label.replace("_", " ").replace("\\s+".toRegex(), " ").trim()
 
+/**
+ * Nombre base del archivo del dibujo de una sena.
+ *
+ * Los ids llevan espacio ("por favor") pero los assets no, asi que se
+ * reemplazan por guion bajo: dictionary/por_favor.jpg.
+ */
+internal fun archivoDeSena(label: String): String =
+    normalizeTrainingLabel(label).replace(' ', '_')
+
 internal fun findTrainingWordImageInAssets(context: Context, word: String): String? {
-    val base = normalizeTrainingLabel(word)
+    val base = archivoDeSena(word)
     val exts = listOf("jpg", "jpeg", "png", "webp")
     val candidates = exts.map { "dictionary/$base.$it" } + exts.map { "$base.$it" }
 
@@ -376,7 +393,7 @@ fun CameraScreen(
                         // predicciones de baja confianza en voz alta, y repetia la
                         // misma palabra en cada ciclo de captura.
                         // Pasa por nombreParaMostrar igual que el subtitulo: el id
-                        // que devuelve el modelo es "por_favor", no "Por favor".
+                        // que devuelve el modelo es "por favor", no "Por favor".
                         if (ajustes.leerEnVozAlta) {
                             speechManager.speak(nombreParaMostrar(prediction.gesture))
                         }

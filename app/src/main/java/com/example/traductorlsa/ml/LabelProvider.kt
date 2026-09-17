@@ -20,7 +20,7 @@ class LabelProviderImpl(private val context: Context) : LabelProvider {
             }
         } catch (t: Throwable) {
             Log.e("LabelProvider", "No se pudo leer words.json: ${t.message}")
-            listOf("hola","adios","bien","como_estas","gracias")
+            listOf("hola","adios","bien","como estas","gracias")
         }
     }
 }

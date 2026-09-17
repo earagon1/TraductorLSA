@@ -550,7 +550,7 @@ internal fun categorizeWord(raw: String): WordCategory {
  * Nombre para mostrar.
  *
  * words.json guarda los ids con los que entrena el modelo, sin tildes ni
- * signos: "adios", "como_estas". Eso no puede llegar tal cual a la pantalla,
+ * signos: "adios", "como estas". Eso no puede llegar tal cual a la pantalla,
  * así que se traduce acá. Al agregar una seña nueva al modelo, sumar también
  * su nombre a este mapa.
  */
@@ -558,10 +558,10 @@ private val NOMBRES_PARA_MOSTRAR = mapOf(
     "hola" to "Hola",
     "adios" to "Adiós",
     "bien" to "Bien",
-    "como_estas" to "¿Cómo estás?",
+    "como estas" to "¿Cómo estás?",
     "gracias" to "Gracias",
-    "mi_nombre_es" to "Mi nombre es",
-    "por_favor" to "Por favor",
+    "mi nombre es" to "Mi nombre es",
+    "por favor" to "Por favor",
 )
 
 internal fun nombreParaMostrar(raw: String): String {

@@ -43,7 +43,7 @@ Carga las **etiquetas del modelo** desde el archivo `words.json`.
 
 - Lee el arreglo `word_ids` y extrae el nombre de cada seña.
 - Si el archivo no existe, usa etiquetas por defecto:  
-  `"hola", "adios", "bien", "como_estas", "gracias"`.
+  `"hola", "adios", "bien", "como estas", "gracias"`.
 
 **Uso:**
 ```kotlin
