@@ -56,6 +56,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.traductorlsa.camera.CameraManager
 import com.example.traductorlsa.camera.FrameAnalyzer
+import com.example.traductorlsa.dataset.Participante
 import com.example.traductorlsa.detection.HandTrackerImpl
 import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
@@ -437,7 +438,7 @@ fun CameraScreen(
                         samples = listOf(TrainingSample(label = selected.label, seq = savedFrames)),
                         T = tUsed,
                         D = dUsed,
-                        clientId = clientIdActual()
+                        participantId = participanteActual()
                     )
                     sessionSavedCount += 1
                     conteoPorSena = conteoPorSena.toMutableMap().apply {
@@ -1530,29 +1531,30 @@ fun loadOrInitDataset(context: Context, T: Int, D: Int): JSONObject {
 /**
  * Guarda muestras en el dataset local, agrupadas por fecha.
  *
- * Cada muestra lleva `client_id`: el id de la cuenta que la grabo. Sin ese
- * campo no hay forma de saber de quien es cada gesto, y el dataset no sirve
- * para el experimento de aprendizaje federado, que necesita justamente
- * agrupar las muestras por persona. Tampoco serviria para medir generalizacion
- * interusuario. Se omite la clave si no hay sesion, asi las muestras sin
- * atribucion quedan identificables en lugar de mezclarse con las demas.
+ * Cada muestra lleva `participant_id`: el seudonimo de la cuenta que la grabo
+ * (ver [Participante]). Sin ese campo no hay forma de saber de quien es cada
+ * gesto, y el dataset no sirve para el aprendizaje federado ni para medir la
+ * generalizacion a personas no vistas. Se omite la clave si no hay sesion, asi
+ * las muestras sin atribucion quedan identificables en lugar de mezclarse con
+ * las demas.
  */
 fun appendSamplesByDate(
     context: Context,
     samples: List<TrainingSample>,
     T: Int,
     D: Int,
-    clientId: String? = null,
+    participantId: String? = null,
 ): File {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     val root = loadOrInitDataset(context, T, D)
+    seudonimizarMuestrasViejas(root)
     val byDate = root.getJSONObject("by_date")
     val arr = if (byDate.has(today)) byDate.getJSONArray(today) else JSONArray()
     samples.forEach { s ->
         val seqJson = JSONArray()
         s.seq.forEach { f -> val fArr = JSONArray(); f.forEach { v -> fArr.put(v) }; seqJson.put(fArr) }
         val muestra = JSONObject().put("label", s.label).put("seq", seqJson)
-        if (!clientId.isNullOrBlank()) muestra.put("client_id", clientId)
+        if (!participantId.isNullOrBlank()) muestra.put("participant_id", participantId)
         arr.put(muestra)
     }
     byDate.put(today, arr)
@@ -1562,12 +1564,42 @@ fun appendSamplesByDate(
 }
 
 /**
- * Id de la cuenta activa, o null si no hay sesion.
+ * Seudonimo de la cuenta activa, o null si no hay sesion.
  *
  * Se lee del StateFlow en el momento de guardar y no por composicion, para que
- * la lambda de captura no se quede con un valor viejo.
+ * la lambda de captura no se quede con un valor viejo. El id crudo de Clerk no
+ * sale de esta funcion: al dataset solo llega el seudonimo.
  */
-fun clientIdActual(): String? = Clerk.userFlow.value?.id
+fun participanteActual(): String? = Participante.idSeudonimo(Clerk.userFlow.value?.id)
+
+/**
+ * Reemplaza el `client_id` crudo de las muestras grabadas antes del seudonimo
+ * por su `participant_id`. Devuelve true si cambio algo.
+ *
+ * Esas muestras guardaban el id de la cuenta de Clerk tal cual. Se migran en el
+ * lugar en vez de descartarlas, y con la misma derivacion, asi siguen agrupadas
+ * con las muestras nuevas de la misma persona.
+ */
+fun seudonimizarMuestrasViejas(root: JSONObject): Boolean {
+    val byDate = root.optJSONObject("by_date") ?: return false
+    var cambio = false
+    byDate.keys().forEach { fecha ->
+        val items = byDate.optJSONArray(fecha) ?: return@forEach
+        for (i in 0 until items.length()) {
+            val muestra = items.optJSONObject(i) ?: continue
+            if (!muestra.has("client_id")) continue
+            val crudo = muestra.optString("client_id")
+            if (!muestra.has("participant_id")) {
+                // Un client_id que ya es seudonimo no se vuelve a derivar.
+                val id = if (Participante.esSeudonimo(crudo)) crudo else Participante.idSeudonimo(crudo)
+                if (id != null) muestra.put("participant_id", id)
+            }
+            muestra.remove("client_id")
+            cambio = true
+        }
+    }
+    return cambio
+}
 
 fun removeLastDatasetSample(context: Context): String? {
     val file = datasetFile(context)
@@ -1605,6 +1637,10 @@ fun shareDatasetJsonFile(context: Context): Boolean {
     try {
         val file = datasetFile(context)
         if (!file.exists() || file.length() == 0L) return false
+        // Antes de que el archivo salga del telefono, ningun id de cuenta crudo.
+        // Si el JSON no se puede leer, no se comparte: no hay forma de garantizarlo.
+        val root = JSONObject(file.readText())
+        if (seudonimizarMuestrasViejas(root)) file.writeText(root.toString())
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/json"

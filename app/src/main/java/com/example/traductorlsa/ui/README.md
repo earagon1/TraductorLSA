@@ -42,8 +42,9 @@ La pantalla de cámara, que sirve a **dos modos** con el mismo pipeline:
 #### **Dataset local**
 El archivo `lsa_samples.json` se maneja desde acá:
 
-- **`appendSamplesByDate(context, samples, T, D, clientId)`** — guarda muestras agrupadas por fecha. Cada muestra lleva **`client_id`**, el id de la cuenta que la grabó: sin ese campo no hay forma de saber de quién es cada gesto, y el dataset no sirve ni para el experimento de aprendizaje federado ni para medir generalización interusuario. Si no hay sesión se omite la clave, así las muestras sin atribución quedan identificables.
-- **`clientIdActual()`** — lee el id del `StateFlow` de Clerk **en el momento de guardar**, no por composición, para que la lambda de captura no se quede con un valor viejo.
+- **`appendSamplesByDate(context, samples, T, D, participantId)`** — guarda muestras agrupadas por fecha. Cada muestra lleva **`participant_id`**, el seudónimo de la cuenta que la grabó (ver `dataset/Participante.kt`): sin ese campo no hay forma de saber de quién es cada gesto, y el dataset no sirve ni para el experimento de aprendizaje federado ni para medir generalización interusuario. Si no hay sesión se omite la clave, así las muestras sin atribución quedan identificables.
+- **`participanteActual()`** — lee la cuenta del `StateFlow` de Clerk **en el momento de guardar**, no por composición, para que la lambda de captura no se quede con un valor viejo, y devuelve solo su seudónimo: el id crudo de Clerk no llega al dataset.
+- **`seudonimizarMuestrasViejas(root)`** — las muestras grabadas antes del seudónimo traían `client_id` con el id crudo de la cuenta. Se reemplaza por su `participant_id` al guardar la siguiente muestra y siempre antes de compartir el archivo, así el id crudo no sale del teléfono.
 - **`removeLastDatasetSample`** — deshacer la última muestra.
 - **`shareDatasetJsonFile`** — exporta el JSON por el selector del sistema, vía `FileProvider`.
 - **`loadDatasetCountsByLabel`** — cuántas muestras hay por seña.
