@@ -84,3 +84,17 @@ El cuantizado va primero a propósito. Antes ganaba el float32 y el optimizado v
 - Recibe las secuencias normalizadas de `SequenceBuffer` (en `features/`).
 - `GestureEngine` es quien lo invoca; nadie más habla con el intérprete directamente.
 - Las etiquetas salen de `LabelProvider`, que lee el mismo `words.json` con el que se entrenó el modelo. **El orden importa**: los índices de salida de la red corresponden a las posiciones de ese arreglo.
+
+---
+
+## **`MetricasCaptura.kt`: cuánto tarda cada etapa**
+
+En los builds depurables, cada captura (completa o abortada) deja **una línea JSON**
+con los tiempos de cada etapa por frame (`conv`, `rot`, `mp`, `feat`: media, p95 y
+máximo), la inferencia, los FPS, el top-3 y en qué mitad del vector apareció cada mano.
+- Se escribe en logcat con el tag `SENAR_METRICS` **y** en `files/metricas/senar_metrics.jsonl`. El archivo existe porque el buffer de logcat de algunos dispositivos es de 256 KB y pierde una sesión entera en minutos.
+- Las etapas también se marcan con `android.os.Trace` (`senar:conv`, `senar:rot`, `senar:mp`, `senar:feat`, `senar:infer`) para Perfetto.
+- En release no se mide ni se escribe nada (`Metricas.activas`, que fija `SenarApp`).
+- Para resumir: `tools/logcat_metrics.py`. Para congelar una línea base: `tools/linea_base.py` → `docs/metricas/baseline.json`.
+
+Reemplaza a los `Log.d` que `GestureEngine` escribía en **cada frame**, también en release.

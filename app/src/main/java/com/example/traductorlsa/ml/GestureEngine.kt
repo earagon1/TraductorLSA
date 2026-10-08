@@ -9,7 +9,7 @@ import com.example.traductorlsa.features.SequenceBuffer
 import com.example.traductorlsa.model.NormPoint
 import com.example.traductorlsa.model.PredictionResult
 import com.google.mediapipe.framework.image.BitmapImageBuilder
-import android.os.SystemClock
+import android.os.Trace
 
 
 class GestureEngine(
@@ -39,15 +39,23 @@ class GestureEngine(
 
     private var isFrontCamera = true
 
+    private val acumulador = AcumuladorCaptura()
+
     private var noHandFrames = 0
     private val maxNoHandFrames = 10 // tolera ~10 frames sin mano (~0.3s si tenés 30fps, ~1s si tenés 10fps)
     private var handFrames = 0
     private val minHandFrames = 5
 
 
-    fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long) {
+    /**
+     * @param convNanos lo que tardó la conversión YUV -> Bitmap en [FrameAnalyzer],
+     * que ocurre antes de llegar acá. Solo se usa para las métricas.
+     */
+    fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long, convNanos: Long = 0L) {
         // ============================================================
         // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
+        val t0 = System.nanoTime()
+        Trace.beginSection("senar:rot")
         val correctedBitmap = when (rotationDeg) {
             90 -> Bitmap.createBitmap(
                 bitmap, 0, 0, bitmap.width, bitmap.height,
@@ -59,19 +67,19 @@ class GestureEngine(
             )
             else -> bitmap
         }
+        Trace.endSection()
+        val t1 = System.nanoTime()
 
         // Ya está rotado correctamente, así que pasamos rotación 0 al tracker
+        Trace.beginSection("senar:mp")
         val mpImage = BitmapImageBuilder(correctedBitmap).build()
         val res = handTracker.detect(mpImage, 0)
+        Trace.endSection()
+        val t2 = System.nanoTime()
 
         // ============================================================
         // 🔍 Flip de coordenadas solo para overlay (no afecta el modelo)
         val handsOverlay = featureBuilder.toOverlayPoints(res, 0)
-
-        // Loguear coordenadas antes del flip
-        handsOverlay.firstOrNull()?.firstOrNull()?.let { p ->
-            Log.d("GestureDebug", "Antes del flip: x=${p.x}, y=${p.y}, isFrontCamera=$isFrontCamera")
-        }
 
         // Invertir coordenadas X solo si la cámara es frontal (para coincidir con el preview espejado)
         val flippedOverlay = if (isFrontCamera) {
@@ -80,27 +88,12 @@ class GestureEngine(
             handsOverlay
         }
 
-        // Loguear coordenadas después del flip
-        flippedOverlay.firstOrNull()?.firstOrNull()?.let { p ->
-            Log.d("GestureDebug", "Después del flip: x=${p.x}, y=${p.y}")
-        }
-
         // Enviar overlay a la UI
         onHands?.invoke(flippedOverlay, correctedBitmap.width, correctedBitmap.height, 0, isFrontCamera)
 
         // ============================================================
 
         val hasHands = res != null && res.landmarks().isNotEmpty()
-
-        if (hasHands && res != null) {
-            try {
-                val handednessList = res.handednesses()
-                val label = handednessList?.firstOrNull()?.firstOrNull()?.categoryName() ?: "Unknown"
-                Log.d("GestureDebug", "🖐 Mano detectada: $label")
-            } catch (e: Exception) {
-                Log.d("GestureDebug", "🖐 Mano detectada (sin info de lado)")
-            }
-        }
 
         when (state) {
             CaptureState.IDLE -> {
@@ -127,6 +120,7 @@ class GestureEngine(
                     if (ts - waitStartTime >= 500) {
                         captureStartTime = ts
                         sequenceBuffer.clear()
+                        acumulador.limpiar()
                         onCaptureProgress?.invoke(0, 15)
                         state = CaptureState.CAPTURING
                         Log.d("GestureEngine", "⏱️ Inicio de captura en $ts ms")
@@ -136,32 +130,34 @@ class GestureEngine(
 
             CaptureState.CAPTURING -> {
                 if (hasHands) {
+                    Trace.beginSection("senar:feat")
+                    // isFrontCamera=false es intencional: el frame llega sin espejar y
+                    // la etiqueta de HandLandmarker ya corresponde a la mano del sujeto.
+                    // Medido el 2026-10-05/07 en la PC y en la tablet: coincide con el
+                    // entrenamiento (contract/features_v2.md, regla 3).
                     val vec = featureBuilder.toVector126(
                         res,
-                        false, // isFrontCamera ya se maneja en el mapeo interno, o puedes pasar isFrontCamera aquí si tu lógica lo requiere, pero nota que en tu código original pasabas 'false'. Revisa si eso era intencional.
+                        false,
                         0,
                         correctedBitmap.width,
                         correctedBitmap.height
                     )
-
                     sequenceBuffer.push(vec)
+                    Trace.endSection()
+                    val t3 = System.nanoTime()
 
-                    val leftCount = vec.slice(0..62).count { it != 0f }
-                    val rightCount = vec.slice(63..125).count { it != 0f }
-
-                    val activeHand = when {
-                        rightCount > leftCount -> "Right"
-                        leftCount > rightCount -> "Left"
-                        else -> "Unknown"
+                    if (Metricas.activas) {
+                        acumulador.registrarFrame(
+                            mapOf(Etapa.CONV to convNanos, Etapa.ROT to t1 - t0, Etapa.MP to t2 - t1, Etapa.FEAT to t3 - t2),
+                            vec
+                        )
                     }
-
-                    Log.d("GestureDebug", "🖐 Mano activa: $activeHand (L=$leftCount, R=$rightCount)")
 
                     val size = sequenceBuffer.recent(targetFrames).size
                     onCaptureProgress?.invoke(size, targetFrames)
-                    Log.d("GestureEngine", "📸 Capturando frames: $size/15")
 
                     if (size >= targetFrames) {
+                        val targetUsado = targetFrames
                         val captureDuration = ts - captureStartTime
                         val fps = targetFrames.toFloat() / (captureDuration / 1000f)
                         val newTarget = when {
@@ -174,13 +170,24 @@ class GestureEngine(
                         Log.d("GestureEngine", "✅ Captura: ${captureDuration}ms, FPS=%.1f, nuevo target=$newTarget".format(fps))
                         onCaptureStats?.invoke(captureDuration, 0, fps, newTarget)
 
-                        autoPredict()
+                        // Se clasifican los frames capturados con el target de ESTA
+                        // captura. Antes se pedía recent(targetFrames) después de
+                        // actualizarlo: si el target bajaba de 15 a 10 se clasificaban
+                        // solo los últimos 10 frames de los 15 capturados.
+                        val (top3, inferNanos) = autoPredict(targetUsado)
+                        emitirMetricas("captura", captureDuration, fps, targetUsado, size, inferNanos, top3)
                         sequenceBuffer.clear()
                         onCaptureProgress?.invoke(0, targetFrames)
                         state = CaptureState.DONE
                     }
                 } else {
                     Log.d("GestureEngine", "⏹️ Manos perdidas en CAPTURING → volver a IDLE")
+                    // Las capturas abortadas también se reportan: en la tablet fueron
+                    // el 35 % y son parte de la experiencia de uso.
+                    val parcial = sequenceBuffer.recent(targetFrames).size
+                    val duracion = ts - captureStartTime
+                    val fpsParcial = if (duracion > 0) parcial * 1000f / duracion else 0f
+                    emitirMetricas("abortada", duracion, fpsParcial, targetFrames, parcial, null, emptyList())
                     sequenceBuffer.clear()
                     onCaptureProgress?.invoke(0, 15)
                     state = CaptureState.IDLE
@@ -200,17 +207,24 @@ class GestureEngine(
         }
     }
 
-    private fun autoPredict() {
+    /**
+     * Clasifica los últimos [nFrames] frames capturados. Devuelve el top-3 (etiqueta,
+     * probabilidad) y los nanosegundos de inferencia, para las métricas.
+     */
+    private fun autoPredict(nFrames: Int): Pair<List<Pair<String, Float>>, Long?> {
         val T = classifier.T
         val D = classifier.D
-        val recent = sequenceBuffer.recent(targetFrames)
-        if (recent.isEmpty()) return
+        val recent = sequenceBuffer.recent(nFrames)
+        if (recent.isEmpty()) return emptyList<Pair<String, Float>>() to null
 
         val seqT = sequenceBuffer.normalizeTo(recent, T, D)
 
-        val startInfer = SystemClock.uptimeMillis()
-        val (idx, prob, probs) = classifier.inferTop(seqT, labelProvider.labels)
-        val inferDuration = SystemClock.uptimeMillis() - startInfer
+        Trace.beginSection("senar:infer")
+        val startInfer = System.nanoTime()
+        val (_, _, probs) = classifier.inferTop(seqT, labelProvider.labels)
+        val inferNanos = System.nanoTime() - startInfer
+        Trace.endSection()
+        val inferDuration = inferNanos / 1_000_000
 
         // 🔹 AQUÍ va lo que te pasé:
         val sorted = probs.mapIndexed { i, p -> i to p }
@@ -221,8 +235,6 @@ class GestureEngine(
             PredictionResult(labelProvider.labels[i], p, "Unknown")
         }
 
-        Log.d("GestureEngine", "🤖 Top-3: $predictions")
-
         // 🔹 Para compatibilidad → seguir notificando la mejor predicción
         onPrediction?.invoke(predictions.first())
 
@@ -230,6 +242,28 @@ class GestureEngine(
         onTopPredictions?.invoke(predictions, seqT.toTypedArray())
 
         onCaptureStats?.invoke(0, inferDuration, 0f, targetFrames)
+        return predictions.map { it.gesture to it.confidence } to inferNanos
+    }
+
+    /** Una línea JSON por captura (completa o abortada); ver [Metricas]. */
+    private fun emitirMetricas(
+        evento: String,
+        duracionMs: Long,
+        fps: Float,
+        target: Int,
+        nFrames: Int,
+        inferNanos: Long?,
+        top3: List<Pair<String, Float>>,
+    ) {
+        if (!Metricas.activas) return
+        val linea = lineaMetricas(
+            evento, duracionMs, fps, target, nFrames, acumulador.resumen(),
+            inferNanos?.let { it / 1e6 }, top3,
+            acumulador.framesLh, acumulador.framesRh, acumulador.framesAmbas,
+        )
+        Log.i(Metricas.TAG, linea)
+        Metricas.guardar(linea)
+        acumulador.limpiar()
     }
 
 

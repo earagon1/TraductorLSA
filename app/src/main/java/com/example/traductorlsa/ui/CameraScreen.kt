@@ -501,8 +501,8 @@ fun CameraScreen(
         camController.bindToLifecycle(lifecycleOwner)
         camController.clearImageAnalysisAnalyzer()
 
-        val analyzer = FrameAnalyzer(context) { bitmap, rotationDeg, ts ->
-            engine.process(bitmap, rotationDeg, ts)
+        val analyzer = FrameAnalyzer(context) { bitmap, rotationDeg, ts, convNanos ->
+            engine.process(bitmap, rotationDeg, ts, convNanos)
         }
         camController.setImageAnalysisAnalyzer(executor) { imageProxy ->
             analyzer.analyze(imageProxy)
