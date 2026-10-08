@@ -96,11 +96,11 @@ dependencies {
     // MediaPipe Tasks (hands)
     implementation("com.google.mediapipe:tasks-vision:0.10.29")
 
-    // TensorFlow Lite
+    // TensorFlow Lite. Sin select-tf-ops (el modelo ya no usa ops Flex, y esa
+    // librería era 169 de los 243 MB del APK debug) ni gpu (nunca se usó el
+    // delegate de GPU; la inferencia tarda menos de 2 ms en CPU).
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
-    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
 
     // Clerk Android (API + UI)
     implementation("com.clerk:clerk-android-api:0.1.28")

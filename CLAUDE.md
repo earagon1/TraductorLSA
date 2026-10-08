@@ -20,7 +20,7 @@ CameraX (ImageAnalysis) → YuvToRgbConverter (YUV→JPEG→Bitmap) → GestureE
   → rotación 90/270 a Bitmap "arriba" → HandTracker (MediaPipe HandLandmarker, IMAGE, hand_landmarker.task)
   → FeatureBuilder.toVector126 (lh[63] ‖ rh[63], corrección a lienzo cuadrado)
   → SequenceBuffer (captura de 10/15/20 frames según los FPS → normalizeTo 15)
-  → TFLiteClassifier (actions_15_opt.tflite, 15×126 → C) + LabelProvider (words.json)
+  → TFLiteClassifier (actions_15_opt.tflite sin ops Flex, 15×126 → C) + LabelProvider (words.json)
   → top-3 → UI (CameraScreen) + SpeechManager (TTS)
 ```
 - Máquina de estados de `ml/GestureEngine.kt`: IDLE → WAITING (500 ms con mano) → CAPTURING (solo frames con mano; si se pierde la mano, vuelve a IDLE) → DONE.
@@ -35,6 +35,10 @@ CameraX (ImageAnalysis) → YuvToRgbConverter (YUV→JPEG→Bitmap) → GestureE
 ./gradlew.bat compileDebugKotlin -q    # chequeo rápido de compilación
 python tools/chequeo_imports.py && python tools/chequeo_orden.py && python tools/chequeo_compose.py
 ```
+- **Tests instrumentados sin perder el dataset:** `connectedAndroidTest` desinstala la app al terminar y borra el dataset del teléfono. Usar:
+  `./gradlew.bat installDebug installDebugAndroidTest` y `adb shell am instrument -w -e class <Clase> com.example.traductorlsa.test/androidx.test.runner.AndroidJUnitRunner`.
+- **Dispositivo por Wi-Fi:** la tablet de Evelin (Lenovo TB321FU) está vinculada con `adb pair`; si la depuración inalámbrica está activa, `adb devices` la encuentra sola por mDNS. En Git Bash usar `MSYS_NO_PATHCONV=1` para rutas del dispositivo (`/sdcard/...`).
+- **Métricas del pipeline:** `adb shell run-as com.example.traductorlsa cat files/metricas/senar_metrics.jsonl` → `tools/logcat_metrics.py` / `tools/linea_base.py`.
 - `adb` no está en el PATH: `"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"`.
 - Logs del pipeline en el dispositivo: `adb logcat -s GestureEngine GestureDebug TFLiteClassifier`.
 - `MainActivity` sube el volumen al máximo en cada arranque (H-A23): ojo al probar.

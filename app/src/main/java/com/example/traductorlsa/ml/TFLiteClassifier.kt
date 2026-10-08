@@ -31,15 +31,19 @@ class TFLiteClassifier(
         // de inferencia no se notan al lado de los segundos que tarda capturar
         // la secuencia.
         //
-        // La variante entera (int8 con calibracion) quedo descartada: mismo
-        // tamano que la dinamica pero 26 veces mas lenta, porque TFLite no
-        // tiene kernels int8 para LSTM y las capas caen al delegate Flex.
+        // Desde 2026-10-08 el modelo no usa ops Flex: las LSTM van desenrolladas
+        // en ops builtin (modelo_LSA/lsa/export.py), así que la app ya no carga
+        // tensorflow-lite-select-tf-ops, que era el 70 % del APK. Da las mismas
+        // predicciones que el modelo Flex anterior en las 1200 secuencias del
+        // dataset. La paridad con el runtime de Android la verifica
+        // ModeloParidadTest. El float32 se sacó: era Flex y acá ya no corre.
+        //
+        // La variante entera (int8) quedó descartada con Flex por lenta; sin
+        // Flex vuelve a ser candidata, pendiente de medir (PY-X2).
         val modelName = when {
             assetExists("actions_15_opt.tflite") -> "actions_15_opt.tflite"
-            assetExists("actions_15_f32.tflite") -> "actions_15_f32.tflite"
             assetExists("modelo.tflite")        -> "modelo.tflite"
-            assetExists("model.tflite")         -> "model.tflite"
-            else                                -> "actions_15_f32.tflite"
+            else                                -> "model.tflite"
         }
         Log.d("TFLiteClassifier", "Cargando modelo: $modelName")
 
