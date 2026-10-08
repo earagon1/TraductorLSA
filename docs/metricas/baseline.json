@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-10-08",
+  "nota": "Linea base T-A02. Lenovo TB321FU (Snapdragon 8 Gen 3) en vertical, Evelin, 14 capturas en Traducir sena (11 completas). Modelo publicado con Flex; contrato v1 en la app.",
+  "commit_app": "f0d1c14",
+  "modelo_tflite_sha256": "8efedad8010d3fa4093494aae8b5f970c2adbed4a049cf58d612df7b74f73b8d",
+  "words_json_sha256": "c04403e60efa5f3b406dd478d95ac1707cdd404b46461d242bcb77ac22c9be34",
+  "dispositivo": {
+    "modelo": "TB321FU",
+    "fabricante": "LENOVO",
+    "android": "16",
+    "soc": "SM8650"
+  },
+  "capturas_crudas": "docs/metricas/baseline_capturas.jsonl",
+  "apk_debug": {
+    "archivo": "app/build/outputs/apk/debug/app-debug.apk",
+    "total_mb": 243.47,
+    "por_abi_mb": {
+      "arm64-v8a": 116.61,
+      "armeabi-v7a": 82.65
+    },
+    "libs_nativas_mb": {
+      "libtensorflowlite_flex_jni.so": 169.38,
+      "libmediapipe_tasks_vision_jni.so": 17.34,
+      "libtensorflowlite_jni.so": 6.57,
+      "libtensorflowlite_gpu_jni.so": 5.91,
+      "libimage_processing_util_jni.so": 0.05,
+      "libandroidx.graphics.path.so": 0.02
+    },
+    "resto_mb": {
+      "dex": 32.84,
+      "assets": 7.9,
+      "otros": 1.98,
+      "res": 0.71,
+      "com": 0.13,
+      "META-INF": 0.03,
+      "google": 0.02,
+      "kotlin": 0.01
+    }
+  },
+  "pipeline": {
+    "capturas": 14,
+    "completas": 11,
+    "abortadas": 3,
+    "tasa_abortadas": 0.21428571428571427,
+    "conv_ms_p50": 3.411,
+    "conv_ms_p95": 11.3,
+    "rot_ms_p50": 2.878,
+    "rot_ms_p95": 11.052,
+    "mp_ms_p50": 66.138,
+    "mp_ms_p95": 163.829,
+    "feat_ms_p50": 0.346,
+    "feat_ms_p95": 0.992,
+    "frame_total_ms_p50": 72.77300000000001,
+    "infer_ms_p50": 1.683,
+    "infer_ms_p95": 5.544,
+    "fps_p50": 13.123,
+    "fps_p95": 16.63,
+    "duracion_ms_p50": 1143,
+    "duracion_ms_p95": 1487,
+    "confianza_top1_mediana": 0.98072,
+    "confianza_top1_bajo_0_7": 0.2727272727272727
+  },
+  "pendiente": [
+    "ram_pico_mb",
+    "arranque_en_frio_ms",
+    "apk_release_r8"
+  ]
+}
