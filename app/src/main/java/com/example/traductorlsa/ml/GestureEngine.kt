@@ -3,7 +3,11 @@ package com.example.traductorlsa.ml
 
 import android.graphics.Bitmap
 import android.util.Log
+import com.example.traductorlsa.dataset.CapturaCruda
+import com.example.traductorlsa.dataset.FrameCrudo
+import com.example.traductorlsa.dataset.ManoCruda
 import com.example.traductorlsa.detection.HandTracker
+import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import com.example.traductorlsa.features.FeatureBuilder
 import com.example.traductorlsa.features.SequenceBuffer
 import com.example.traductorlsa.model.NormPoint
@@ -40,6 +44,18 @@ class GestureEngine(
     private var isFrontCamera = true
 
     private val acumulador = AcumuladorCaptura()
+
+    // Landmarks tal como salen de MediaPipe, frame por frame, para el dataset v2.
+    private val framesCrudos = ArrayList<FrameCrudo>(32)
+    private var rotacionCaptura = 0
+
+    /**
+     * La última captura completa, en crudo. Se fija justo antes de [onTopPredictions],
+     * así quien guarda la muestra de entrenamiento la tiene a mano en ese callback.
+     */
+    @Volatile
+    var ultimaCaptura: CapturaCruda? = null
+        private set
 
     private var noHandFrames = 0
     private val maxNoHandFrames = 10 // tolera ~10 frames sin mano (~0.3s si tenés 30fps, ~1s si tenés 10fps)
@@ -121,6 +137,8 @@ class GestureEngine(
                         captureStartTime = ts
                         sequenceBuffer.clear()
                         acumulador.limpiar()
+                        framesCrudos.clear()
+                        rotacionCaptura = rotationDeg
                         onCaptureProgress?.invoke(0, 15)
                         state = CaptureState.CAPTURING
                         Log.d("GestureEngine", "⏱️ Inicio de captura en $ts ms")
@@ -143,6 +161,7 @@ class GestureEngine(
                         correctedBitmap.height
                     )
                     sequenceBuffer.push(vec)
+                    framesCrudos.add(FrameCrudo(ts - captureStartTime, manosCrudas(res)))
                     Trace.endSection()
                     val t3 = System.nanoTime()
 
@@ -169,6 +188,16 @@ class GestureEngine(
 
                         Log.d("GestureEngine", "✅ Captura: ${captureDuration}ms, FPS=%.1f, nuevo target=$newTarget".format(fps))
                         onCaptureStats?.invoke(captureDuration, 0, fps, newTarget)
+
+                        ultimaCaptura = CapturaCruda(
+                            frames = framesCrudos.takeLast(targetUsado),
+                            anchoImg = correctedBitmap.width,
+                            altoImg = correctedBitmap.height,
+                            rotacionDeg = rotacionCaptura,
+                            camaraFrontal = isFrontCamera,
+                            fps = fps,
+                            duracionMs = captureDuration,
+                        )
 
                         // Se clasifican los frames capturados con el target de ESTA
                         // captura. Antes se pedía recent(targetFrames) después de
@@ -243,6 +272,25 @@ class GestureEngine(
 
         onCaptureStats?.invoke(0, inferDuration, 0f, targetFrames)
         return predictions.map { it.gesture to it.confidence } to inferNanos
+    }
+
+    /**
+     * Las manos del resultado de MediaPipe sin tocar: ni lateralidad corregida ni
+     * corrección de aspecto. Es lo que el dataset v2 necesita para poder aplicar
+     * después cualquier versión del contrato.
+     */
+    private fun manosCrudas(res: HandLandmarkerResult?): List<ManoCruda> {
+        if (res == null) return emptyList()
+        val landmarks = res.landmarks()
+        val lados = res.handednesses()
+        return landmarks.indices.map { i ->
+            val mejor = lados.getOrNull(i)?.maxByOrNull { it.score() }
+            val lm = FloatArray(landmarks[i].size * 3)
+            landmarks[i].forEachIndexed { k, p ->
+                lm[3 * k] = p.x(); lm[3 * k + 1] = p.y(); lm[3 * k + 2] = p.z()
+            }
+            ManoCruda(mejor?.categoryName() ?: "Unknown", mejor?.score() ?: 0f, lm)
+        }
     }
 
     /** Una línea JSON por captura (completa o abortada); ver [Metricas]. */

@@ -56,7 +56,16 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.traductorlsa.camera.CameraManager
 import com.example.traductorlsa.camera.FrameAnalyzer
+import com.example.traductorlsa.dataset.DatasetV2
 import com.example.traductorlsa.dataset.Participante
+import com.example.traductorlsa.dataset.SesionGuiada
+import com.example.traductorlsa.ui.camera.DialogoElegirParticipante
+import com.example.traductorlsa.ui.camera.DialogoPausa
+import com.example.traductorlsa.ui.camera.DialogoSesionTerminada
+import com.example.traductorlsa.ui.camera.FijarVertical
+import com.example.traductorlsa.ui.camera.ProgresoSesion
+import com.example.traductorlsa.ui.camera.TiraSesionGuiada
+import com.example.traductorlsa.ui.camera.cargarPlanilla
 import com.example.traductorlsa.detection.HandTrackerImpl
 import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
@@ -271,6 +280,15 @@ fun CameraScreen(
     var showWordPicker by remember { mutableStateOf(false) }
     var showReference by remember { mutableStateOf(false) }
 
+    // ---- SESIÓN GUIADA (protocolo de captura, docs/captura/) ----
+    val planilla = remember { cargarPlanilla(context) }
+    var sesion by remember { mutableStateOf<SesionGuiada?>(null) }
+    var elegirParticipante by remember { mutableStateOf(false) }
+    var mostrarPausa by remember { mutableStateOf(false) }
+    var sesionTerminada by remember { mutableStateOf<SesionGuiada?>(null) }
+
+    FijarVertical()
+
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
@@ -333,9 +351,34 @@ fun CameraScreen(
         }
     }
 
+    /** La seña de la planilla como opción del selector; "nada" no está en words.json. */
+    fun opcionPara(clase: String): TrainingWordOption =
+        (officialWords + customWords).firstOrNull { it.label == clase }
+            ?: TrainingWordOption(clase, findTrainingWordImageInAssets(context, clase), isOfficial = false)
+                .also { customWords += it }
+
+    /** Mueve la sesión y deja elegida la seña que toca, con la pausa si corresponde. */
+    fun irA(nueva: SesionGuiada) {
+        sesion = nueva
+        ProgresoSesion.guardar(context, nueva)
+        val toma = nueva.actual
+        if (toma == null) {
+            sesionTerminada = nueva
+            sesion = null
+            selectedWord = null
+            return
+        }
+        selectedWord = opcionPara(toma.clase)
+        mostrarPausa = nueva.pausaAntes
+    }
+
     fun deshacerUltimaMuestra() {
         scope.launch {
-            val quitada = withContext(Dispatchers.IO) { removeLastDatasetSample(context) }
+            val quitada = withContext(Dispatchers.IO) {
+                removeLastDatasetSample(context).also { if (it != null) DatasetV2.quitarUltima(context) }
+            }
+            // En la sesión guiada, deshacer vuelve a la toma anterior para repetirla.
+            if (quitada != null) sesion?.let { irA(it.retroceder()); mostrarPausa = false }
             if (quitada != null) {
                 sessionSavedCount = (sessionSavedCount - 1).coerceAtLeast(0)
                 conteoPorSena = conteoPorSena.toMutableMap().apply {
@@ -369,7 +412,9 @@ fun CameraScreen(
     }
 
     LaunchedEffect(trainingMode, selectedWord) {
-        if (trainingMode && selectedWord == null && senaInicial == null) showWordPicker = true
+        if (trainingMode && selectedWord == null && senaInicial == null && sesion == null &&
+            !elegirParticipante && sesionTerminada == null
+        ) showWordPicker = true
     }
 
     DisposableEffect(engine, trainingMode, selectedWord) {
@@ -427,19 +472,27 @@ fun CameraScreen(
         }
 
         engine.onTopPredictions = { _, seq ->
-            if (trainingMode) {
+            val sesionActual = sesion
+            // Durante la pausa la cámara sigue viendo manos: no se guarda nada hasta
+            // que la persona toque Continuar.
+            if (trainingMode && !mostrarPausa) {
                 val selected = selectedWord
                 if (selected != null && seq.isNotEmpty()) {
                     val savedFrames = seq.map { it.toList() }
                     tUsed = savedFrames.size
                     dUsed = if (savedFrames.isNotEmpty()) savedFrames[0].size else 0
+                    val participante = participanteActual()
                     appendSamplesByDate(
                         context = context,
                         samples = listOf(TrainingSample(label = selected.label, seq = savedFrames)),
                         T = tUsed,
                         D = dUsed,
-                        participantId = participanteActual()
+                        participantId = participante
                     )
+                    engine.ultimaCaptura?.let { captura ->
+                        DatasetV2.guardarMuestra(context, selected.label, participante, captura, sesionActual?.meta())
+                    }
+                    if (sesionActual != null) scope.launch { irA(sesionActual.avanzar()) }
                     sessionSavedCount += 1
                     conteoPorSena = conteoPorSena.toMutableMap().apply {
                         this[selected.label] = (this[selected.label] ?: 0) + 1
@@ -561,7 +614,23 @@ fun CameraScreen(
                 onVolver = onBack,
                 modifier = Modifier.align(Alignment.TopCenter),
             ) {
+                if (sesion == null && planilla.isNotEmpty()) {
+                    TextButton(onClick = { elegirParticipante = true; showWordPicker = false }) {
+                        Text("Guiada", color = Color.White)
+                    }
+                }
                 if (senaElegida != null) InsigniaDeProgreso(muestrasDeLaSena)
+            }
+
+            sesion?.let { s ->
+                TiraSesionGuiada(
+                    sesion = s,
+                    onSalir = { sesion = null; selectedWord = null; mostrarPausa = false },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 62.dp),
+                )
             }
 
             if (senaElegida?.imageAssetPath != null) {
@@ -623,6 +692,22 @@ fun CameraScreen(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
+
+        if (trainingMode && elegirParticipante) {
+            DialogoElegirParticipante(
+                codigos = SesionGuiada.codigos(planilla),
+                onElegir = { codigo ->
+                    elegirParticipante = false
+                    showWordPicker = false
+                    // Retoma donde quedó esa persona si la app se cerró a mitad de sesión.
+                    irA(SesionGuiada.de(planilla, codigo, ProgresoSesion.indice(context, codigo)))
+                    mostrarPausa = false
+                },
+                onCancelar = { elegirParticipante = false },
+            )
+        }
+        sesion?.let { s -> if (mostrarPausa) DialogoPausa(s) { mostrarPausa = false } }
+        sesionTerminada?.let { s -> DialogoSesionTerminada(s) { sesionTerminada = null } }
 
         if (trainingMode && showWordPicker) {
             TrainingWordPickerSheet(
@@ -1641,13 +1726,17 @@ fun shareDatasetJsonFile(context: Context): Boolean {
         // Si el JSON no se puede leer, no se comparte: no hay forma de garantizarlo.
         val root = JSONObject(file.readText())
         if (seudonimizarMuestrasViejas(root)) file.writeText(root.toString())
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_STREAM, uri)
+        // Se comparten juntos el v1 y el v2 (landmarks crudos): el v2 es el que sirve
+        // para el contrato nuevo, y separado del v1 sería fácil olvidarlo. El v2 ya
+        // nace con participant_id seudónimo, así que no hay nada que migrar.
+        val archivos = listOf(file, DatasetV2.archivo(context)).filter { it.exists() && it.length() > 0L }
+        val uris = ArrayList(archivos.map { FileProvider.getUriForFile(context, "${context.packageName}.provider", it) })
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            type = "*/*"
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "Compartir dataset JSON"))
+        context.startActivity(Intent.createChooser(intent, "Compartir dataset"))
         return true
     } catch (_: Exception) {
         return false

@@ -17,7 +17,9 @@ import random
 
 CLASES = ["hola", "adios", "bien", "como estas", "gracias", "e", "v", "l", "i", "n",
           "mi nombre es", "por favor"]
-PARTICIPANTES = {"P1": "tablet TB321FU", "P2": "telefono P2", "P3": "telefono P3"}
+# PRUEBA es para ensayar el flujo antes de la sesión: sus muestras llevan ese código y
+# se descartan al analizar, así el ensayo no consume las tomas de nadie.
+PARTICIPANTES = {"P1": "tablet TB321FU", "P2": "telefono P2", "P3": "telefono P3", "PRUEBA": "cualquiera"}
 DISPOSITIVO_C = "tablet P2"
 ESTANDAR = "luz=interior;angulo=0;distancia=media"
 ADVERSAS = {
@@ -93,6 +95,14 @@ def main():
     campos = ["participante", "orden", "dispositivo", "bloque", "tanda", "condicion", "clase", "indicacion",
               "estado", "nota"]
     with open(args.salida, "w", newline="", encoding="utf-8-sig") as f:  # utf-8-sig: Excel lo abre bien
+        w = csv.DictWriter(f, fieldnames=campos)
+        w.writeheader()
+        w.writerows(todas)
+    # La misma planilla viaja en el APK: la sesión guiada de la app la recorre en orden.
+    asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets",
+                         "captura", "planilla.csv")
+    os.makedirs(os.path.dirname(asset), exist_ok=True)
+    with open(asset, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=campos)
         w.writeheader()
         w.writerows(todas)
