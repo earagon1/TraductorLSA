@@ -6,8 +6,8 @@ mezcladas, para no grabar 10 tomas casi idénticas seguidas. La semilla depende 
 participante, así que la planilla se puede regenerar igual.
 
 Uso:
-    python tools/planilla_captura.py                      # versión completa
-    python tools/planilla_captura.py --minima             # versión mínima del protocolo
+    python tools/planilla_captura.py                      # sesión del domingo: tandas A1+A2 y "nada"
+    python tools/planilla_captura.py --con-robustez       # agrega el bloque B (4 condiciones) y el C
     python tools/planilla_captura.py --salida otra.csv
 """
 import argparse
@@ -24,6 +24,10 @@ ADVERSAS = {
     "completa": ["luz=exterior", "luz=sombra", "angulo=30", "angulo=60", "distancia=cerca", "distancia=lejos"],
     "minima": ["luz=sombra", "angulo=30", "distancia=cerca", "distancia=lejos"],
 }
+# Decidido con Evelin el 2026-10-09: 8 repeticiones por seña y persona, en dos
+# tandas de 4 (ver el protocolo, §4.3), y 10 tomas de "nada".
+TOMAS_POR_TANDA = 4
+TOMAS_NADA = 10
 NADA = ["bajar las manos", "rascarse la cara", "acomodarse el pelo", "tocar el telefono", "moverse sin senar"]
 
 
@@ -35,9 +39,8 @@ def condicion_adversa(cambio):
     return ";".join(f"{a}={b}" for a, b in factores.items())
 
 
-def filas(participante, minima):
+def filas(participante, con_robustez):
     rng = random.Random(f"senar-captura-{participante}")
-    tomas_a = 8 if minima else 10
     salida = []
 
     def agregar(bloque, tanda, condicion, clases, dispositivo):
@@ -51,23 +54,27 @@ def filas(participante, minima):
     dispositivo = PARTICIPANTES[participante]
     # Bloque A en dos tandas: dan dos "sesiones" para la validación agrupada.
     for tanda in (1, 2):
-        lista = [c for c in CLASES for _ in range(tomas_a // 2)]
+        lista = [c for c in CLASES for _ in range(TOMAS_POR_TANDA)]
         rng.shuffle(lista)
         agregar("A", tanda, ESTANDAR, lista, dispositivo)
-    nada = [f"nada ({m})" for m in NADA for _ in range(3)]
+    nada = [f"nada ({NADA[i % len(NADA)]})" for i in range(TOMAS_NADA)]
     rng.shuffle(nada)
     agregar("N", 1, ESTANDAR, nada, dispositivo)
-    adversas = list(ADVERSAS["minima" if minima else "completa"])
+    if not con_robustez:
+        return numerar(salida)
+    adversas = list(ADVERSAS["minima"])
     rng.shuffle(adversas)
     for cambio in adversas:
         lista = list(CLASES)
         rng.shuffle(lista)
         agregar("B", 1, condicion_adversa(cambio), lista, dispositivo)
-    if not minima:
-        lista = [c for c in CLASES for _ in range(3)]
-        rng.shuffle(lista)
-        agregar("C", 1, ESTANDAR, lista, DISPOSITIVO_C)
+    lista = [c for c in CLASES for _ in range(3)]
+    rng.shuffle(lista)
+    agregar("C", 1, ESTANDAR, lista, DISPOSITIVO_C)
+    return numerar(salida)
 
+
+def numerar(salida):
     for i, f in enumerate(salida, 1):
         f["orden"] = i
         f["estado"] = ""   # ok / deshecha / no detecta
@@ -77,12 +84,12 @@ def filas(participante, minima):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--minima", action="store_true")
+    ap.add_argument("--con-robustez", action="store_true")
     ap.add_argument("--salida", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "docs",
                                                        "captura", "planilla_registro.csv"))
     args = ap.parse_args()
 
-    todas = [f for p in PARTICIPANTES for f in filas(p, args.minima)]
+    todas = [f for p in PARTICIPANTES for f in filas(p, args.con_robustez)]
     campos = ["participante", "orden", "dispositivo", "bloque", "tanda", "condicion", "clase", "indicacion",
               "estado", "nota"]
     with open(args.salida, "w", newline="", encoding="utf-8-sig") as f:  # utf-8-sig: Excel lo abre bien

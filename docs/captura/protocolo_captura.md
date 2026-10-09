@@ -1,6 +1,6 @@
 # Protocolo de la sesión de captura multipersona (Etapa 3)
 
-> Borrador para revisión de la directora. Versión 0.1, 2026-10-08.
+> Borrador para revisión de la directora. Versión 0.2, 2026-10-09 (8 repeticiones en dos tandas; sesión partida en dos días).
 > Lo que todavía falta decidir está marcado con **[DECIDIR]**.
 
 ## 1. Para qué es esta sesión
@@ -74,18 +74,39 @@ En todas las condiciones las dos manos tienen que entrar en el cuadro durante to
 
 ### 4.3 Bloques por persona
 
+Decidido con la autora el 2026-10-09: **8 repeticiones por seña y por persona, en dos
+tandas de 4, más 10 tomas de "nada"**. La sesión se parte en dos días.
+
+**Sesión 1: domingo 11/10 (la esencial)**
+
 | Bloque | Qué | Tomas | Tiempo estimado |
 |---|---|---|---|
-| **A: estándar** | 12 clases × **10 tomas**, en la condición estándar | 120 | 25–30 min |
-| **N: nada** | 15 tomas de transición: bajar las manos, rascarse la cara, acomodarse el pelo, tocar el teléfono, moverse sin señar | 15 | 5 min |
-| **B: robustez** | 12 clases × **1 toma** en cada una de las 6 condiciones adversas (una por vez: el resto, estándar) | 72 | 20–25 min |
-| **C: otro dispositivo** | 12 clases × **3 tomas** en la tablet del novio, condición estándar | 36 | 10 min |
-| | **Total por persona** | **243** | **≈ 1 h 15 min** (con pausas) |
+| **A, tanda 1** | 12 clases × **4 tomas**, en orden mezclado, condición estándar | 48 | 12 min |
+| Pausa | 5–10 min: levantarse, tomar agua | — | — |
+| **A, tanda 2** | 12 clases × **4 tomas**, otro orden mezclado | 48 | 12 min |
+| **N: nada** | 10 tomas de transición: bajar las manos, rascarse la cara, acomodarse el pelo, tocar el teléfono, moverse sin señar | 10 | 3 min |
+| | **Total por persona** | **106** | **≈ 30 min** |
 
-- **Versión mínima, si no alcanza el tiempo:** bloque A con 8 tomas + N + B con 4 condiciones (sombra, 30°, cerca, lejos) y sin C: unas 159 tomas, alrededor de 45 min. **[DECIDIR]**
-- **Orden:** A → N → B → C, con una pausa de 5 minutos entre bloques.
-- **Dentro de cada bloque, las clases van en orden aleatorio.** La lista de cada persona sale de `tools/planilla_captura.py` → `planilla_registro.csv` (reproducible: la semilla depende del participante), y la app la sigue en el modo de sesión guiada. Grabar las 10 tomas de una clase seguidas produce tomas casi idénticas, que es justamente lo que infló la validación de la webcam.
-- Conviene grabar el bloque A en dos tandas de 5 tomas por clase, separadas por una pausa: dan dos "sesiones" distintas para la validación agrupada por sesión.
+**Sesión 2: otro día, antes del 25/10 (robustez)**
+
+| Bloque | Qué | Tomas | Tiempo estimado |
+|---|---|---|---|
+| **B: robustez** | 12 clases × 1 toma en cada una de 4 condiciones adversas: sombra, 30°, cerca, lejos (una por vez; el resto, estándar) | 48 | 15 min |
+| **C: otro dispositivo** (opcional) | 12 clases × 3 tomas en la tablet del novio, condición estándar | 36 | 10 min |
+
+Por qué 8 repeticiones:
+- **Confianza de la evaluación.** Con 8 por seña, la persona que queda afuera en LOPO aporta 96 muestras de test, con un margen de ±8 puntos en la accuracy. Con 4 serían ±12, y con 15 ±6, a casi el doble de tiempo.
+- **Las dos tandas necesitan al menos 3–4 tomas cada una**, para entrenar con una y evaluar con la otra.
+- **Para entrenar suman más las personas que las repeticiones**: las tomas seguidas de la misma persona se parecen demasiado, que es lo que pasó con las 100 por clase de la webcam.
+- **Pasadas las ~100 tomas** el cansancio baja la calidad de la seña.
+- El mínimo aceptable, si alguien no puede seguir, es 6 (3 + 3). **Todas las personas hacen las 12 señas**, y las dos tandas tienen la misma cantidad de tomas.
+
+Por qué dos tandas: la pausa hace que las tomas de la segunda tanda salgan menos
+parecidas a las de la primera (otra postura, otra posición en el cuadro). Así hay dos
+"sesiones" para la validación agrupada por sesión y para la personalización del
+federado (entrenar con una tanda y evaluar con la otra).
+
+- **Dentro de cada tanda, las clases van en orden aleatorio.** Grabar las tomas de una clase seguidas produce tomas casi idénticas, que es justamente lo que infló la validación de la webcam. La lista de cada persona sale de `tools/planilla_captura.py` → `planilla_registro.csv` (reproducible: la semilla depende del participante; `--con-robustez` agrega B y C), y la app la sigue en el modo de sesión guiada.
 
 ### 4.4 Cómo se hace cada toma
 1. Las manos empiezan **abajo, fuera del cuadro**.
@@ -128,10 +149,10 @@ Fijar esto ahora evita elegir el análisis después de ver los resultados.
 
 | Fecha (2026) | Qué |
 |---|---|
-| 08/10 – 15/10 | Requisitos de la app (§3.1): dataset v2 con crudos y condición, orientación fija. Revisión de este protocolo por la directora |
-| 16/10 – 17/10 | Práctica de P2 y P3; prueba completa del flujo en los 4 dispositivos con 5 tomas de prueba (que después se borran) |
-| **18/10 – 19/10** | **Sesión de captura** (un día por persona si no entra en uno) **[DECIDIR] fecha** |
-| 20/10 en adelante | Re-extracción v2, entrenamiento, LOPO, robustez, federado |
+| 09/10 – 10/10 | Requisitos de la app (§3.1): dataset con crudos, sesión guiada y orientación vertical. El sábado: la autora prueba el APK con 5 tomas; se instala en los teléfonos de P2 y P3 (APK por WhatsApp o Drive) y cada uno inicia sesión con su cuenta |
+| **Dom 11/10** | **Sesión 1:** práctica de P2 y P3 (15 min), consentimientos, bloques A y N; exportación y respaldo ese mismo día |
+| Antes del 25/10 | **Sesión 2:** bloque B (y C si se puede) |
+| 12/10 en adelante | Re-extracción v2, entrenamiento, LOPO, federado; robustez cuando esté la sesión 2 |
 
 La entrega es a mediados de noviembre: la captura no puede pasar del 25/10 sin
 recortar el análisis.
