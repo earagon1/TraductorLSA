@@ -20,6 +20,9 @@ class TFLiteClassifier(
     var D: Int = 126
         private set
 
+    /** Temperatura y umbral del modelo publicado (assets/calibracion.json). */
+    val calibracion: Calibracion = Calibracion.leer(context)
+
     init {
         // El cuantizado va primero a proposito.
         //
@@ -88,6 +91,12 @@ class TFLiteClassifier(
             var acc = 0f
             for (i in probs.indices) { probs[i] = kotlin.math.exp(probs[i] - max); acc += probs[i] }
             for (i in probs.indices) probs[i] /= acc
+        }
+
+        // La confianza que ven el umbral y la pantalla es la calibrada; la seña elegida
+        // no cambia (la temperatura conserva el orden de las clases).
+        if (calibracion.temperatura != 1f) {
+            aplicarTemperatura(probs, calibracion.temperatura).copyInto(probs)
         }
 
         var best = 0; var p = probs[0]
