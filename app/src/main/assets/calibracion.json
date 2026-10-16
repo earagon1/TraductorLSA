@@ -1,0 +1,6 @@
+{
+  "temperatura": 1.2008,
+  "umbral": 0.75,
+  "modelo_sha256": "276a79ea97659501544900191b96590b1462b204fb2284e204e7a7d2ac634857",
+  "origen": "modelo_LSA/resultados_calibracion/2026-10-16_lopo (T = mediana de 9 pliegues LOPO; umbral elegido por Evelin)"
+}

@@ -39,6 +39,14 @@ enum class VarianteEspanol(val etiqueta: String, private val pais: String) {
     val etiquetaBcp47: String get() = if (pais.isEmpty()) "es" else "es-$pais"
 }
 
+/**
+ * Umbral de confianza calibrada por defecto. Sale de modelo_LSA/scripts/calibrar.py
+ * (resultados_calibracion/2026-10-16_lopo), sobre personas que el modelo no vio: con
+ * 0,75 la app muestra el 60 % de las señas y acierta el 83 % de las que muestra. Lo
+ * eligió Evelin entre mostrar más y acertar más; viaja también en assets/calibracion.json.
+ */
+const val CONFIANZA_POR_DEFECTO = 0.75f
+
 data class AjustesSenar(
     val calidad: CalidadAnalisis = CalidadAnalisis.EQUILIBRIO,
     val camaraFrontal: Boolean = true,
@@ -48,7 +56,7 @@ data class AjustesSenar(
     val velocidadVoz: Float = 1.0f,
     val tonoVoz: Float = 1.0f,
     val variante: VarianteEspanol = VarianteEspanol.ARGENTINA,
-    val confianzaMinima: Float = 0.7f,
+    val confianzaMinima: Float = CONFIANZA_POR_DEFECTO,
     /**
      * Pide que el reconocimiento de voz se resuelva en el dispositivo.
      *
@@ -84,7 +92,7 @@ class RepositorioAjustes private constructor(context: Context) {
         velocidadVoz = prefs.getFloat(VELOCIDAD, 1.0f),
         tonoVoz = prefs.getFloat(TONO, 1.0f),
         variante = enumPorNombre(prefs.getString(VARIANTE, null), VarianteEspanol.ARGENTINA),
-        confianzaMinima = prefs.getFloat(CONFIANZA, 0.7f),
+        confianzaMinima = prefs.getFloat(CONFIANZA, CONFIANZA_POR_DEFECTO),
         reconocimientoSoloLocal = prefs.getBoolean(RECONOCIMIENTO_LOCAL, true),
     )
 
@@ -116,7 +124,11 @@ class RepositorioAjustes private constructor(context: Context) {
         private const val VELOCIDAD = "velocidad"
         private const val TONO = "tono"
         private const val VARIANTE = "variante"
-        private const val CONFIANZA = "confianza"
+        // La clave cambió con la calibración (2026-10-16): el valor viejo se refería a la
+        // confianza sin calibrar del modelo original, que no significaba nada (mostraba
+        // el 83 % de las señas y acertaba el 32 %). Un 0,7 guardado así no es comparable
+        // con uno sobre la confianza calibrada, así que todos arrancan del valor nuevo.
+        private const val CONFIANZA = "confianza_calibrada"
         private const val RECONOCIMIENTO_LOCAL = "reconocimiento_local"
 
         @Volatile

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.traductorlsa.ml.LabelProviderImpl
 import com.example.traductorlsa.ml.TFLiteClassifier
+import com.example.traductorlsa.ml.aplicarTemperatura
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -58,9 +59,15 @@ class ModeloParidadTest {
                     FloatArray(fila.length()) { d -> fila.getDouble(d).toFloat() }
                 }
                 val (_, _, probs) = clasificador.inferTop(seq, labels.labels)
-                val esperadas = caso.getJSONArray("probs")
-                assertEquals(esperadas.length(), probs.size)
-                for (k in probs.indices) peor = maxOf(peor, abs(probs[k] - esperadas.getDouble(k)))
+                // El fixture trae las probabilidades crudas del modelo; la app les aplica
+                // la temperatura de calibracion.json, así que se compara contra lo mismo.
+                val crudas = caso.getJSONArray("probs")
+                val esperadas = aplicarTemperatura(
+                    FloatArray(crudas.length()) { crudas.getDouble(it).toFloat() },
+                    clasificador.calibracion.temperatura,
+                )
+                assertEquals(esperadas.size, probs.size)
+                for (k in probs.indices) peor = maxOf(peor, abs(probs[k] - esperadas[k]).toDouble())
             }
             assertTrue("diferencia máxima $peor > $tolerancia", peor <= tolerancia)
         } finally {
