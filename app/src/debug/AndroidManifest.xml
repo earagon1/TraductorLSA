@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo en el build debug: herramientas de medición que no viajan en la versión final. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- exported para poder abrirla con `adb shell am start` desde la PC. -->
+        <activity
+            android:name=".federado.EntrenamientoLocalActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+    </application>
+</manifest>
