@@ -5,6 +5,14 @@ import android.content.Context
 import android.util.Log
 import org.json.JSONObject
 
+/**
+ * Clase del modelo para "no es una seña": bajar las manos, rascarse, acomodarse.
+ * Se entrena con las tomas de transición de la sesión de captura y existe para que el
+ * modelo no esté obligado a elegir siempre una de las señas. En el modo traducir no se
+ * muestra ni se dice, y no aparece en el diccionario.
+ */
+const val CLASE_NADA = "nada"
+
 interface LabelProvider {
     val labels: List<String>
 }

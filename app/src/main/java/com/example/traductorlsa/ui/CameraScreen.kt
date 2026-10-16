@@ -71,6 +71,7 @@ import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
 import com.example.traductorlsa.features.FeatureBuilderImpl
 import com.example.traductorlsa.features.SequenceBufferImpl
+import com.example.traductorlsa.ml.CLASE_NADA
 import com.example.traductorlsa.ml.GestureEngine
 import com.example.traductorlsa.ml.LabelProviderImpl
 import com.example.traductorlsa.ml.TFLiteClassifier
@@ -428,7 +429,12 @@ fun CameraScreen(
                 val sinNombre = prediction.gesture == "Unknown" || prediction.gesture == "Sin datos"
                 val valida = !sinNombre && prediction.confidence >= ajustes.confianzaMinima
 
-                if (valida) {
+                if (prediction.gesture == CLASE_NADA) {
+                    // El modelo reconoció que no hubo seña (rascarse, acomodarse, bajar
+                    // las manos): no se muestra ni se dice nada, y tampoco es una seña
+                    // "no reconocida" que haya que avisar.
+                    confianzaDescartada = -1f
+                } else if (valida) {
                     confianzaDescartada = -1f
                     val last = recentTranslations.lastOrNull()
                     if (last != prediction.gesture) {

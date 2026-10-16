@@ -1,16 +1,1 @@
-{
-  "word_ids": [
-    "hola",
-    "adios",
-    "bien",
-    "como estas",
-    "gracias",
-    "e",
-    "v",
-    "l",
-    "i",
-    "n",
-    "mi nombre es",
-    "por favor"
-  ]
-}
+{"word_ids": ["hola", "adios", "bien", "como estas", "gracias", "e", "v", "l", "i", "n", "mi nombre es", "por favor", "nada"]}

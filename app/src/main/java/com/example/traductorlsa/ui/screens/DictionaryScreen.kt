@@ -77,6 +77,7 @@ import com.example.traductorlsa.ui.theme.SenarPapel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import com.example.traductorlsa.ml.CLASE_NADA
 import org.json.JSONObject
 import java.text.Normalizer
 import java.util.Locale
@@ -108,7 +109,9 @@ fun DictionaryScreen(navController: NavHostController) {
         error = null
         try {
             entradas = withContext(Dispatchers.IO) {
-                loadWordsFromAssets(context.assets, "words.json").map { palabra ->
+                // "nada" es una clase del modelo (movimientos que no son señas), no una
+                // seña que se pueda aprender: no va en el diccionario.
+                loadWordsFromAssets(context.assets, "words.json").filter { it != CLASE_NADA }.map { palabra ->
                     DictionaryEntry(
                         word = palabra,
                         display = nombreParaMostrar(palabra),
@@ -562,6 +565,7 @@ private val NOMBRES_PARA_MOSTRAR = mapOf(
     "gracias" to "Gracias",
     "mi nombre es" to "Mi nombre es",
     "por favor" to "Por favor",
+    "nada" to "Sin seña",
 )
 
 internal fun nombreParaMostrar(raw: String): String {
