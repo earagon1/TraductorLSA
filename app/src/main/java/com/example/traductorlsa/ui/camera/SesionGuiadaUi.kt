@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.traductorlsa.dataset.SesionGuiada
 import com.example.traductorlsa.dataset.TomaPlanificada
+import com.example.traductorlsa.dataset.instruccionCondicion
 import com.example.traductorlsa.dataset.leerPlanilla
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
 
@@ -92,7 +93,14 @@ fun TiraSesionGuiada(sesion: SesionGuiada, onSalir: () -> Unit, modifier: Modifi
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val donde = toma?.let { if (it.bloque == "A") "tanda ${it.tanda}" else "bloque ${it.bloque}" } ?: "terminada"
+            val donde = toma?.let {
+                when (it.bloque) {
+                    "A" -> "tanda ${it.tanda}"
+                    "N" -> "sin señas"
+                    "B" -> "robustez"
+                    else -> "bloque ${it.bloque}"
+                }
+            } ?: "terminada"
             Text(
                 "${sesion.codigo} · $donde · ${sesion.hechas}/${sesion.total}",
                 color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp,
@@ -107,6 +115,9 @@ fun TiraSesionGuiada(sesion: SesionGuiada, onSalir: () -> Unit, modifier: Modifi
             )
             if (toma.indicacion.isNotBlank()) {
                 Text("Sin señar: ${toma.indicacion}", color = Color.White.copy(alpha = 0.85f), fontSize = 15.sp)
+            }
+            instruccionCondicion(toma.condicion)?.let {
+                Text("Condición: $it", color = Color(0xFFFFD36B), fontSize = 15.sp)
             }
         }
     }
@@ -140,11 +151,17 @@ fun DialogoElegirParticipante(codigos: List<String>, onElegir: (String) -> Unit,
 @Composable
 fun DialogoPausa(sesion: SesionGuiada, onContinuar: () -> Unit) {
     val toma = sesion.actual ?: return
-    val que = if (toma.bloque == "A") "la tanda ${toma.tanda}" else "las tomas de \"nada\""
+    val condicion = instruccionCondicion(toma.condicion)
+    val texto = when {
+        toma.bloque == "B" && condicion != null ->
+            "Siguiente condición: $condicion.\n\nPreparate y, cuando estés listo o lista, tocá Continuar."
+        toma.bloque == "A" -> "Descansá unos minutos: levantate, tomá agua. Cuando estés listo o lista, seguimos con la tanda ${toma.tanda}."
+        else -> "Descansá unos minutos. Cuando estés listo o lista, seguimos con las tomas de \"nada\"."
+    }
     AlertDialog(
         onDismissRequest = {},
-        title = { Text("Pausa") },
-        text = { Text("Descansá unos minutos: levantate, tomá agua. Cuando estés listo o lista, seguimos con $que.") },
+        title = { Text(if (toma.bloque == "B") "Cambio de condición" else "Pausa") },
+        text = { Text(texto) },
         confirmButton = { Button(onClick = onContinuar) { Text("Continuar") } },
     )
 }

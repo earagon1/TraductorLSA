@@ -44,6 +44,27 @@ fun leerPlanilla(csv: String): List<TomaPlanificada> {
 }
 
 /**
+ * Qué tiene que hacer la persona para una condición de la planilla
+ * ("luz=sombra;angulo=0;distancia=media"). Null en la condición estándar: no hay nada
+ * que cambiar. Son las condiciones de robustez de la propuesta (§3.5).
+ */
+fun instruccionCondicion(condicion: String): String? {
+    val f = condicion.split(";").mapNotNull { p -> p.split("=").takeIf { it.size == 2 }?.let { it[0] to it[1] } }.toMap()
+    val partes = buildList {
+        when (f["luz"]) {
+            "sombra" -> add("Apagá la luz del techo: solo luz indirecta")
+            "exterior" -> add("Grabá junto a una ventana o afuera, con luz natural")
+        }
+        f["angulo"]?.takeIf { it != "0" }?.let { add("Girá el cuerpo unos $it° respecto de la cámara") }
+        when (f["distancia"]) {
+            "cerca" -> add("Acercate: unos 40 cm de la cámara")
+            "lejos" -> add("Alejate: unos 120 cm de la cámara, con las manos en cuadro")
+        }
+    }
+    return partes.takeIf { it.isNotEmpty() }?.joinToString(". ")
+}
+
+/**
  * Recorre en orden las tomas de un participante: qué seña toca ahora, cuándo hay
  * que hacer una pausa y cómo volver atrás si una toma se deshace.
  *
@@ -73,8 +94,15 @@ class SesionGuiada private constructor(
             if (indice <= 0 || terminada) return false
             val previa = tomas[indice - 1]
             val ahora = tomas[indice]
-            return previa.bloque != ahora.bloque || previa.tanda != ahora.tanda
+            // En el bloque de robustez la pausa también separa las condiciones: hay que
+            // apagar la luz, girarse o moverse antes de seguir.
+            return previa.bloque != ahora.bloque || previa.tanda != ahora.tanda || previa.condicion != ahora.condicion
         }
+
+    /** Índice de la primera toma de un bloque, o null si la planilla no lo tiene. */
+    fun primeraDelBloque(bloque: String): Int? = tomas.indexOfFirst { it.bloque == bloque }.takeIf { it >= 0 }
+
+    fun irA(nuevoIndice: Int): SesionGuiada = SesionGuiada(codigo, tomas, nuevoIndice.coerceIn(0, tomas.size))
 
     fun avanzar(): SesionGuiada = SesionGuiada(codigo, tomas, (indice + 1).coerceAtMost(tomas.size))
     fun retroceder(): SesionGuiada = SesionGuiada(codigo, tomas, (indice - 1).coerceAtLeast(0))

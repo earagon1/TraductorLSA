@@ -59,6 +59,7 @@ import com.example.traductorlsa.camera.FrameAnalyzer
 import com.example.traductorlsa.dataset.DatasetV2
 import com.example.traductorlsa.dataset.Participante
 import com.example.traductorlsa.dataset.SesionGuiada
+import com.example.traductorlsa.dataset.instruccionCondicion
 import com.example.traductorlsa.ui.camera.DialogoElegirParticipante
 import com.example.traductorlsa.ui.camera.DialogoPausa
 import com.example.traductorlsa.ui.camera.DialogoSesionTerminada
@@ -706,8 +707,17 @@ fun CameraScreen(
                     elegirParticipante = false
                     showWordPicker = false
                     // Retoma donde quedó esa persona si la app se cerró a mitad de sesión.
-                    irA(SesionGuiada.de(planilla, codigo, ProgresoSesion.indice(context, codigo)))
-                    mostrarPausa = false
+                    var s = SesionGuiada.de(planilla, codigo, ProgresoSesion.indice(context, codigo))
+                    // Si la app perdió la posición (reinstalada, datos borrados) pero esa
+                    // persona ya grabó la sesión 1 completa, se arranca en la robustez en
+                    // vez de hacerle repetir las 106 tomas.
+                    val inicioB = s.primeraDelBloque("B")
+                    if (s.indice == 0 && inicioB != null && DatasetV2.contarDeCodigo(context, codigo) >= inicioB) {
+                        s = s.irA(inicioB)
+                    }
+                    irA(s)
+                    // Al retomar en una condición de robustez, el cartel dice qué cambiar.
+                    mostrarPausa = s.actual?.let { instruccionCondicion(it.condicion) != null } ?: false
                 },
                 onCancelar = { elegirParticipante = false },
             )

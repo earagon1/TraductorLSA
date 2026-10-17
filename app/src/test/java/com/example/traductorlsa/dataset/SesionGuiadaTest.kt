@@ -61,6 +61,31 @@ class SesionGuiadaTest {
     }
 
     @Test
+    fun `instrucciones de cada condicion de robustez`() {
+        assertNull(instruccionCondicion("luz=interior;angulo=0;distancia=media"))
+        assertTrue(instruccionCondicion("luz=sombra;angulo=0;distancia=media").orEmpty().contains("Apagá la luz"))
+        assertTrue(instruccionCondicion("luz=interior;angulo=30;distancia=media").orEmpty().contains("30°"))
+        assertTrue(instruccionCondicion("luz=interior;angulo=0;distancia=cerca").orEmpty().contains("40 cm"))
+        assertTrue(instruccionCondicion("luz=interior;angulo=0;distancia=lejos").orEmpty().contains("120 cm"))
+    }
+
+    @Test
+    fun `en robustez hay pausa al cambiar de condicion`() {
+        val csvB = csv + "\n" + """
+            |P1,5,tablet,B,1,luz=sombra;angulo=0;distancia=media,hola,,,
+            |P1,6,tablet,B,1,luz=sombra;angulo=0;distancia=media,v,,,
+            |P1,7,tablet,B,1,luz=interior;angulo=0;distancia=cerca,hola,,,
+        """.trimMargin()
+        val s = SesionGuiada.de(leerPlanilla(csvB), "P1")
+        assertEquals(4, s.primeraDelBloque("B"))
+        val enB = s.irA(4)
+        assertTrue("entrar a B", enB.pausaAntes)
+        assertFalse("misma condición", enB.avanzar().pausaAntes)
+        assertTrue("cambia la condición", enB.avanzar().avanzar().pausaAntes)
+        assertNull(s.primeraDelBloque("C"))
+    }
+
+    @Test
     fun `la planilla del APK tiene las 12 senas por 8 para cada participante`() {
         // El test corre con app/ como directorio de trabajo.
         val tomas = leerPlanilla(File("src/main/assets/captura/planilla.csv").readText())
@@ -70,6 +95,13 @@ class SesionGuiadaTest {
             assertEquals("12 clases para $codigo", 12, porClase.size)
             assertTrue("8 por clase para $codigo", porClase.values.all { it == 8 })
             assertEquals(48, propias.count { it.tanda == 1 })
+            // Sesión 2: las 12 señas una vez en cada una de las 4 condiciones, después de A y N.
+            val robustez = tomas.filter { it.codigo == codigo && it.bloque == "B" }
+            assertEquals(48, robustez.size)
+            assertEquals(107, robustez.minOf { it.orden })
+            robustez.groupBy { it.condicion }.values.forEach { porCondicion ->
+                assertEquals(12, porCondicion.map { it.clase }.toSet().size)
+            }
         }
     }
 }

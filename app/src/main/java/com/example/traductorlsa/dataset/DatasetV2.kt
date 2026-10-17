@@ -63,6 +63,14 @@ object DatasetV2 {
         }
     }
 
+    /** Cuántas muestras de la sesión guiada tiene un código de planilla (P1, P2…). */
+    fun contarDeCodigo(context: Context, codigo: String): Int {
+        val f = archivo(context)
+        if (!f.exists()) return 0
+        val marca = "\"sesion\":{\"codigo\":\"$codigo\""
+        return f.useLines { lineas -> lineas.count { it.contains(marca) } }
+    }
+
     /**
      * Saca la última muestra, para el botón Deshacer. Devuelve false si no había ninguna.
      * Reescribe el archivo, pero solo al deshacer, que es raro.

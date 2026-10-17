@@ -7,7 +7,8 @@ participante, así que la planilla se puede regenerar igual.
 
 Uso:
     python tools/planilla_captura.py                      # sesión del domingo: tandas A1+A2 y "nada"
-    python tools/planilla_captura.py --con-robustez       # agrega el bloque B (4 condiciones) y el C
+    python tools/planilla_captura.py --con-robustez       # sesión 2: agrega el bloque B (4 condiciones)
+    python tools/planilla_captura.py --con-robustez --con-otro-dispositivo   # y además el bloque C
     python tools/planilla_captura.py --salida otra.csv
 """
 import argparse
@@ -41,7 +42,7 @@ def condicion_adversa(cambio):
     return ";".join(f"{a}={b}" for a, b in factores.items())
 
 
-def filas(participante, con_robustez):
+def filas(participante, con_robustez, con_otro_dispositivo=False):
     rng = random.Random(f"senar-captura-{participante}")
     salida = []
 
@@ -70,9 +71,10 @@ def filas(participante, con_robustez):
         lista = list(CLASES)
         rng.shuffle(lista)
         agregar("B", 1, condicion_adversa(cambio), lista, dispositivo)
-    lista = [c for c in CLASES for _ in range(3)]
-    rng.shuffle(lista)
-    agregar("C", 1, ESTANDAR, lista, DISPOSITIVO_C)
+    if con_otro_dispositivo:
+        lista = [c for c in CLASES for _ in range(3)]
+        rng.shuffle(lista)
+        agregar("C", 1, ESTANDAR, lista, DISPOSITIVO_C)
     return numerar(salida)
 
 
@@ -86,12 +88,15 @@ def numerar(salida):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    # El bloque B se agrega DESPUÉS de A y N, con la misma semilla: el orden de lo ya
+    # grabado no cambia, y la sesión guiada de cada persona sigue desde la toma 107.
     ap.add_argument("--con-robustez", action="store_true")
+    ap.add_argument("--con-otro-dispositivo", action="store_true")
     ap.add_argument("--salida", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "docs",
                                                        "captura", "planilla_registro.csv"))
     args = ap.parse_args()
 
-    todas = [f for p in PARTICIPANTES for f in filas(p, args.con_robustez)]
+    todas = [f for p in PARTICIPANTES for f in filas(p, args.con_robustez, args.con_otro_dispositivo)]
     campos = ["participante", "orden", "dispositivo", "bloque", "tanda", "condicion", "clase", "indicacion",
               "estado", "nota"]
     with open(args.salida, "w", newline="", encoding="utf-8-sig") as f:  # utf-8-sig: Excel lo abre bien
