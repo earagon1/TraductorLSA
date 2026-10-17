@@ -70,6 +70,17 @@ class SesionGuiadaTest {
     }
 
     @Test
+    fun `la descripcion completa dice que restablecer`() {
+        // Al pasar de "poca luz" a "cerca", el cartel tiene que decir que la luz va prendida.
+        val cerca = descripcionCompletaCondicion("luz=interior;angulo=0;distancia=cerca")
+        assertEquals(3, cerca.size)
+        assertTrue(cerca[0].contains("PRENDIDA"))
+        assertTrue(cerca[1].contains("De frente"))
+        assertTrue(cerca[2].contains("40 cm"))
+        assertTrue(descripcionCompletaCondicion("luz=sombra;angulo=0;distancia=media")[0].contains("APAGADA"))
+    }
+
+    @Test
     fun `en robustez hay pausa al cambiar de condicion`() {
         val csvB = csv + "\n" + """
             |P1,5,tablet,B,1,luz=sombra;angulo=0;distancia=media,hola,,,

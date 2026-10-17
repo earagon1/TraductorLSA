@@ -29,6 +29,11 @@ class GestureEngine(
     var onCaptureStats: ((captureMs: Long, inferMs: Long, fps: Float, newTarget: Int) -> Unit)? = null
     // Callback para enviar Top-3 predicciones + features normalizados (para correcciones)
     var onTopPredictions: ((List<PredictionResult>, Array<FloatArray>) -> Unit)? = null
+    // Después de guardar una seña: avisa cuando las manos ya bajaron y se puede hacer la
+    // siguiente, para que la pantalla deje de pedir "Bajá las manos".
+    var onListoParaCapturar: (() -> Unit)? = null
+
+    private val esperaSinManos = EsperaSinManos()
 
 
     private enum class CaptureState { IDLE, WAITING, CAPTURING, DONE }
@@ -207,6 +212,7 @@ class GestureEngine(
                         emitirMetricas("captura", captureDuration, fps, targetUsado, size, inferNanos, top3)
                         sequenceBuffer.clear()
                         onCaptureProgress?.invoke(0, targetFrames)
+                        esperaSinManos.reiniciar(ts)
                         state = CaptureState.DONE
                     }
                 } else {
@@ -224,14 +230,15 @@ class GestureEngine(
             }
 
             CaptureState.DONE -> {
-                if (!hasHands) {
-                    noHandFrames++
-                    if (noHandFrames >= maxNoHandFrames) {
-                        Log.d("GestureEngine", "👌 Manos desaparecieron realmente → listo para nueva captura (IDLE)")
-                        state = CaptureState.IDLE
-                        noHandFrames = 0
-                    }
-                } else noHandFrames = 0
+                // Por tiempo y tolerando detecciones sueltas (ver EsperaSinManos): con
+                // 10 frames seguidos sin mano, un teléfono a 6 FPS quedaba trabado.
+                if (esperaSinManos.listo(hasHands, ts)) {
+                    Log.d("GestureEngine", "👌 Manos desaparecieron realmente → listo para nueva captura (IDLE)")
+                    state = CaptureState.IDLE
+                    noHandFrames = 0
+                    handFrames = 0
+                    onListoParaCapturar?.invoke()
+                }
             }
         }
     }

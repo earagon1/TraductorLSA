@@ -342,6 +342,9 @@ fun CameraScreen(
     // entero varias veces por minuto.
     var conteoPorSena by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var recienGuardada by remember { mutableStateOf(false) }
+    // Después de guardar: false mientras la app espera que bajen las manos, true cuando
+    // ya se puede hacer la siguiente seña (lo avisa GestureEngine.onListoParaCapturar).
+    var listoParaSiguiente by remember { mutableStateOf(false) }
     // Cuando la prediccion no llega al minimo de Ajustes, la pantalla lo dice en
     // vez de quedarse muda. -1 significa que no hay ninguna descartada.
     var confianzaDescartada by remember { mutableStateOf(-1f) }
@@ -508,11 +511,15 @@ fun CameraScreen(
                     // hasta la captura siguiente. Un snackbar encima repetiria el
                     // mismo mensaje y taparia el visor justo cuando hay que mirar.
                     recienGuardada = true
+                    listoParaSiguiente = false
                 }
             }
         }
 
+        engine.onListoParaCapturar = { listoParaSiguiente = true }
+
         onDispose {
+            engine.onListoParaCapturar = null
             engine.onHands = null
             engine.onPrediction = null
             engine.onCaptureProgress = null
@@ -658,6 +665,7 @@ fun CameraScreen(
                 frameTarget = frameTarget,
                 hayManos = hayManos,
                 recienGuardada = recienGuardada,
+                listoParaSiguiente = listoParaSiguiente,
                 onCambiarSena = { showWordPicker = true },
                 onGirarCamara = { isFrontCamera = !isFrontCamera },
                 onDeshacer = { deshacerUltimaMuestra() },
@@ -1076,6 +1084,7 @@ private fun PieDeCaptura(
     frameTarget: Int,
     hayManos: Boolean,
     recienGuardada: Boolean,
+    listoParaSiguiente: Boolean = false,
     onCambiarSena: () -> Unit,
     onGirarCamara: () -> Unit,
     onDeshacer: () -> Unit,
@@ -1113,6 +1122,7 @@ private fun PieDeCaptura(
                     text = when {
                         !haySena -> "Elegí una seña para empezar"
                         grabando -> "No bajes las manos"
+                        recienGuardada && listoParaSiguiente -> "Ya podés hacer la siguiente seña"
                         recienGuardada -> "Bajá las manos"
                         else -> "Mostrá la seña frente a la cámara"
                     },

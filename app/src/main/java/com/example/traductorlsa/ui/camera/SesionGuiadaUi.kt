@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.traductorlsa.dataset.SesionGuiada
 import com.example.traductorlsa.dataset.TomaPlanificada
+import com.example.traductorlsa.dataset.descripcionCompletaCondicion
 import com.example.traductorlsa.dataset.instruccionCondicion
 import com.example.traductorlsa.dataset.leerPlanilla
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
@@ -153,8 +154,11 @@ fun DialogoPausa(sesion: SesionGuiada, onContinuar: () -> Unit) {
     val toma = sesion.actual ?: return
     val condicion = instruccionCondicion(toma.condicion)
     val texto = when {
-        toma.bloque == "B" && condicion != null ->
-            "Siguiente condición: $condicion.\n\nPreparate y, cuando estés listo o lista, tocá Continuar."
+        toma.bloque == "B" ->
+            "Siguiente condición${condicion?.let { ": $it" } ?: ""}.\n\nCómo tiene que quedar:\n" +
+                descripcionCompletaCondicion(toma.condicion).joinToString("\n") { "• $it" } +
+                "\n\nSe guarda la seña que pide la app, aunque el modelo reconozca otra: no hace falta " +
+                "deshacer por eso. Cuando estés listo o lista, tocá Continuar."
         toma.bloque == "A" -> "Descansá unos minutos: levantate, tomá agua. Cuando estés listo o lista, seguimos con la tanda ${toma.tanda}."
         else -> "Descansá unos minutos. Cuando estés listo o lista, seguimos con las tomas de \"nada\"."
     }

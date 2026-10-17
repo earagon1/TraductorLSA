@@ -65,6 +65,30 @@ fun instruccionCondicion(condicion: String): String? {
 }
 
 /**
+ * Las tres variables de una condición, completas, para el cartel de cambio de condición.
+ *
+ * El cartel decía solo lo que cambiaba ("Acercate: unos 40 cm") y en la sesión 2 de P3
+ * la luz quedó apagada de la condición anterior: "lejos" se grabó además con poca luz.
+ * Listar las tres (luz, posición y distancia) hace explícito qué hay que restablecer.
+ */
+fun descripcionCompletaCondicion(condicion: String): List<String> {
+    val f = condicion.split(";").mapNotNull { p -> p.split("=").takeIf { it.size == 2 }?.let { it[0] to it[1] } }.toMap()
+    return listOf(
+        when (f["luz"]) {
+            "sombra" -> "Luz del techo APAGADA (solo luz indirecta)"
+            "exterior" -> "Luz natural (junto a una ventana o afuera)"
+            else -> "Luz del techo PRENDIDA"
+        },
+        f["angulo"]?.takeIf { it != "0" }?.let { "Girado unos $it° respecto de la cámara" } ?: "De frente a la cámara",
+        when (f["distancia"]) {
+            "cerca" -> "A unos 40 cm de la cámara"
+            "lejos" -> "A unos 120 cm de la cámara"
+            else -> "A unos 70 cm de la cámara (distancia normal)"
+        },
+    )
+}
+
+/**
  * Recorre en orden las tomas de un participante: qué seña toca ahora, cuándo hay
  * que hacer una pausa y cómo volver atrás si una toma se deshace.
  *
