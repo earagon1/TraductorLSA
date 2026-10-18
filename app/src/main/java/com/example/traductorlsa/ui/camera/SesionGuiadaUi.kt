@@ -19,6 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +38,7 @@ import com.example.traductorlsa.dataset.descripcionCompletaCondicion
 import com.example.traductorlsa.dataset.instruccionCondicion
 import com.example.traductorlsa.dataset.leerPlanilla
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
+import kotlinx.coroutines.delay
 
 /** La planilla de la sesión de captura que viaja en el APK (`tools/planilla_captura.py`). */
 const val ASSET_PLANILLA = "captura/planilla.csv"
@@ -149,24 +155,45 @@ fun DialogoElegirParticipante(codigos: List<String>, onElegir: (String) -> Unit,
     )
 }
 
+/**
+ * Segundos que espera el cartel de cambio de condición antes de seguir solo.
+ *
+ * En la sesión 2 de P2, a 120 cm nadie llegaba a tocar Continuar: había que volver al
+ * teléfono y alejarse de nuevo, o tocarlo por adb. Con la cuenta regresiva la persona
+ * lee el cartel, se acomoda (apaga la luz, se aleja, se gira) y la sesión sigue sola.
+ */
+const val SEGUNDOS_AUTO_CONTINUAR = 20
+
 @Composable
 fun DialogoPausa(sesion: SesionGuiada, onContinuar: () -> Unit) {
     val toma = sesion.actual ?: return
     val condicion = instruccionCondicion(toma.condicion)
+    val esCambioDeCondicion = toma.bloque == "B"
+    // Las pausas de descanso (entre tandas) no siguen solas: son para levantarse.
+    var restantes by remember(sesion.indice) { mutableStateOf(if (esCambioDeCondicion) SEGUNDOS_AUTO_CONTINUAR else -1) }
+    if (restantes >= 0) {
+        LaunchedEffect(sesion.indice, restantes) {
+            if (restantes == 0) onContinuar() else { delay(1000); restantes -= 1 }
+        }
+    }
     val texto = when {
-        toma.bloque == "B" ->
+        esCambioDeCondicion ->
             "Siguiente condición${condicion?.let { ": $it" } ?: ""}.\n\nCómo tiene que quedar:\n" +
                 descripcionCompletaCondicion(toma.condicion).joinToString("\n") { "• $it" } +
                 "\n\nSe guarda la seña que pide la app, aunque el modelo reconozca otra: no hace falta " +
-                "deshacer por eso. Cuando estés listo o lista, tocá Continuar."
+                "deshacer por eso." +
+                if (restantes >= 0) "\n\nSigue sola en $restantes s: acomodate mientras tanto." else "\n\nCuando estés listo o lista, tocá Continuar."
         toma.bloque == "A" -> "Descansá unos minutos: levantate, tomá agua. Cuando estés listo o lista, seguimos con la tanda ${toma.tanda}."
         else -> "Descansá unos minutos. Cuando estés listo o lista, seguimos con las tomas de \"nada\"."
     }
     AlertDialog(
         onDismissRequest = {},
-        title = { Text(if (toma.bloque == "B") "Cambio de condición" else "Pausa") },
+        title = { Text(if (esCambioDeCondicion) "Cambio de condición" else "Pausa") },
         text = { Text(texto) },
-        confirmButton = { Button(onClick = onContinuar) { Text("Continuar") } },
+        confirmButton = { Button(onClick = onContinuar) { Text(if (restantes >= 0) "Continuar ya" else "Continuar") } },
+        dismissButton = if (restantes > 0) {
+            { TextButton(onClick = { restantes = -1 }) { Text("Esperar") } }
+        } else null,
     )
 }
 

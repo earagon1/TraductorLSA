@@ -58,7 +58,7 @@ fun instruccionCondicion(condicion: String): String? {
         f["angulo"]?.takeIf { it != "0" }?.let { add("Girá el cuerpo unos $it° respecto de la cámara") }
         when (f["distancia"]) {
             "cerca" -> add("Acercate: unos 40 cm de la cámara")
-            "lejos" -> add("Alejate: unos 120 cm de la cámara, con las manos en cuadro")
+            "lejos" -> add("Alejate: unos 120 cm de la cámara. Entre seña y seña, manos detrás de la espalda")
         }
     }
     return partes.takeIf { it.isNotEmpty() }?.joinToString(". ")
@@ -82,7 +82,9 @@ fun descripcionCompletaCondicion(condicion: String): List<String> {
         f["angulo"]?.takeIf { it != "0" }?.let { "Girado unos $it° respecto de la cámara" } ?: "De frente a la cámara",
         when (f["distancia"]) {
             "cerca" -> "A unos 40 cm de la cámara"
-            "lejos" -> "A unos 120 cm de la cámara"
+            // A 120 cm las manos en reposo quedan en cuadro y la app las toma como una seña
+            // (sesión 2 de P2): entre seña y seña tienen que salir del cuadro.
+            "lejos" -> "A unos 120 cm de la cámara, con las manos detrás de la espalda entre seña y seña"
             else -> "A unos 70 cm de la cámara (distancia normal)"
         },
     )

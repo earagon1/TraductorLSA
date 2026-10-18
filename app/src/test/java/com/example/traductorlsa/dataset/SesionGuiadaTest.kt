@@ -67,6 +67,7 @@ class SesionGuiadaTest {
         assertTrue(instruccionCondicion("luz=interior;angulo=30;distancia=media").orEmpty().contains("30°"))
         assertTrue(instruccionCondicion("luz=interior;angulo=0;distancia=cerca").orEmpty().contains("40 cm"))
         assertTrue(instruccionCondicion("luz=interior;angulo=0;distancia=lejos").orEmpty().contains("120 cm"))
+        assertTrue(instruccionCondicion("luz=interior;angulo=0;distancia=lejos").orEmpty().contains("espalda"))
     }
 
     @Test
