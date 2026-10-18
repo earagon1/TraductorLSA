@@ -64,10 +64,12 @@ import com.example.traductorlsa.ui.camera.DialogoElegirParticipante
 import com.example.traductorlsa.ui.camera.DialogoPausa
 import com.example.traductorlsa.ui.camera.DialogoSesionTerminada
 import com.example.traductorlsa.ui.camera.FijarVertical
+import com.example.traductorlsa.ui.camera.MantenerPantallaEncendida
 import com.example.traductorlsa.ui.camera.ProgresoSesion
 import com.example.traductorlsa.ui.camera.TiraSesionGuiada
 import com.example.traductorlsa.ui.camera.cargarPlanilla
-import com.example.traductorlsa.detection.HandTrackerImpl
+import com.example.traductorlsa.detection.TrackerPerezoso
+import com.example.traductorlsa.detection.trackerDesdeConfig
 import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
 import com.example.traductorlsa.features.FeatureBuilderImpl
@@ -144,6 +146,9 @@ const val DATASET_FILE_NAME = "lsa_samples.json"
  * necesita. Se cambia aca y se actualizan las tres pantallas a la vez.
  */
 internal const val MUESTRAS_OBJETIVO = 20
+
+/** Modo y delegado de MediaPipe en la cámara (ver la medición en CameraScreen). */
+internal const val CONFIG_MEDIAPIPE = "IMAGEN_GPU"
 
 internal fun loadAllLabels(context: Context): List<String> {
     try {
@@ -290,6 +295,7 @@ fun CameraScreen(
     var sesionTerminada by remember { mutableStateOf<SesionGuiada?>(null) }
 
     FijarVertical()
+    MantenerPantallaEncendida()
 
     var hasPermission by remember {
         mutableStateOf(
@@ -310,7 +316,21 @@ fun CameraScreen(
     // La sensibilidad se toma al entrar a la pantalla y no en vivo: recrear el
     // detector recarga los 8 MB del modelo, y el deslizador de Ajustes dispara
     // en cada movimiento. Cambiarla tiene efecto la próxima vez que se abre.
-    val handTracker = remember { HandTrackerImpl(context, ajustes.sensibilidadDeteccion) }
+    // Banco de medición (solo debug, prefs "banco" escritas desde la PC): con qué
+    // delegado corre MediaPipe y, si "comparar" está puesto, otra configuración que corre
+    // sobre el mismo frame para medir tiempo y diferencia de landmarks.
+    val banco = remember {
+        if (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0)
+            context.getSharedPreferences("banco", android.content.Context.MODE_PRIVATE) else null
+    }
+    // MediaPipe en GPU (con vuelta automática a CPU si el teléfono no la tiene): en el
+    // Galaxy A55 baja de 99 a 70 ms por frame con los mismos landmarks (misma cantidad de
+    // manos en el 99,7 % de los frames, puntos a 0,2 % del ancho; 2026-10-18). Se crea en
+    // el hilo de la cámara, que es donde corre.
+    val handTracker = remember {
+        val config = banco?.getString("principal", null) ?: CONFIG_MEDIAPIPE
+        TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, config) }
+    }
     val featureBuilder = remember { FeatureBuilderImpl() }
     val sequenceBuffer = remember { SequenceBufferImpl() }
     val labelProvider = remember { LabelProviderImpl(context) }
@@ -329,6 +349,22 @@ fun CameraScreen(
 
     LaunchedEffect(ajustes.velocidadVoz, ajustes.tonoVoz, ajustes.variante) {
         speechManager.configurar(ajustes.velocidadVoz, ajustes.tonoVoz, ajustes.variante.locale)
+    }
+    DisposableEffect(engine) {
+        val comparar = banco?.getString("comparar", null)
+        if (comparar != null) {
+            val archivo = java.io.File(context.filesDir, "metricas/comparacion_mp.jsonl").apply { parentFile?.mkdirs() }
+            engine.comparador = TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, comparar) }
+            val principal = banco.getString("principal", null) ?: CONFIG_MEDIAPIPE
+            engine.onComparacion = { fila ->
+                archivo.appendText(fila.put("principal", principal).put("comparado", comparar).toString() + "\n")
+            }
+        }
+        onDispose {
+            engine.comparador?.close()
+            engine.comparador = null
+            engine.onComparacion = null
+        }
     }
 
     val snack = remember { SnackbarHostState() }
@@ -568,8 +604,8 @@ fun CameraScreen(
         camController.bindToLifecycle(lifecycleOwner)
         camController.clearImageAnalysisAnalyzer()
 
-        val analyzer = FrameAnalyzer(context) { bitmap, rotationDeg, ts, convNanos ->
-            engine.process(bitmap, rotationDeg, ts, convNanos)
+        val analyzer = FrameAnalyzer(context) { bitmap, rotationDeg, ts, convNanos, yaDerecho ->
+            engine.process(bitmap, rotationDeg, ts, convNanos, yaDerecho)
         }
         camController.setImageAnalysisAnalyzer(executor) { imageProxy ->
             analyzer.analyze(imageProxy)

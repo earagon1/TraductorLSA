@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.traductorlsa.dataset.CapturaCruda
 import com.example.traductorlsa.dataset.FrameCrudo
 import com.example.traductorlsa.dataset.ManoCruda
+import com.example.traductorlsa.detection.ComparacionLandmarks
 import com.example.traductorlsa.detection.HandTracker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import com.example.traductorlsa.features.FeatureBuilder
@@ -32,6 +33,14 @@ class GestureEngine(
     // Después de guardar una seña: avisa cuando las manos ya bajaron y se puede hacer la
     // siguiente, para que la pantalla deje de pedir "Bajá las manos".
     var onListoParaCapturar: (() -> Unit)? = null
+
+    /**
+     * Solo para medir (build debug): otra configuración de MediaPipe que corre sobre el
+     * mismo frame. [onComparacion] recibe por frame los tiempos de las dos, cuántas manos
+     * vio cada una y cuánto se mueven los puntos entre ellas.
+     */
+    var comparador: HandTracker? = null
+    var onComparacion: ((org.json.JSONObject) -> Unit)? = null
 
     private val esperaSinManos = EsperaSinManos()
 
@@ -72,19 +81,19 @@ class GestureEngine(
      * @param convNanos lo que tardó la conversión YUV -> Bitmap en [FrameAnalyzer],
      * que ocurre antes de llegar acá. Solo se usa para las métricas.
      */
-    fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long, convNanos: Long = 0L) {
+    /**
+     * @param yaDerecho el frame llega rotado desde la conversión (RgbaABitmap); [rotationDeg]
+     * es igual la rotación original de la cámara, que se guarda en la muestra v2.
+     */
+    fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long, convNanos: Long = 0L, yaDerecho: Boolean = false) {
         // ============================================================
         // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
         val t0 = System.nanoTime()
         Trace.beginSection("senar:rot")
-        val correctedBitmap = when (rotationDeg) {
-            90 -> Bitmap.createBitmap(
+        val correctedBitmap = if (yaDerecho) bitmap else when (rotationDeg) {
+            90, 180, 270 -> Bitmap.createBitmap(
                 bitmap, 0, 0, bitmap.width, bitmap.height,
-                android.graphics.Matrix().apply { postRotate(90f) }, true
-            )
-            270 -> Bitmap.createBitmap(
-                bitmap, 0, 0, bitmap.width, bitmap.height,
-                android.graphics.Matrix().apply { postRotate(270f) }, true
+                android.graphics.Matrix().apply { postRotate(rotationDeg.toFloat()) }, true
             )
             else -> bitmap
         }
@@ -94,9 +103,22 @@ class GestureEngine(
         // Ya está rotado correctamente, así que pasamos rotación 0 al tracker
         Trace.beginSection("senar:mp")
         val mpImage = BitmapImageBuilder(correctedBitmap).build()
-        val res = handTracker.detect(mpImage, 0)
+        val res = handTracker.detect(mpImage, 0, ts)
         Trace.endSection()
         val t2 = System.nanoTime()
+        comparador?.let { otro ->
+            val c0 = System.nanoTime()
+            val res2 = otro.detect(mpImage, 0, ts)
+            val c1 = System.nanoTime()
+            val a = ComparacionLandmarks.puntos(res)
+            val b = ComparacionLandmarks.puntos(res2)
+            val d = ComparacionLandmarks.distanciaMedia(
+                a, b, correctedBitmap.width.toDouble() / correctedBitmap.height)
+            onComparacion?.invoke(org.json.JSONObject().put("ts", ts).put("estado", state.name)
+                .put("ms_principal", (t2 - t1) / 1e6).put("ms_comparado", (c1 - c0) / 1e6)
+                .put("manos_principal", a.size).put("manos_comparado", b.size)
+                .put("distancia", d ?: org.json.JSONObject.NULL))
+        }
 
         // ============================================================
         // 🔍 Flip de coordenadas solo para overlay (no afecta el modelo)

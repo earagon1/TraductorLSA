@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -78,6 +79,20 @@ fun FijarVertical() {
         val anterior = activity.requestedOrientation
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         onDispose { activity.requestedOrientation = anterior }
+    }
+}
+
+/**
+ * Pantalla encendida mientras se ve la cámara: la persona seña sin tocar el teléfono y,
+ * con el tiempo de apagado del sistema, la pantalla se apagaba a mitad de una sesión (y
+ * con ella la cámara). Solo mientras esta pantalla está abierta; al salir vuelve lo normal.
+ */
+@Composable
+fun MantenerPantallaEncendida() {
+    val activity = LocalContext.current.buscarActivity() ?: return
+    DisposableEffect(activity) {
+        activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose { activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
     }
 }
 

@@ -24,5 +24,8 @@ class CameraManager(
         controller.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
         controller.setImageAnalysisBackpressureStrategy(analysisStrategy)
         controller.setImageAnalysisTargetSize(CameraController.OutputSize(targetSize))
+        // RGBA directo: la conversión de color la hace CameraX en nativo y el frame no pasa
+        // por JPEG (ver RgbaABitmap). FrameAnalyzer igual acepta YUV si una cámara no lo da.
+        controller.setImageAnalysisOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
     }
 }
