@@ -63,11 +63,14 @@ import com.example.traductorlsa.dataset.instruccionCondicion
 import com.example.traductorlsa.ui.camera.DialogoElegirParticipante
 import com.example.traductorlsa.ui.camera.DialogoPausa
 import com.example.traductorlsa.ui.camera.DialogoSesionTerminada
+import com.example.traductorlsa.ui.camera.EstadoTraduccion
 import com.example.traductorlsa.ui.camera.FijarVertical
 import com.example.traductorlsa.ui.camera.MantenerPantallaEncendida
 import com.example.traductorlsa.ui.camera.ProgresoSesion
 import com.example.traductorlsa.ui.camera.TiraSesionGuiada
+import com.example.traductorlsa.ui.camera.UltimaLectura
 import com.example.traductorlsa.ui.camera.cargarPlanilla
+import com.example.traductorlsa.ui.camera.estadoTraduccion
 import com.example.traductorlsa.detection.TrackerPerezoso
 import com.example.traductorlsa.detection.trackerDesdeConfig
 import com.example.traductorlsa.settings.ajustesSenar
@@ -381,9 +384,20 @@ fun CameraScreen(
     // Después de guardar: false mientras la app espera que bajen las manos, true cuando
     // ya se puede hacer la siguiente seña (lo avisa GestureEngine.onListoParaCapturar).
     var listoParaSiguiente by remember { mutableStateOf(false) }
-    // Cuando la prediccion no llega al minimo de Ajustes, la pantalla lo dice en
-    // vez de quedarse muda. -1 significa que no hay ninguna descartada.
-    var confianzaDescartada by remember { mutableStateOf(-1f) }
+    // Qué pasó con la última captura del modo traducción: el pie lo dice en vez de
+    // quedarse mudo cuando no se reconoció (ver EstadoTraduccion).
+    var ultimaLectura by remember { mutableStateOf<UltimaLectura>(UltimaLectura.Ninguna) }
+    // Después de cada seña la app espera que se bajen las manos; si siguen arriba un rato,
+    // el pie lo pide.
+    var esperandoBajarManos by remember { mutableStateOf(false) }
+    var pedirBajarManos by remember { mutableStateOf(false) }
+    LaunchedEffect(esperandoBajarManos) {
+        pedirBajarManos = false
+        if (esperandoBajarManos) {
+            delay(1500)
+            pedirBajarManos = true
+        }
+    }
     val repoAjustes = repositorioAjustes()
 
     LaunchedEffect(trainingMode) {
@@ -469,13 +483,14 @@ fun CameraScreen(
                 val sinNombre = prediction.gesture == "Unknown" || prediction.gesture == "Sin datos"
                 val valida = !sinNombre && prediction.confidence >= ajustes.confianzaMinima
 
-                if (prediction.gesture == CLASE_NADA) {
-                    // El modelo reconoció que no hubo seña (rascarse, acomodarse, bajar
-                    // las manos): no se muestra ni se dice nada, y tampoco es una seña
-                    // "no reconocida" que haya que avisar.
-                    confianzaDescartada = -1f
+                esperandoBajarManos = true
+                if (prediction.gesture == CLASE_NADA || sinNombre) {
+                    // "nada" no se dice ni se escribe, pero se avisa en el pie: también
+                    // sale cuando una seña real no se entendió, y callarse dejaba a la
+                    // persona sin saber que tenía que repetir.
+                    ultimaLectura = UltimaLectura.SinSena
                 } else if (valida) {
-                    confianzaDescartada = -1f
+                    ultimaLectura = UltimaLectura.Reconocida
                     val last = recentTranslations.lastOrNull()
                     if (last != prediction.gesture) {
                         currentTranslation = prediction.gesture
@@ -491,8 +506,7 @@ fun CameraScreen(
                         }
                     }
                 } else {
-                    // Sin nombre no hay porcentaje que valga la pena mostrar.
-                    confianzaDescartada = if (sinNombre) 0f else prediction.confidence
+                    ultimaLectura = UltimaLectura.Dudosa(prediction.confidence)
                 }
             }
         }
@@ -502,7 +516,8 @@ fun CameraScreen(
             if (target > 0) frameTarget = target
             if (count > 0) {
                 recienGuardada = false
-                confianzaDescartada = -1f
+                ultimaLectura = UltimaLectura.Ninguna
+                esperandoBajarManos = false
             }
         }
 
@@ -552,7 +567,10 @@ fun CameraScreen(
             }
         }
 
-        engine.onListoParaCapturar = { listoParaSiguiente = true }
+        engine.onListoParaCapturar = {
+            listoParaSiguiente = true
+            esperandoBajarManos = false
+        }
 
         onDispose {
             engine.onListoParaCapturar = null
@@ -729,8 +747,7 @@ fun CameraScreen(
             PieDeTraduccion(
                 frase = recentTranslations,
                 hayManos = hayManos,
-                frameCount = frameCount,
-                confianzaDescartada = confianzaDescartada,
+                estado = estadoTraduccion(ultimaLectura, frameCount, hayManos, recentTranslations.isNotEmpty(), pedirBajarManos),
                 onRepetir = {
                     val texto = recentTranslations.joinToString(" ") { nombreParaMostrar(it) }
                     if (texto.isNotBlank()) speechManager.speak(texto)
@@ -738,7 +755,7 @@ fun CameraScreen(
                 onLimpiar = {
                     recentTranslations = emptyList()
                     currentTranslation = ""
-                    confianzaDescartada = -1f
+                    ultimaLectura = UltimaLectura.Ninguna
                 },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -1223,14 +1240,12 @@ private fun PieDeCaptura(
 private fun PieDeTraduccion(
     frase: List<String>,
     hayManos: Boolean,
-    frameCount: Int,
-    confianzaDescartada: Float,
+    estado: EstadoTraduccion,
     onRepetir: () -> Unit,
     onLimpiar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val descartada = confianzaDescartada >= 0f
-    val porcentaje = (confianzaDescartada * 100).toInt()
+    val descartada = estado.esAviso
 
     Column(
         modifier = modifier
@@ -1244,19 +1259,13 @@ private fun PieDeTraduccion(
                 frase.isNotEmpty() -> SenarAzul600
                 else -> Color.White.copy(alpha = 0.40f)
             },
-            texto = when {
-                descartada && confianzaDescartada > 0f -> "NO LA RECONOCÍ · $porcentaje%"
-                descartada -> "NO LA RECONOCÍ"
-                frameCount > 0 -> "LEYENDO LA SEÑA…"
-                frase.isNotEmpty() -> "TRADUCIENDO"
-                hayManos -> "TE VEO"
-                else -> "ESPERANDO SEÑAS"
-            },
+            texto = estado.rotulo,
         )
 
-        if (descartada) {
+        val ayuda = estado.ayuda
+        if (ayuda != null) {
             Text(
-                text = "Repetila un poco más despacio.",
+                text = ayuda,
                 fontSize = 12.5.sp,
                 color = Color.White.copy(alpha = 0.58f),
                 modifier = Modifier.padding(top = 6.dp),
