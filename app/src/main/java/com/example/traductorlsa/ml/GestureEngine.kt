@@ -40,6 +40,9 @@ class GestureEngine(
      * vio cada una y cuánto se mueven los puntos entre ellas.
      */
     var comparador: HandTracker? = null
+
+    /** Si está, el comparador recibe el frame transformado (por ejemplo, pasado por JPEG). */
+    var entradaComparador: ((Bitmap) -> Bitmap)? = null
     var onComparacion: ((org.json.JSONObject) -> Unit)? = null
 
     private val esperaSinManos = EsperaSinManos()
@@ -107,8 +110,9 @@ class GestureEngine(
         Trace.endSection()
         val t2 = System.nanoTime()
         comparador?.let { otro ->
+            val imagen2 = entradaComparador?.let { BitmapImageBuilder(it(correctedBitmap)).build() } ?: mpImage
             val c0 = System.nanoTime()
-            val res2 = otro.detect(mpImage, 0, ts)
+            val res2 = otro.detect(imagen2, 0, ts)
             val c1 = System.nanoTime()
             val a = ComparacionLandmarks.puntos(res)
             val b = ComparacionLandmarks.puntos(res2)

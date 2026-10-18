@@ -356,16 +356,27 @@ fun CameraScreen(
     DisposableEffect(engine) {
         val comparar = banco?.getString("comparar", null)
         if (comparar != null) {
+            // "entrada" = "jpeg80": el comparador ve el mismo frame pasado por JPEG de calidad
+            // 80, como el pipeline anterior (YuvToRgbConverter). Mide qué cambió al sacarlo.
+            if (banco.getString("entrada", null) == "jpeg80") {
+                engine.entradaComparador = { bmp ->
+                    val bytes = java.io.ByteArrayOutputStream()
+                        .also { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, it) }.toByteArray()
+                    android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                }
+            }
             val archivo = java.io.File(context.filesDir, "metricas/comparacion_mp.jsonl").apply { parentFile?.mkdirs() }
             engine.comparador = TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, comparar) }
             val principal = banco.getString("principal", null) ?: CONFIG_MEDIAPIPE
             engine.onComparacion = { fila ->
-                archivo.appendText(fila.put("principal", principal).put("comparado", comparar).toString() + "\n")
+                archivo.appendText(fila.put("principal", principal).put("comparado", comparar)
+                    .put("entrada", banco.getString("entrada", null) ?: "igual").toString() + "\n")
             }
         }
         onDispose {
             engine.comparador?.close()
             engine.comparador = null
+            engine.entradaComparador = null
             engine.onComparacion = null
         }
     }
