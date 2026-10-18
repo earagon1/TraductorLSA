@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Release: sin tráfico en claro. La app traduce sin red; la red solo la usan la cuenta
+  (Clerk, por HTTPS) y el federado. El federado por HTTP de la red local va solo en el
+  build de debug (src/debug/res/xml/network_security_config.xml): pasarlo a release
+  pide HTTPS en el servidor (trabajo futuro, con la nube).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

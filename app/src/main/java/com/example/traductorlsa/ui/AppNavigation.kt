@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.traductorlsa.ui.screens.AboutScreen
+import com.example.traductorlsa.ui.screens.FederadoScreen
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
 import com.example.traductorlsa.ui.screens.DatasetScreen
 import com.example.traductorlsa.ui.screens.DictionaryScreen
@@ -99,6 +100,7 @@ sealed class AppDestination(val route: String) {
     object Dictionary : AppDestination("dictionary")
     object Settings : AppDestination("settings")
     object About : AppDestination("about")
+    object Federado : AppDestination("federado")
 }
 
 /** Techo de espera de Clerk una vez terminada la presentacion. */
@@ -235,6 +237,7 @@ fun AppNavHost(navController: NavHostController) {
         composable(AppDestination.Dictionary.route) { DictionaryScreen(navController) }
         composable(AppDestination.Settings.route) { SettingsScreen(navController) }
         composable(AppDestination.About.route) { AboutScreen(navController) }
+        composable(AppDestination.Federado.route) { FederadoScreen(navController) }
     }
 }
 

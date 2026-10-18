@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug (el build del piloto): permite HTTP en claro para hablar con el servidor del
+  federado en la PC de la red local (modelo_LSA/federated/servidor.py). Android no deja
+  habilitarlo por rango de IP, y la IP de la PC cambia según la Wi-Fi: por eso se
+  habilita en general, pero solo en este build.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

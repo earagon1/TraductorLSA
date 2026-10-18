@@ -21,14 +21,22 @@ data class Calibracion(val temperatura: Float = 1f, val umbral: Float? = null) {
         const val ASSET = "calibracion.json"
 
         fun leer(context: Context): Calibracion = try {
-            val json = JSONObject(context.assets.open(ASSET).bufferedReader().use { it.readText() })
-            Calibracion(
-                temperatura = json.optDouble("temperatura", 1.0).toFloat().takeIf { it > 0f } ?: 1f,
-                umbral = if (json.has("umbral")) json.getDouble("umbral").toFloat() else null,
-            )
+            desdeJson(JSONObject(context.assets.open(ASSET).bufferedReader().use { it.readText() }))
         } catch (_: Exception) {
             Calibracion()
         }
+
+        /** La de un paquete bajado del servidor del federado (viaja con su backbone). */
+        fun leer(archivo: java.io.File): Calibracion = try {
+            desdeJson(JSONObject(archivo.readText()))
+        } catch (_: Exception) {
+            Calibracion()
+        }
+
+        private fun desdeJson(json: JSONObject) = Calibracion(
+            temperatura = json.optDouble("temperatura", 1.0).toFloat().takeIf { it > 0f } ?: 1f,
+            umbral = if (json.has("umbral")) json.getDouble("umbral").toFloat() else null,
+        )
     }
 }
 

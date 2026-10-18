@@ -2,6 +2,8 @@ package com.example.traductorlsa.ml
 
 import android.content.Context
 import android.util.Log
+import com.example.traductorlsa.federado.CabezaDensa
+import com.example.traductorlsa.federado.ModeloInstalado
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -20,8 +22,17 @@ class TFLiteClassifier(
     var D: Int = 126
         private set
 
-    /** Temperatura y umbral del modelo publicado (assets/calibracion.json). */
-    val calibracion: Calibracion = Calibracion.leer(context)
+    /**
+     * El paquete bajado del servidor del federado, si hay uno activo. Con él se traduce con
+     * su backbone + la cabeza más reciente de las rondas ([CabezaDensa], en Kotlin), y no
+     * con el modelo de fábrica, que queda en assets para "Volver al de fábrica".
+     */
+    val modeloInstalado: ModeloInstalado? = ModeloInstalado.activo(context)
+    private val cabeza: CabezaDensa? = modeloInstalado?.let { runCatching { it.cabeza() }.getOrNull() }
+    private var dimSalida: Int = 0
+
+    /** Temperatura y umbral del modelo con el que se traduce (el instalado o el de fábrica). */
+    val calibracion: Calibracion = modeloInstalado?.let { Calibracion.leer(it.calibracion) } ?: Calibracion.leer(context)
 
     init {
         // El cuantizado va primero a proposito.
@@ -48,9 +59,16 @@ class TFLiteClassifier(
             assetExists("modelo.tflite")        -> "modelo.tflite"
             else                                -> "model.tflite"
         }
-        Log.d("TFLiteClassifier", "Cargando modelo: $modelName")
-
-        interpreter = Interpreter(loadModelFile(modelName), Interpreter.Options().apply { setNumThreads(4) })
+        interpreter = if (modeloInstalado != null && cabeza != null) {
+            Log.d("TFLiteClassifier", "Cargando el paquete v${modeloInstalado.paquete} del federado")
+            Interpreter(FileInputStream(modeloInstalado.backbone).use {
+                it.channel.map(FileChannel.MapMode.READ_ONLY, 0, modeloInstalado.backbone.length())
+            }, Interpreter.Options().apply { setNumThreads(4) })
+        } else {
+            Log.d("TFLiteClassifier", "Cargando modelo: $modelName")
+            Interpreter(loadModelFile(modelName), Interpreter.Options().apply { setNumThreads(4) })
+        }
+        dimSalida = interpreter.getOutputTensor(0).shape().last()
 
         interpreter.getInputTensor(0)?.shape()?.let { shape ->
             if (shape.size >= 3) { T = shape[1]; D = shape[2] }
@@ -76,13 +94,15 @@ class TFLiteClassifier(
         }
         input.rewind()
 
-        val output = ByteBuffer.allocateDirect(4 * labels.size).order(ByteOrder.nativeOrder())
+        val output = ByteBuffer.allocateDirect(4 * dimSalida).order(ByteOrder.nativeOrder())
         output.rewind()
         interpreter.run(input, output)
         output.rewind()
+        val salida = FloatArray(dimSalida) { output.float }
 
-        val probs = FloatArray(labels.size)
-        for (i in probs.indices) probs[i] = output.float
+        // Con un paquete instalado el TFLite es solo el backbone: la salida es el embedding
+        // y las probabilidades las da la cabeza. Si no, la salida ya es una por seña.
+        val probs = cabeza?.predecir(salida) ?: salida.copyOf(labels.size)
 
         // Softmax normalizado
         val sum = probs.sum()

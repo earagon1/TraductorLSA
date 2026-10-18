@@ -3,9 +3,11 @@ package com.example.traductorlsa.federado
 import android.content.Context
 import org.tensorflow.lite.Interpreter
 import java.io.Closeable
+import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
 /**
@@ -13,17 +15,21 @@ import java.nio.channels.FileChannel
  * embedding de 128 que entra a [CabezaDensa]. Es un TFLite de inferencia sin Flex
  * (`modelo_LSA/federated/exportar_cabeza.py`); en el teléfono no se entrena.
  */
-class Backbone(context: Context, asset: String = ASSET) : Closeable {
-    private val interprete: Interpreter
+class Backbone private constructor(buffer: MappedByteBuffer) : Closeable {
+    private val interprete: Interpreter = Interpreter(buffer, Interpreter.Options().apply { setNumThreads(4) })
     val t: Int
     val d: Int
     val dimEmbedding: Int
 
+    /** El de assets (el de la demo de entrenamiento local). */
+    constructor(context: Context, asset: String = ASSET) : this(context.assets.openFd(asset).let { afd ->
+        FileInputStream(afd.fileDescriptor).channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
+    })
+
+    /** El de un paquete bajado del servidor del federado ([ModeloInstalado]). */
+    constructor(archivo: File) : this(FileInputStream(archivo).use { it.channel.map(FileChannel.MapMode.READ_ONLY, 0, archivo.length()) })
+
     init {
-        val afd = context.assets.openFd(asset)
-        val buffer = FileInputStream(afd.fileDescriptor).channel
-            .map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
-        interprete = Interpreter(buffer, Interpreter.Options().apply { setNumThreads(4) })
         val forma = interprete.getInputTensor(0).shape()
         t = forma[1]
         d = forma[2]

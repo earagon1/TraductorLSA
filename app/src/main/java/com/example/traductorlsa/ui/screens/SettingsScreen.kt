@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -285,6 +286,55 @@ fun SettingsScreen(navController: NavHostController) {
         }
 
         Aire(26)
+        Surface(
+            onClick = { navController.navigate(AppDestination.Federado.route) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = SenarBlanco,
+            border = BorderStroke(1.dp, SenarBordeSuave),
+        ) {
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(SenarPapelHundido),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = null,
+                        tint = SenarGrafito500,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "Aprendizaje federado",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = SenarGrafito900,
+                    )
+                    Aire(3)
+                    Text(
+                        text = "Mejorar el modelo entre todos y recibir actualizaciones",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SenarGrafito500,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = SenarGrafito300,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        }
+
+        Aire(12)
         Surface(
             onClick = { navController.navigate(AppDestination.About.route) },
             modifier = Modifier.fillMaxWidth(),
