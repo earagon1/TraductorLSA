@@ -83,7 +83,11 @@ object OperacionesFederadas {
         val partes = mutableListOf<String>()
         val man = cliente.manifiesto()
         var modelo = ModeloInstalado.activo(context)
-        if (modelo == null || modelo.paquete != man.getInt("paquete")) {
+        // Se compara el contenido (sha del backbone) y no solo el número: otro servidor, o
+        // el mismo con el directorio reiniciado, puede repartir otro "v1".
+        if (modelo == null || modelo.paquete != man.getInt("paquete") ||
+            modelo.backboneSha != man.getString("backbone_sha256")
+        ) {
             modelo = ModeloInstalado.instalar(context, man) { nombre -> cliente.archivo(man.getInt("paquete"), nombre) }
             val nuevas = man.optJSONArray("senas_nuevas")?.length() ?: 0
             partes += "Instalado el modelo v${modelo.paquete} (${modelo.clases.size} señas" +
