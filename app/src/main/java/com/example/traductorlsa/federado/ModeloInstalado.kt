@@ -110,8 +110,10 @@ class ModeloInstalado(
             prefs(context).edit().putInt(CLAVE_VERSION, version).apply()
         }
 
+        /** También apaga la personalización automática: volver a lo de fábrica es volver a todo. */
         fun volverAFabrica(context: Context) {
-            prefs(context).edit().putInt(CLAVE_ACTIVO, 0).putInt(CLAVE_VERSION, 0).apply()
+            prefs(context).edit().putInt(CLAVE_ACTIVO, 0).putInt(CLAVE_VERSION, 0)
+                .putBoolean(CLAVE_PERSONALIZAR, false).apply()
         }
 
         /**
