@@ -71,6 +71,50 @@ object ProtocoloFederado {
 
     fun sha256(datos: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(datos).joinToString("") { "%02x".format(it) }
+
+    // --- Rotación aleatoria antes de cuantizar (opcional) ---
+    //
+    // Las "actualizaciones esbozadas" de Konečný et al., que cita la propuesta: el delta se
+    // rota con H·D (D signos al azar, H Walsh-Hadamard) para repartir su energía antes de
+    // los 8 bits. Medido con los updates del piloto, no baja el error (no tienen picos), así
+    // que [ROTAR] va apagado; queda implementada para un modelo más grande. El servidor la
+    // deshace con la semilla que viaja en el tensor.
+    const val ROTACION = "hadamard"
+    const val ROTAR = false
+
+    fun potenciaDe2(n: Int): Int = if (n <= 1) 1 else Integer.highestOneBit(n - 1) shl 1
+
+    /** Signos ±1 de splitmix64, iguales a `protocolo.signos` de Python (fixture). */
+    fun signos(semilla: Long, n: Int): FloatArray = FloatArray(n) { i ->
+        var z = semilla + (i + 1).toLong() * -0x61c8864680b583ebL // 0x9E3779B97F4A7C15
+        z = (z xor (z ushr 30)) * -0x40a7b892e31b1a47L // 0xBF58476D1CE4E5B9
+        z = (z xor (z ushr 27)) * -0x6b2fb644ecceee15L // 0x94D049BB133111EB
+        z = z xor (z ushr 31)
+        if (z ushr 63 == 0L) 1f else -1f
+    }
+
+    private fun hadamard(x: DoubleArray) {
+        var h = 1
+        while (h < x.size) {
+            for (i in x.indices step 2 * h) for (j in i until i + h) {
+                val a = x[j]
+                val b = x[j + h]
+                x[j] = a + b
+                x[j + h] = a - b
+            }
+            h *= 2
+        }
+    }
+
+    /** H·D·x / sqrt(n), con x completado con ceros hasta n = potencia de 2. */
+    fun rotar(x: FloatArray, semilla: Long): FloatArray {
+        val n = potenciaDe2(x.size)
+        val s = signos(semilla, n)
+        val y = DoubleArray(n) { if (it < x.size) x[it].toDouble() * s[it] else 0.0 }
+        hadamard(y)
+        val raiz = kotlin.math.sqrt(n.toDouble())
+        return FloatArray(n) { (y[it] / raiz).toFloat() }
+    }
 }
 
 /** Base64 estándar (RFC 4648, con relleno '='). */

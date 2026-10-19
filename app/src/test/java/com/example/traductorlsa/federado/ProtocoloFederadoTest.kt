@@ -48,6 +48,22 @@ class ProtocoloFederadoTest {
     }
 
     @Test
+    fun `rotacion igual que el servidor`() {
+        // Los signos tienen que ser idénticos (si no, el servidor deshace otra rotación);
+        // la transformada, igual hasta el redondeo de punto flotante.
+        val casos = fixture.getJSONArray("rotacion")
+        for (k in 0 until casos.length()) {
+            val c = casos.getJSONObject(k)
+            val semilla = c.getLong("semilla")
+            val s = c.getJSONArray("signos")
+            assertArrayEquals("signos $semilla", FloatArray(s.length()) { s.getInt(it).toFloat() },
+                ProtocoloFederado.signos(semilla, s.length()), 0f)
+            assertArrayEquals("rotado $semilla", floats(c.getJSONArray("rotado")),
+                ProtocoloFederado.rotar(floats(c.getJSONArray("x")), semilla), c.getDouble("tolerancia").toFloat())
+        }
+    }
+
+    @Test
     fun `base64 ida y vuelta con todos los rellenos`() {
         val azar = Random(1)
         for (n in 0..40) {

@@ -133,12 +133,17 @@ object OperacionesFederadas {
         val msEntrenamiento = (System.nanoTime() - t1) / 1e6
         val despues = accuracy(cabeza, x, y)
         val azar = Random(System.nanoTime())
+        val semillaBase = azar.nextLong(0, 1L shl 40)
         val tensores = JSONArray()
         cabeza.pesos().zip(globales).forEachIndexed { i, (local, global) ->
             val delta = FloatArray(local.size) { local[it] - global[it] }
-            val c = ProtocoloFederado.cuantizar(delta, azar)
-            tensores.put(JSONObject().put("forma", formaDe(m, i)).put("escala", c.escala.toDouble())
-                .put("datos", Base64Simple.codificar(c.q)))
+            val tensor = JSONObject().put("forma", formaDe(m, i))
+            val aEnviar = if (ProtocoloFederado.ROTAR) {
+                tensor.put("rotacion", JSONObject().put("tipo", ProtocoloFederado.ROTACION).put("semilla", semillaBase + i))
+                ProtocoloFederado.rotar(delta, semillaBase + i)
+            } else delta
+            val c = ProtocoloFederado.cuantizar(aEnviar, azar)
+            tensores.put(tensor.put("escala", c.escala.toDouble()).put("datos", Base64Simple.codificar(c.q)))
         }
         val metricas = JSONObject().put("accuracy_antes", antes).put("accuracy_despues", despues)
             .put("ms_embeddings", msEmbedding).put("ms_entrenamiento", msEntrenamiento).put("epocas", EPOCAS)
