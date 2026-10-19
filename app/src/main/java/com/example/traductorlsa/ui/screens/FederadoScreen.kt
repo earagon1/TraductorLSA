@@ -69,15 +69,15 @@ fun FederadoScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val participante = participanteActual()
 
-    fun correr(nombre: String, accion: (ClienteFederado) -> ResultadoFederado) {
-        if (direccion.isBlank()) { registro.add(0, "Escribí la dirección del servidor"); return }
-        prefs.edit().putString("servidor", direccion.trim()).apply()
+    fun correr(nombre: String, conServidor: Boolean = true, accion: (ClienteFederado) -> ResultadoFederado) {
+        if (conServidor && direccion.isBlank()) { registro.add(0, "Escribí la dirección del servidor"); return }
+        if (conServidor) prefs.edit().putString("servidor", direccion.trim()).apply()
         ocupado = true
         progreso = "$nombre…"
         scope.launch {
             val texto = withContext(Dispatchers.IO) {
                 try {
-                    val r = accion(ClienteFederado(direccion))
+                    val r = accion(ClienteFederado(direccion.ifBlank { "127.0.0.1" }))
                     guardarEnLog(context, nombre, r)
                     r.resumen
                 } catch (e: Exception) {
@@ -106,6 +106,14 @@ fun FederadoScreen(navController: NavHostController) {
                         modelo = descripcionModelo(context)
                         registro.add(0, "Volviste al modelo de fábrica")
                     }, enabled = !ocupado) { Text("Volver al modelo de fábrica") }
+                }
+                if (ModeloInstalado.activo(context)?.tienePersonal == true) {
+                    TextButton(onClick = {
+                        ModeloInstalado.activo(context)?.quitarPersonal()
+                        ModeloInstalado.guardarQuierePersonalizar(context, false)
+                        modelo = descripcionModelo(context)
+                        registro.add(0, "Quitaste la personalización: traducís con el modelo compartido")
+                    }, enabled = !ocupado) { Text("Quitar la personalización") }
                 }
             }
         }
@@ -143,8 +151,18 @@ fun FederadoScreen(navController: NavHostController) {
                     AyudaAjuste("Para participar tenés que iniciar sesión: las tomas se asocian a tu código seudónimo.")
                 }
                 val puede = acepta && participante != null && !ocupado
-                Button(onClick = { correr("Buscar actualización") { c -> OperacionesFederadas.actualizar(context, c) } },
-                    enabled = !ocupado, modifier = Modifier.fillMaxWidth()) { Text("Buscar actualización") }
+                Button(onClick = {
+                    correr("Buscar actualización") { c ->
+                        val r = OperacionesFederadas.actualizar(context, c)
+                        // Si había elegido personalizar y llegó una cabeza nueva, se rehace sola:
+                        // la personal vieja era sobre la versión anterior.
+                        val m = ModeloInstalado.activo(context)
+                        if (participante != null && m != null && !m.tienePersonal && ModeloInstalado.quierePersonalizar(context)) {
+                            val p = OperacionesFederadas.personalizar(context, participante) { t -> progreso = t }
+                            ResultadoFederado("${r.resumen}. ${p.resumen}", r.detalle.put("personalizacion", p.detalle))
+                        } else r
+                    }
+                }, enabled = !ocupado, modifier = Modifier.fillMaxWidth()) { Text("Buscar actualización") }
                 Button(onClick = {
                     correr("Entrenar en esta ronda") { c ->
                         OperacionesFederadas.participar(context, c, participante ?: error("sin sesión")) { p -> progreso = p }
@@ -153,6 +171,14 @@ fun FederadoScreen(navController: NavHostController) {
                 OutlinedButton(onClick = {
                     correr("Aportar mis tomas") { c -> OperacionesFederadas.aportar(context, c, participante ?: error("sin sesión")) }
                 }, enabled = puede, modifier = Modifier.fillMaxWidth()) { Text("Aportar mis tomas") }
+                OutlinedButton(onClick = {
+                    correr("Personalizar", conServidor = false) { _ ->
+                        OperacionesFederadas.personalizar(context, participante ?: error("sin sesión")) { p -> progreso = p }
+                    }
+                }, enabled = participante != null && !ocupado, modifier = Modifier.fillMaxWidth()) {
+                    Text("Personalizar con mis tomas")
+                }
+                AyudaAjuste("Personalizar ajusta el modelo a tu forma de señar, solo en este teléfono: no se envía nada.")
                 if (progreso.isNotEmpty()) Text(progreso, style = MaterialTheme.typography.bodySmall, color = SenarGrafito500)
             }
         }
@@ -171,7 +197,8 @@ fun FederadoScreen(navController: NavHostController) {
 private fun descripcionModelo(context: Context): String {
     val m = ModeloInstalado.activo(context) ?: return "Modelo de fábrica"
     val v = ModeloInstalado.versionCabeza(context)
-    return "Modelo v${m.paquete} del servidor${if (v > 0) ", ajuste de las rondas v$v" else ""} · ${m.clases.count { it != "nada" }} señas"
+    return "Modelo v${m.paquete} del servidor${if (v > 0) ", ajuste de las rondas v$v" else ""}" +
+        (if (m.tienePersonal) ", personalizado con tus tomas" else "") + " · ${m.clases.count { it != "nada" }} señas"
 }
 
 /** Una línea JSON por operación en files/federado/operaciones.jsonl, para el informe del piloto. */

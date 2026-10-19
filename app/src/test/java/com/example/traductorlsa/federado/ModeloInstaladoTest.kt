@@ -59,6 +59,25 @@ class ModeloInstaladoTest {
     }
 
     @Test
+    fun `la personalizacion vale solo para la cabeza compartida sobre la que se hizo`() {
+        val carpeta = kotlin.io.path.createTempDirectory("modelo").toFile()
+        java.io.File(carpeta, "cabeza.json").writeText(cabezaBase().toString())
+        val manifiesto = JSONObject().put("clases", JSONArray(listOf("s0", "s1", "s2"))).put("backbone_sha256", "x")
+        val v2 = ModeloInstalado(1, carpeta, manifiesto, versionCabeza = 2)
+        assertFalse(v2.tienePersonal)
+        val azar = Random(4)
+        val personal = listOf(128 * 64, 64, 64 * 64, 64, 64 * 3, 3).map { n -> FloatArray(n) { azar.nextFloat() } }
+        v2.guardarPersonal(personal)
+        assertTrue(v2.tienePersonal)
+        assertEquals(ProtocoloFederado.shaPesos(personal), ProtocoloFederado.shaPesos(v2.cabeza().pesos()))
+        // Llegó la cabeza v3 de las rondas: la personal (sobre la v2) ya no se usa.
+        val v3 = ModeloInstalado(1, carpeta, manifiesto, versionCabeza = 3)
+        assertFalse(v3.tienePersonal)
+        assertEquals(ProtocoloFederado.shaPesos(v3.cabezaGlobal().pesos()), ProtocoloFederado.shaPesos(v3.cabeza().pesos()))
+        carpeta.deleteRecursively()
+    }
+
+    @Test
     fun `la direccion del servidor se completa`() {
         assertEquals("http://192.168.0.10:8765", ClienteFederado.normalizarDireccion(" 192.168.0.10:8765/ "))
         assertEquals("https://x.org", ClienteFederado.normalizarDireccion("https://x.org"))

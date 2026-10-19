@@ -14,19 +14,50 @@ import java.io.File
  * El modelo de fábrica nunca se borra ni se pisa: "Volver al de fábrica" solo cambia
  * cuál está activo. Así una actualización mala no deja a nadie sin traductor.
  */
-class ModeloInstalado(val paquete: Int, val carpeta: File, val manifiesto: JSONObject) {
+class ModeloInstalado(
+    val paquete: Int,
+    val carpeta: File,
+    val manifiesto: JSONObject,
+    /** Versión de la cabeza de rondas que tiene el teléfono (0 = la del paquete). */
+    val versionCabeza: Int = 0,
+) {
     val backbone: File get() = File(carpeta, "backbone.tflite")
     val calibracion: File get() = File(carpeta, "calibracion.json")
     private val cabezaPaquete: File get() = File(carpeta, "cabeza.json")
     private val cabezaRondas: File get() = File(carpeta, CABEZA_RONDAS)
+    private val cabezaPersonal: File get() = File(carpeta, CABEZA_PERSONAL)
 
     val clases: List<String> = manifiesto.getJSONArray("clases").let { a -> List(a.length()) { a.getString(it) } }
     val backboneSha: String = manifiesto.getString("backbone_sha256")
     val uuidsTest: Set<String> = manifiesto.optJSONArray("uuids_test")?.let { a -> List(a.length()) { a.getString(it) }.toSet() }
         ?: emptySet()
 
-    /** La cabeza con la que se traduce: la última de las rondas, o la del paquete. */
-    fun cabeza(): CabezaDensa = CabezaDensa.desdeJson(JSONObject((if (cabezaRondas.exists()) cabezaRondas else cabezaPaquete).readText()))
+    /** La cabeza compartida: la última de las rondas, o la del paquete. Base de las rondas. */
+    fun cabezaGlobal(): CabezaDensa =
+        CabezaDensa.desdeJson(JSONObject((if (cabezaRondas.exists()) cabezaRondas else cabezaPaquete).readText()))
+
+    /**
+     * La personalización vale si se hizo sobre la cabeza compartida que está ahora: cuando
+     * llega una versión nueva de las rondas, la personal vieja ya no corresponde.
+     */
+    val tienePersonal: Boolean
+        get() = cabezaPersonal.exists() &&
+            runCatching { JSONObject(cabezaPersonal.readText()).getInt("version_base") == versionCabeza }.getOrDefault(false)
+
+    /** La cabeza con la que se traduce: la personal si está vigente; si no, la compartida. */
+    fun cabeza(): CabezaDensa = if (tienePersonal) CabezaDensa.desdeJson(JSONObject(cabezaPersonal.readText())) else cabezaGlobal()
+
+    /** Guarda la cabeza personalizada (nunca sale del teléfono). */
+    fun guardarPersonal(pesos: List<FloatArray>) {
+        val json = cabezaJsonConPesos(cabezaBaseJson(), pesos).put("version_base", versionCabeza)
+        val tmp = File(carpeta, "$CABEZA_PERSONAL.tmp")
+        tmp.writeText(json.toString())
+        if (!tmp.renameTo(cabezaPersonal)) { cabezaPersonal.delete(); tmp.renameTo(cabezaPersonal) }
+    }
+
+    fun quitarPersonal() {
+        cabezaPersonal.delete()
+    }
 
     /** La cabeza del paquete tal como vino: la base para escribir los pesos de una ronda. */
     fun cabezaBaseJson(): JSONObject = JSONObject(cabezaPaquete.readText())
@@ -43,6 +74,15 @@ class ModeloInstalado(val paquete: Int, val carpeta: File, val manifiesto: JSONO
         private const val CLAVE_ACTIVO = "paquete_activo"
         private const val CLAVE_VERSION = "version_cabeza"
         private const val CABEZA_RONDAS = "cabeza_rondas.json"
+        private const val CABEZA_PERSONAL = "cabeza_personal.json"
+        private const val CLAVE_PERSONALIZAR = "personalizar"
+
+        /** Si la persona eligió personalizar: se rehace sola cuando llega una cabeza nueva. */
+        fun quierePersonalizar(context: Context): Boolean = prefs(context).getBoolean(CLAVE_PERSONALIZAR, false)
+
+        fun guardarQuierePersonalizar(context: Context, si: Boolean) {
+            prefs(context).edit().putBoolean(CLAVE_PERSONALIZAR, si).apply()
+        }
 
         fun raiz(context: Context) = File(context.filesDir, "modelos")
 
@@ -55,7 +95,7 @@ class ModeloInstalado(val paquete: Int, val carpeta: File, val manifiesto: JSONO
             val carpeta = File(raiz(context), "v$n")
             val man = File(carpeta, "manifiesto.json")
             return try {
-                ModeloInstalado(n, carpeta, JSONObject(man.readText())).takeIf { m ->
+                ModeloInstalado(n, carpeta, JSONObject(man.readText()), versionCabeza(context)).takeIf { m ->
                     listOf("backbone.tflite", "cabeza.json").all { File(carpeta, it).exists() } && m.clases.isNotEmpty()
                 }
             } catch (_: Exception) {

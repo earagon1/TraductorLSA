@@ -76,6 +76,7 @@ data class ResultadoFederado(val resumen: String, val detalle: JSONObject = JSON
 
 object OperacionesFederadas {
     private const val EPOCAS = 2
+    private const val EPOCAS_PERSONALIZAR = 8
     private const val TAMANO_LOTE = 8
 
     /** Paquete y cabeza al día con el servidor. */
@@ -126,7 +127,7 @@ object OperacionesFederadas {
 
         progreso("Preparando tus tomas…")
         val t0 = System.nanoTime()
-        val (x, y) = embeddingsPropios(context, modelo, participante)
+        val (x, y) = tomasPropias(context, modelo, participante).entrenamiento
         if (x.isEmpty()) return ResultadoFederado("No tenés tomas de las señas del modelo para entrenar. Grabá algunas en el modo entrenamiento.")
         val msEmbedding = (System.nanoTime() - t0) / 1e6
         val antes = accuracy(cabeza, x, y)
@@ -194,22 +195,80 @@ object OperacionesFederadas {
         return s == null || s.optString("bloque") !in setOf("B", "C")
     }
 
-    private fun embeddingsPropios(context: Context, modelo: ModeloInstalado, participante: String): Pair<List<FloatArray>, IntArray> {
-        val x = ArrayList<FloatArray>()
-        val y = ArrayList<Int>()
+    /** Las tomas propias, en embeddings, separadas por para qué se pueden usar. */
+    class TomasPropias(
+        /** Las que entrenan (rondas y personalización). */
+        val entrenamiento: Pair<List<FloatArray>, IntArray>,
+        /** Del test fijo del servidor: nunca entrenan, sirven para medir en el teléfono. */
+        val reservadas: Pair<List<FloatArray>, IntArray>,
+        /** De la sesión de robustez (bloque B): tampoco entrenan. */
+        val robustez: Pair<List<FloatArray>, IntArray>,
+    )
+
+    private fun tomasPropias(context: Context, modelo: ModeloInstalado, participante: String): TomasPropias {
+        val grupos = List(3) { ArrayList<FloatArray>() to ArrayList<Int>() }
         Backbone(modelo.backbone).use { backbone ->
             DatasetV2.archivo(context).takeIf { it.exists() }?.forEachLine { linea ->
                 if (linea.isBlank()) return@forEachLine
                 val m = runCatching { JSONObject(linea) }.getOrNull() ?: return@forEachLine
-                if (!esAportable(m, participante, modelo.uuidsTest)) return@forEachLine
+                if (m.optString("participant_id") != participante) return@forEachLine
+                val grupo = when {
+                    esAportable(m, participante, modelo.uuidsTest) -> 0
+                    m.optString("uuid") in modelo.uuidsTest -> 1
+                    m.optJSONObject("sesion")?.optString("bloque") == "B" -> 2
+                    else -> return@forEachLine
+                }
                 val etiqueta = modelo.clases.indexOf(m.optString("label"))
                 if (etiqueta < 0) return@forEachLine
                 val seq = ContratoV2.secuenciaDesdeFrames(frames(m), m.getInt("img_w"), m.getInt("img_h")) ?: return@forEachLine
-                x += backbone.embedding(seq)
-                y += etiqueta
+                grupos[grupo].first += backbone.embedding(seq)
+                grupos[grupo].second += etiqueta
             }
         }
-        return x to y.toIntArray()
+        val (e, r, b) = grupos.map { (x, y) -> x to y.toIntArray() }
+        return TomasPropias(e, r, b)
+    }
+
+    /**
+     * Personalización: la cabeza compartida, ajustada con las tomas propias y guardada solo
+     * en el teléfono. FedAvg arma un modelo para "el promedio" de las personas; en la PC,
+     * ajustar la cabeza sin P2 solo con sus 84 tomas lo llevó de 59,6 a 72-74 % en su
+     * sesión 2, contra 61,7 % con 4 rondas federadas (2026-10-18). 8 épocas: desde ahí ya no
+     * mejoraba.
+     *
+     * Mide antes y después en las tomas propias que no entrenan (las reservadas para el test
+     * del servidor y las de la sesión de robustez): es la prueba, en el teléfono, de si sirve.
+     */
+    fun personalizar(context: Context, participante: String, progreso: (String) -> Unit = {}): ResultadoFederado {
+        val modelo = ModeloInstalado.activo(context)
+            ?: return ResultadoFederado("Primero buscá una actualización: personalizar necesita el modelo del servidor.")
+        progreso("Preparando tus tomas…")
+        val tomas = tomasPropias(context, modelo, participante)
+        val (x, y) = tomas.entrenamiento
+        if (x.isEmpty()) return ResultadoFederado("No tenés tomas de las señas del modelo. Grabá algunas en el modo entrenamiento.")
+        val global = modelo.cabezaGlobal()
+        val personal = CabezaDensa.desdeJson(ModeloInstalado.cabezaJsonConPesos(modelo.cabezaBaseJson(), global.pesos()))
+        progreso("Ajustando con ${x.size} tomas…")
+        val t0 = System.nanoTime()
+        personal.reiniciarOptimizador()
+        personal.entrenar(x, y, EPOCAS_PERSONALIZAR, TAMANO_LOTE, azar = Random(0))
+        val ms = (System.nanoTime() - t0) / 1e6
+        modelo.guardarPersonal(personal.pesos())
+        ModeloInstalado.guardarQuierePersonalizar(context, true)
+        val detalle = JSONObject().put("muestras_entrenamiento", x.size).put("epocas", EPOCAS_PERSONALIZAR)
+            .put("ms_entrenamiento", ms).put("version_base", modelo.versionCabeza)
+            .put("dispositivo", "${Build.MANUFACTURER} ${Build.MODEL}")
+        val partes = mutableListOf("Personalizado con ${x.size} tomas en ${"%.1f".format(ms / 1000)} s")
+        for ((nombre, grupo) in listOf("reservadas" to tomas.reservadas, "robustez" to tomas.robustez)) {
+            val (gx, gy) = grupo
+            if (gx.isEmpty()) continue
+            val antes = accuracy(global, gx, gy)
+            val despues = accuracy(personal, gx, gy)
+            detalle.put("${nombre}_n", gx.size).put("${nombre}_antes", antes).put("${nombre}_despues", despues)
+            val etiqueta = if (nombre == "reservadas") "tus tomas de prueba" else "tu sesión 2"
+            partes += "$etiqueta: ${"%.0f".format(antes * 100)} → ${"%.0f".format(despues * 100)} % (${gx.size} tomas)"
+        }
+        return ResultadoFederado(partes.joinToString(". "), detalle)
     }
 
     private fun pesosDe(m: JSONObject): List<FloatArray> {
