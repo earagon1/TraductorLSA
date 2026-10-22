@@ -1,0 +1,85 @@
+\chapter{Aprendizaje federado}
+\label{cap:federado}
+
+Este capítulo describe el esquema de aprendizaje federado incorporado al prototipo: su arquitectura, el protocolo de comunicación, el entrenamiento en el dispositivo y las medidas de protección de las actualizaciones. Los resultados se presentan en la Sección~\ref{sec:res-federado}.
+
+\section{Motivación y alcance}
+
+La escasez de datos anotados de LSA limita la capacidad del modelo de reconocer a personas que no participaron de su entrenamiento: el acierto cae de 84,6\,\% con una persona conocida a 67,3\,\% con una persona no vista (Sección~\ref{sec:res-escenarios}). Mejorar el modelo requiere incorporar tomas de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales.
+
+El aprendizaje federado permite entrenar un modelo de forma colaborativa a partir de actualizaciones calculadas en cada dispositivo, sin transferir los datos crudos~\cite{mcmahan2017fedavg}. En este trabajo se aborda con carácter experimental: se implementa el ciclo completo en dispositivos reales y se evalúa su viabilidad, sin pretender un mecanismo de producción.
+
+\section{Arquitectura}
+
+El esquema se compone de un servidor y de la aplicación en cada dispositivo. Para la tesina, el servidor se ejecuta en una computadora personal dentro de una red local, sin acceso a internet. El mismo código puede trasladarse a un servidor en la nube; esa migración queda como trabajo futuro.
+
+El modelo se divide en dos partes:
+
+\begin{itemize}
+    \item La parte de extracción de características (dos capas LSTM), que transforma la secuencia de $15 \times 126$ valores en un vector de 128 valores. Se distribuye como modelo TensorFlow Lite y no se entrena en el dispositivo.
+    \item La cabeza de clasificación (tres capas densas de 64, 64 y $C$ neuronas, con $C = 13$), de 13\,261 parámetros. Es la parte que se entrena en el dispositivo y que viaja en las rondas.
+\end{itemize}
+
+La aplicación clasifica las señas con la parte de extracción y la cabeza vigente. La cabeza se implementó en Kotlin, con propagación hacia atrás y el optimizador Adam, porque entrenar en el dispositivo con TensorFlow Lite exige operaciones que el núcleo de la biblioteca no incluye. La implementación se verificó contra TensorFlow con una tolerancia de $10^{-5}$ en la salida, la pérdida, los gradientes y los pesos tras uno y tres pasos de optimización.
+
+\pendiente{Agregar un diagrama de la arquitectura: servidor en la red local, dispositivos, rondas y paquetes.}
+
+\section{Ciclo de una ronda}
+
+Cada ronda $r$ sigue estos pasos:
+
+\begin{enumerate}
+    \item Cada dispositivo descarga la cabeza vigente $w_r$ y verifica su integridad mediante un resumen SHA-256.
+    \item Entrena la cabeza durante dos épocas con sus propias tomas y calcula la actualización $\Delta_k = w_k - w_r$.
+    \item Cuantiza $\Delta_k$ a 8 bits y la envía al servidor junto con la cantidad de tomas $n_k$ utilizadas. Las tomas no salen del dispositivo.
+    \item Cuando se reúne la cantidad mínima de participantes, o vence el plazo de la ronda, el servidor combina las actualizaciones mediante el promedio ponderado de FedAvg:
+    \begin{equation}
+        w_{r+1} = w_r + \sum_{k} \frac{n_k}{n}\,\Delta_k, \qquad n = \sum_k n_k.
+    \end{equation}
+    \item El servidor evalúa $w_{r+1}$ sobre un conjunto de prueba fijo y la publica solo si su acierto no baja más de un punto respecto de $w_r$.
+    \item Cada dispositivo descarga la nueva cabeza al buscar una actualización.
+\end{enumerate}
+
+El conjunto de prueba fijo está formado por el 15\,\% de las tomas de los dispositivos, estratificado por seña. Esas tomas no se utilizan para entrenar ni en el servidor ni en los dispositivos: el servidor publica sus identificadores y la aplicación las excluye.
+
+\section{Compresión y protección de las actualizaciones}
+
+\subsection{Cuantización a 8 bits}
+
+Cada tensor de la actualización se cuantiza de forma simétrica con su propia escala $s = \max|x| / 127$. El redondeo es estocástico: el valor $x/s$ se redondea hacia arriba con probabilidad igual a su parte fraccionaria, lo que hace que la cuantización sea insesgada. La actualización ocupa 13\,285 bytes frente a 53\,044 en punto flotante de 32 bits.
+
+Para garantizar que el servidor reconstruya exactamente lo que el dispositivo envió, la cuantización de Kotlin y la de Python se verifican bit a bit sobre un conjunto de casos compartido entre ambos repositorios.
+
+\subsection{Límite a la magnitud}
+
+La propuesta plantea limitar la magnitud de las actualizaciones para evitar que un dispositivo con datos erróneos degrade el modelo de todos. El servidor escala cualquier actualización cuya norma L2 supere un límite $L$:
+\begin{equation}
+    \Delta_k \leftarrow \Delta_k \cdot \min\left(1, \frac{L}{\lVert \Delta_k \rVert_2}\right).
+\end{equation}
+Se adoptó $L = 2{,}0$, tres veces la mediana de las actualizaciones honestas medidas con las tres personas.
+
+\subsection{Rotación aleatoria}
+
+Siguiendo las actualizaciones esbozadas de Kone\v{c}n\'y et al.~\cite{konecny2016}, se implementó una rotación aleatoria previa a la cuantización: $y = H D x / \sqrt{n}$, donde $D$ es una matriz diagonal de signos aleatorios generados a partir de una semilla que viaja con la actualización y $H$ es la transformada de Walsh-Hadamard. La rotación reparte la energía del vector entre todos sus valores, de modo que un valor extremo no fije la escala de todo el tensor. Como con las actualizaciones de este modelo no redujo el error (Sección~\ref{sec:res-federado}), se mantiene implementada pero desactivada.
+
+\section{Reentrenamiento completo y distribución de modelos}
+
+Además de las rondas sobre la cabeza, el servidor puede reentrenar el modelo completo. Las personas pueden aportar sus tomas de forma opcional, con consentimiento explícito: se envían solo las coordenadas de los puntos de las manos, nunca imágenes, asociadas a un identificador seudónimo derivado de la cuenta.
+
+El servidor reentrena con todas las fuentes, verifica que el modelo nuevo no tenga operaciones Flex, que la parte de extracción en TensorFlow Lite coincida con la de Keras y que el acierto sobre el conjunto de prueba fijo no empeore, y lo publica como un paquete versionado. El paquete incluye la parte de extracción, la cabeza, la calibración y un manifiesto con el resumen SHA-256 de cada archivo. La aplicación descarga el paquete, verifica cada archivo antes de usarlo y conserva siempre el modelo de fábrica para poder volver a él.
+
+Si las tomas aportadas incluyen una seña nueva, el paquete sale con una clase más. Esto permite ampliar el vocabulario sin publicar una nueva versión de la aplicación.
+
+\section{Personalización en el dispositivo}
+
+FedAvg produce un modelo para el conjunto de los participantes. Para adaptarlo a cada persona, la aplicación permite personalizar la cabeza: parte de la cabeza compartida vigente, la entrena durante ocho épocas con las tomas propias y la guarda solo en el dispositivo. La aplicación traduce con la cabeza personalizada mientras corresponda a la versión compartida vigente; cuando llega una versión nueva, se vuelve a personalizar automáticamente. Las rondas federadas parten siempre de la cabeza compartida.
+
+\section{Privacidad}
+
+En las rondas solo sale del dispositivo la actualización cuantizada de la cabeza y la cantidad de tomas utilizadas. El aporte de tomas para el reentrenamiento completo es una opción separada que requiere consentimiento explícito y envía solo las coordenadas de los puntos de las manos. La traducción de señas no utiliza la red en ningún caso.
+
+En la versión de depuración utilizada para el piloto, la comunicación con el servidor se realiza por HTTP sin cifrar dentro de la red local; la versión de distribución bloquea ese tráfico. La comunicación cifrada, la agregación segura y la privacidad diferencial quedan como trabajo futuro.
+
+\section{Decisiones de implementación}
+
+La propuesta mencionaba TensorFlow Federated y Flower como marcos posibles. Se optó por una implementación propia, de unas pocas centenas de líneas, por dos motivos: TensorFlow Federated no ofrece versiones para Windows y es incompatible con la versión de TensorFlow utilizada, y el cliente de Flower para Android impone su propio formato de modelo, que no se ajusta al entrenamiento de la cabeza en Kotlin. La implementación propia se verificó contra una simulación de FedAvg en Python.

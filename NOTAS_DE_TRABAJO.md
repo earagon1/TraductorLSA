@@ -147,6 +147,20 @@ Carpetas auxiliares:
 - `figures/`
 - `tables/`
 
+## Sesión 2026-10-22 (Claude): resultados y capítulo de aprendizaje federado
+
+- El aprendizaje federado y el entrenamiento en el dispositivo YA ESTÁN IMPLEMENTADOS y probados en dispositivos reales (plan en `Tesis/plan/federado_completo.md`, avance en `Tesis/plan/progreso.md`). Las notas anteriores que dicen "no redactarlos como hechos" quedan superadas: se pueden redactar con los resultados medidos.
+- Nuevo capítulo `chapters/05b-aprendizaje-federado.tex` (`\label{cap:federado}`), incluido en `main.tex` después del 5. Por eso Experimentos y resultados quedó como Capítulo 8.
+- `chapters/07-experimentos-resultados.tex` redactado completo (`\label{cap:resultados}`): esquemas de validación, calibración, consistencia σ, robustez, federado (simulación, costo en el dispositivo, piloto, persona nueva y personalización, límite y rotación), rendimiento en tres dispositivos y variantes del modelo exportado. Todas las cifras salen de `modelo_LSA/resultados_*` y `resultados_tesis/resultados.md`; no transcribir a mano valores nuevos sin regenerarlos.
+- Se agregaron los labels `cap:metodologia` y `cap:discusion`.
+- Figura `figures/robustez-por-condicion.png` (copiada de `modelo_LSA/resultados_robustez/2026-10-17_p1p2p3_5semillas/robustez.png`).
+- Nueva referencia `konecny2016` (Konečný et al., arXiv:1610.05492), citada en la propuesta.
+- Las referencias a tablas en el texto dicen «Tabla» (babel con `es-tabla`), no «Cuadro».
+- La tabla preliminar de abril (Tab S7, A55, A31) se sacó: se midió con otra versión del pipeline. Los dispositivos medidos con la versión final son Galaxy A55, OnePlus CPH2663 y Lenovo TB321FU.
+- Compilación local (bash): `PATH=/c/Users/Evelin/AppData/Local/Programs/MiKTeX/miktex/bin/x64:$PATH`; `pdflatex main; bibtex main; pdflatex main; pdflatex main`.
+- El repo del informe tiene dueño distinto (sandbox de Codex): usar `git -c safe.directory=* ...` en cada comando, sin tocar la configuración global.
+- Orden acordado con la autora: capítulo 8 (resultados, hecho), luego 4 (datos y modelo), 5 (diseño e implementación), 3 (metodología), 9 y 10 (discusión y conclusiones), y al final ajustar 1 y 2.
+
 ## Flujo de trabajo con Overleaf
 
 La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mantener sincronizacion automatica por Git.

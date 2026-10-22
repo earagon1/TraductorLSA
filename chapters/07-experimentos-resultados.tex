@@ -1,36 +1,333 @@
 \chapter{Experimentos y resultados}
+\label{cap:resultados}
 
-\section{Desempeño del modelo}
+Este capítulo presenta los resultados obtenidos con el prototipo y con el modelo de reconocimiento. Las condiciones de evaluación, los esquemas de validación y las métricas se describen en el Capítulo~\ref{cap:metodologia}; el conjunto de datos y el modelo, en el Capítulo~\ref{cap:dataset-modelo}. Todas las cifras provienen de corridas registradas y reproducibles: cada tabla se regenera a partir de los archivos de resultados del repositorio de entrenamiento, sin transcripciones manuales. La interpretación de los resultados se reserva para el Capítulo~\ref{cap:discusion}.
 
-\pendiente{Reportar accuracy, F1 macro y micro y matriz de confusión sobre el conjunto de prueba. Completar cuando el entrenamiento esté cerrado.}
+Salvo indicación en contrario, los porcentajes se informan como media $\pm$ desvío estándar entre cinco repeticiones del entrenamiento con semillas distintas.
 
-\section{Consistencia estadística}
+\section{Desempeño del modelo según el esquema de validación}
+\label{sec:res-escenarios}
 
-\pendiente{Reportar la métrica de consistencia $\sigma$ definida en la propuesta.}
+El conjunto de evaluación reúne 1409 muestras de 13 clases (las 12 señas del vocabulario y la clase «nada»): 1091 provienen de la cámara web de la autora y 318 de la sesión de captura con teléfonos y tabletas de tres personas (P1, P2 y P3). Se excluyeron 109 muestras con menos de cinco cuadros válidos.
 
-\section{Robustez ante condiciones variables}
-
-\pendiente{Reportar resultados según usuario, iluminación, ángulo y distancia de cámara.}
-
-\section{Rendimiento en distintos dispositivos}
-
-\pendiente{Completar la tabla con los seis dispositivos probados (tres antiguos, un teléfono reciente y dos tablets de alta gama), indicando condiciones de medición. Los valores actuales son preliminares y deben revalidarse con el modelo final.}
+La Tabla~\ref{tab:escenarios} compara el mismo problema bajo cinco esquemas de evaluación. Cada uno responde una pregunta distinta: desde cuánto acertaba el modelo con el que comenzó el trabajo sobre tomas reales de los dispositivos, hasta cuánto se infla la medición si las tomas de una misma persona y sesión quedan a ambos lados de la partición.
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{llll}
+    \small
+    \begin{tabular}{p{4.6cm}p{5.0cm}rr}
         \toprule
-        Dispositivo & SoC & FPS efectivos & Inferencia \\
+        Esquema & Qué mide & Accuracy (\%) & F1 macro (\%) \\
         \midrule
-        Galaxy Tab S7 & Snapdragon 865+ & 14.0 & 32 ms \\
-        Galaxy A55 & Exynos 1480 & 5.3 & 30 ms \\
-        Galaxy A31 & Helio P65 & 3.0 & 559 ms \\
+        Modelo original de la aplicación & solo cámara web, características v1; sobre las tomas de los dispositivos & 28,5 & 25,6 \\
+        Solo cámara web, características v2 & mismo entrenamiento, preprocesamiento corregido & 56,0 $\pm$ 5,4 & 53,3 $\pm$ 5,3 \\
+        Persona no vista (LOPO) & entrena sin la persona evaluada & 67,3 $\pm$ 2,3 & 67,3 $\pm$ 2,3 \\
+        Sesión no vista & agrupado por sesión de grabación & 78,0 $\pm$ 7,1 & 75,1 $\pm$ 7,9 \\
+        Esquema anterior (estratificado) & tomas mezcladas al azar & 94,3 $\pm$ 0,4 & 92,1 $\pm$ 0,5 \\
         \bottomrule
     \end{tabular}
-    \caption{Resultados preliminares de rendimiento en distintos dispositivos.}
-    \label{tab:rendimiento-dispositivos}
+    \caption{Desempeño del modelo según el esquema de validación (cinco semillas).}
+    \label{tab:escenarios}
 \end{table}
 
-\section{Comparación entre variantes del modelo}
+El esquema estratificado, que mezcla al azar las tomas de una misma persona y sesión, informa 94,3\,\%. Cuando la persona evaluada no participa del entrenamiento, el acierto es 67,3\,\%. La diferencia de 27 puntos cuantifica cuánto sobreestimaba el esquema anterior la capacidad del modelo de generalizar a personas nuevas.
 
-\pendiente{Comparar tamaño, latencia y precisión entre la variante float32 y la variante optimizada.}
+El modelo con el que comenzó el trabajo, entrenado solo con la cámara web y con la representación de características original, acierta el 28,5\,\% de las tomas reales de los dispositivos. Al mismo tiempo, muestra en pantalla el 83\,\% de sus predicciones (confianza $\geq 0{,}7$) y acierta solo el 32\,\% de ellas.
+
+La Tabla~\ref{tab:por-persona} detalla el acierto por persona y la Tabla~\ref{tab:f1-por-sena}, el F1 por seña.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrr}
+        \toprule
+        Persona & Modelo original (\%) & Persona no vista (\%) \\
+        \midrule
+        P1 & 39,6 & 60,0 \\
+        P2 & 21,9 & 73,0 \\
+        P3 & 24,0 & 68,9 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Acierto por persona: modelo original frente a validación con persona no vista.}
+    \label{tab:por-persona}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrr}
+        \toprule
+        Seña & Modelo original & Persona no vista \\
+        \midrule
+        hola & 40,0 & 91,3 \\
+        adiós & 37,5 & 74,7 \\
+        bien & 22,7 & 46,4 \\
+        ¿cómo estás? & 48,5 & 56,9 \\
+        gracias & 13,8 & 46,9 \\
+        E & 25,8 & 50,4 \\
+        V & 0,0 & 79,8 \\
+        L & 0,0 & 76,3 \\
+        I & 0,0 & 78,1 \\
+        N & 7,7 & 97,1 \\
+        mi nombre es & 29,1 & 48,7 \\
+        por favor & 82,1 & 76,8 \\
+        nada & --- & 51,9 \\
+        \bottomrule
+    \end{tabular}
+    \caption{F1 por seña (\%). El modelo original no tenía la clase «nada».}
+    \label{tab:f1-por-sena}
+\end{table}
+
+\pendiente{Agregar la matriz de confusión del esquema persona no vista como figura.}
+
+\section{Calibración de la confianza}
+\label{sec:res-calibracion}
+
+La confianza que informa el modelo se ajustó mediante escalado de temperatura sobre personas no vistas (nueve pliegues). La temperatura adoptada es $T = 1{,}20$ y reduce el error de calibración esperado (ECE) de 17,1\,\% a 12,7\,\%. La Tabla~\ref{tab:umbral} muestra, para distintos umbrales de confianza calibrada, qué fracción de las predicciones se muestra en pantalla y cuántas de ellas son correctas.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{rrr}
+        \toprule
+        Umbral & Predicciones mostradas (\%) & Acierto de lo mostrado (\%) \\
+        \midrule
+        0,70 & 62,9 & 80,8 \\
+        0,75 & 59,6 & 83,0 \\
+        0,80 & 55,7 & 84,4 \\
+        0,85 & 49,7 & 87,1 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Cobertura y acierto según el umbral de confianza calibrada (persona no vista).}
+    \label{tab:umbral}
+\end{table}
+
+En la aplicación se adoptó el umbral 0,75: se muestra el 59,6\,\% de las predicciones y se acierta el 83,0\,\% de lo mostrado, frente al 83\,\% mostrado con 32\,\% de acierto del modelo original.
+
+\section{Consistencia estadística}
+\label{sec:res-consistencia}
+
+La métrica de consistencia $\sigma$ definida en la propuesta mide si entradas parecidas reciben salidas parecidas, sin utilizar etiquetas (la definición y las decisiones de implementación se presentan en el Capítulo~\ref{cap:metodologia}). Se calculó sobre las 449 tomas de los dispositivos, con un umbral de vecindad $\varepsilon = 0{,}72$: el mayor percentil de las distancias de la sesión~1 para el cual al menos el 90\,\% de los vecinos corresponde a la misma seña (98,4\,\%).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrrr}
+        \toprule
+        Condición & Tomas & Acierto (\%) & $\sigma$ \\
+        \midrule
+        Estándar (sesión 1) & 318 & 95,3 & 0,008 \\
+        Cerca & 36 & 83,3 & 0,008 \\
+        Poca luz & 36 & 83,3 & 0,024 \\
+        Lejos & 24 & 79,2 & 0,028 \\
+        Lejos y poca luz & 12 & 75,0 & 0,036 \\
+        Girado 30° & 23 & 56,5 & --- \\
+        \bottomrule
+    \end{tabular}
+    \caption{Consistencia $\sigma$ del modelo publicado en la aplicación, por condición. A 30° solo una de las 23 tomas tiene vecinos dentro de $\varepsilon$.}
+    \label{tab:sigma}
+\end{table}
+
+La Tabla~\ref{tab:sigma} muestra que $\sigma$ crece en las condiciones adversas: se multiplica por tres con poca luz y por cuatro y medio cuando se combinan distancia y poca luz. Las tomas con el cuerpo girado 30° casi no tienen vecinos en el espacio de entrada, es decir, caen lejos de todas las demás.
+
+Las tomas que el modelo clasifica mal tienen un $\sigma_i$ entre tres y cuatro veces mayor que las que clasifica bien: 0,028 frente a 0,007 en la sesión~1 y 0,052 frente a 0,019 con poca luz.
+
+Con modelos que no vieron a la persona evaluada, $\sigma$ es de dos a cuatro veces mayor (0,022 en la sesión~1, con 67,2\,\% de acierto). La métrica depende del umbral elegido: en la sesión~1, $\sigma$ pasa de 0,008 con $\varepsilon = 0{,}72$ a 0,127 con $\varepsilon = 2{,}19$, valor para el cual solo el 30,5\,\% de los vecinos corresponde a la misma seña.
+
+\section{Robustez ante condiciones de captura}
+\label{sec:res-robustez}
+
+La segunda sesión de captura registró las doce señas una vez en cada una de cuatro condiciones adversas: poca luz, cerca de la cámara (unos 40\,cm), lejos (unos 120\,cm) y con el cuerpo girado 30°. Las tomas de P3 en la condición «lejos» se grabaron además con poca luz, y se analizan aparte. Las tomas de P3 a 30° se descartaron durante la grabación por problemas de detección, y a P2 le falta una toma a 30°.
+
+Cada condición se compara con su referencia estándar usando el mismo modelo, en dos escenarios: persona no vista (el modelo no conoce a la persona) y persona conocida en una sesión nueva (el modelo conoce a la persona, pero no esa sesión). La Tabla~\ref{tab:robustez} resume los resultados y la Figura~\ref{fig:robustez} los representa con sus intervalos de confianza.
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{lrrrr}
+        \toprule
+        & \multicolumn{2}{c}{Persona no vista} & \multicolumn{2}{c}{Persona conocida} \\
+        Condición & Acierto (\%) & Caída (pts) & Acierto (\%) & Caída (pts) \\
+        \midrule
+        Estándar & 69,8 & ref. & 84,6 & ref. \\
+        Poca luz & 60,0 & $-$9,8 & 75,0 & $-$9,6 \\
+        Cerca & 62,2 & $-$7,6 & 78,9 & $-$5,7 \\
+        Lejos & 57,5 & $-$12,3 & 68,3 & $-$16,3 \\
+        Lejos y poca luz & 61,7 & $-$8,1 & 73,3 & $-$11,3 \\
+        Girado 30° & 42,6 & $-$27,2 & 53,9 & $-$30,7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Acierto por condición de captura y caída respecto de la referencia estándar (cinco semillas).}
+    \label{tab:robustez}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.95\textwidth]{robustez-por-condicion.png}
+    \caption{Acierto por condición con intervalos de confianza de Wilson al 95\,\%.}
+    \label{fig:robustez}
+\end{figure}
+
+La única caída cuyo intervalo de confianza al 95\,\% no incluye el cero es la del cuerpo girado 30°: $-27{,}2$ puntos (de $-44{,}5$ a $-9{,}1$) con persona no vista y $-30{,}7$ puntos (de $-48{,}0$ a $-12{,}9$) con persona conocida. Las demás condiciones caen entre 6 y 16 puntos, con intervalos que en general incluyen el cero; la excepción es «lejos» con persona conocida, cuyo intervalo termina en $-0{,}8$.
+
+El efecto a 30° varía mucho entre personas y dispositivos: P1, con la tableta, alcanza entre 62 y 77\,\%; P2, con su teléfono, entre 22 y 29\,\%.
+
+La detección de manos explica parte de la caída. En las señas que se realizan con las dos manos («por favor» y «¿cómo estás?»), MediaPipe detecta ambas manos en el 58,4\,\% de los cuadros en la condición estándar, pero solo en el 17,5\,\% «lejos» y en el 21,1\,\% a 30°.
+
+Durante la grabación también se registraron los intentos de captura interrumpidos por pérdida de la mano (Tabla~\ref{tab:cortes}).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        Persona (dispositivo) & Poca luz & Cerca & Lejos & Girado 30° \\
+        \midrule
+        P1 (tableta) & 0\,\% & 0\,\% & 14\,\% & 29\,\% \\
+        P2 (teléfono) & 35\,\% & 15\,\% & 22\,\% & 69\,\% \\
+        P3 (teléfono) & 41\,\% & 8\,\% & --- & 52\,\% \\
+        \bottomrule
+    \end{tabular}
+    \caption{Porcentaje aproximado de intentos de captura interrumpidos por pérdida de la mano, por condición.}
+    \label{tab:cortes}
+\end{table}
+
+\section{Aprendizaje federado}
+\label{sec:res-federado}
+
+El diseño del esquema federado se describe en el Capítulo~\ref{cap:federado}. Esta sección presenta cuatro grupos de resultados: la simulación con las tres personas, el costo del entrenamiento en el dispositivo, el piloto con dispositivos reales y las medidas de protección de las actualizaciones.
+
+\subsection{Simulación con personas reales}
+
+La simulación entrena de forma federada solo la cabeza del modelo (la parte final, de 13\,261 parámetros), con la parte de extracción de características congelada. Para cada persona, el modelo se entrena con las otras dos (40 rondas, dos épocas locales por ronda, cinco semillas) y se evalúa con la persona excluida.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lr}
+        \toprule
+        Configuración & Acierto (\%) \\
+        \midrule
+        Modelo del servidor, sin federar & 46,8 $\pm$ 11,3 \\
+        Una sola persona (piso) & 62,3 $\pm$ 3,7 \\
+        FedAvg con dos personas & 67,0 $\pm$ 4,4 \\
+        FedAvg con actualizaciones a 8 bits & 67,2 $\pm$ 4,5 \\
+        Entrenamiento centralizado (techo) & 67,4 $\pm$ 5,0 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Aprendizaje federado simulado con una persona excluida (cinco semillas).}
+    \label{tab:federado-simulado}
+\end{table}
+
+FedAvg queda a 0,4 puntos del entrenamiento centralizado y alcanza el 95\,\% de ese techo en unas 10 rondas. Cuantizar las actualizaciones a 8 bits reduce la subida total de 4,24\,MB a 1,06\,MB sin pérdida de acierto. La personalización de un usuario nuevo con su primera tanda de tomas mejora 4,1 puntos en promedio ($p = 0{,}08$); la de un miembro ya representado, 0,9 puntos ($p = 0{,}43$).
+
+\subsection{Costo del entrenamiento en el dispositivo}
+
+En la tableta de P1 se ejecutó el entrenamiento de la cabeza en el propio dispositivo, implementado en Kotlin. Con 48 tomas de entrenamiento, cada época tarda 20,5\,ms (mediana) y diez épocas, unos 0,26\,s; el cálculo de la representación de cada toma tarda 2,9\,ms y el proceso ocupa unos 6\,MB adicionales de memoria. La actualización ocupa 53\,KB en punto flotante de 32 bits y 13\,KB cuantizada a 8 bits. El acierto antes del entrenamiento coincide con el obtenido en Python (82,8\,\%), lo que verifica la equivalencia de punta a punta entre ambas implementaciones.
+
+\subsection{Piloto con dispositivos reales}
+
+El esquema completo se probó en una red local, con un servidor en una computadora personal y los dispositivos conectados por Wi-Fi, sin acceso a internet. En cada ronda, cada dispositivo descarga la cabeza vigente, la entrena con sus propias tomas, envía solo la actualización cuantizada (13\,285 bytes) y, al cerrarse la ronda, descarga la versión combinada.
+
+En la ronda con la tableta (93 tomas) y el teléfono de P2 (84 tomas), el entrenamiento local tardó 0,07\,s y 0,14\,s, respectivamente, más 0,23\,s y 0,28\,s para calcular la representación de las tomas. La cabeza que cada dispositivo descargó al final coincide, bit a bit, con la publicada por el servidor.
+
+Una ronda anterior se cerró con un solo participante por un error en el cálculo del plazo de la ronda, que contaba desde la apertura y no desde la primera actualización recibida; el error se corrigió. Otra ronda recibió una actualización no solicitada de la tableta, enviada por error durante la operación remota del piloto. Ambas rondas se conservan en el registro tal como ocurrieron.
+
+\subsection{Persona nueva y personalización}
+
+Para evaluar el caso en que el esquema federado debería aportar más, se entrenó un modelo sin ninguna toma de P2. Luego se realizaron cuatro rondas con dos dispositivos reales: el teléfono de P2 y la tableta de P1. La Tabla~\ref{tab:federado-sin-p2} muestra el acierto sobre tomas que nunca participan del esquema federado.
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{lrrrr}
+        \toprule
+        Modelo & \multicolumn{2}{c}{P2} & P1 & P3 \\
+        & normal & sesión 2 & sesión 2 & sesión 2 \\
+        \midrule
+        Sin P2 (punto de partida) & 77,3 & 59,6 & 75,0 & 66,7 \\
+        Federado, 4 rondas & 81,8 & 61,7 & 81,2 & 72,2 \\
+        Personalizado en la computadora & 84,5 $\pm$ 2,5 & 70,6 $\pm$ 2,3 & --- & --- \\
+        Personalizado en el teléfono de P2 & 82 & 66 & --- & --- \\
+        \bottomrule
+    \end{tabular}
+    \caption{Acierto (\%) del experimento con una persona nueva. «Normal»: 22 tomas de P2 reservadas para prueba; «sesión 2»: tomas en condiciones adversas (47 de P2). P3 no participó de las rondas.}
+    \label{tab:federado-sin-p2}
+\end{table}
+
+Las rondas mejoraron el modelo compartido para las tres personas, incluida P3, que no participó, y el acierto sobre el conjunto de prueba fijo del servidor pasó de 78,8\,\% a 84,6\,\%. La mejora específica para P2 fue pequeña: dos puntos en sus tomas de la sesión~2, equivalentes a una sola toma, y con oscilaciones entre rondas. La simulación de las mismas rondas en la computadora reproduce el resultado real (81,8\,\% y 59,6\,\%), y aumentar las épocas locales de dos a ocho no lo modifica.
+
+Ajustar la cabeza solo con las 84 tomas de P2, sin promediar con otros dispositivos, eleva su acierto en la sesión~2 a 70,6\,$\pm$\,2,3\,\%. Esta personalización local se implementó en la aplicación y, ejecutada en el teléfono de P2, tardó 0,3\,s y elevó su acierto en la sesión~2 de 62\,\% a 66\,\%. El ajuste solo con P2 también mejora a P3 (de 66,7\,\% a entre 81 y 83\,\%).
+
+\subsection{Protección de las actualizaciones}
+
+La propuesta plantea limitar la magnitud de las actualizaciones y comprimirlas con rotación aleatoria y cuantización. Ambas medidas se evaluaron con actualizaciones reales de las tres personas (Tabla~\ref{tab:limite}).
+
+El límite se fijó en una norma L2 de 2,0, tres veces la mediana de las actualizaciones honestas (entre 0,68 y 0,76). Ninguna actualización honesta lo alcanza, por lo que el acierto sin ataques no cambia (80,9\,\%).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrr}
+        \toprule
+        Actualización maliciosa simulada & Sin límite & Con límite \\
+        \midrule
+        Al azar, 50 veces la norma honesta: distancia al modelo honesto & 8,34 & 0,51 \\
+        Inversa del aprendizaje, 10 veces: acierto (\%) & 71,0 & 77,6 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Efecto del límite a la norma de las actualizaciones (183 tomas que no participan del esquema federado; acierto sin ataques: 80,9\,\%).}
+    \label{tab:limite}
+\end{table}
+
+La rotación aleatoria previa a la cuantización no redujo el error con estas actualizaciones: el error relativo de reconstrucción a 8 bits pasó de 1,0\,\% a 1,2\,\%, y el tamaño aumentó 243 bytes por el relleno hasta potencias de dos. Las actualizaciones de la cabeza no presentan valores extremos (el máximo es de dos a cuatro veces la raíz cuadrática media de cada tensor), que es la situación en la que la rotación resulta útil.
+
+\section{Rendimiento en los dispositivos}
+\label{sec:res-rendimiento}
+
+El rendimiento se midió en tres dispositivos durante el uso real de la aplicación, a partir de las métricas que la propia aplicación registra por cada captura. La Tabla~\ref{tab:rendimiento} compara la versión utilizada en la segunda sesión de captura con la versión final, que incorpora dos optimizaciones: la recepción de la imagen en formato RGBA, sin pasar por compresión JPEG ni por una rotación posterior, y la ejecución de MediaPipe en la unidad de procesamiento gráfico (GPU).
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{lrrrrrr}
+        \toprule
+        & \multicolumn{2}{c}{Preparación (ms)} & \multicolumn{2}{c}{MediaPipe (ms)} & \multicolumn{2}{c}{Cuadros por segundo} \\
+        Dispositivo & antes & después & antes & después & antes & después \\
+        \midrule
+        Samsung Galaxy A55 & 15,5 & 5,4 & 140 & 93 & 6,3 & 9,6 \\
+        OnePlus CPH2663 & 15,7 & 2,7 & 115 & 51 & 7,5 & 17,5 \\
+        Lenovo TB321FU & 6,7 & 2,4 & 50 & 35 & 16,7 & 24,9 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Tiempo por cuadro (mediana) y cuadros por segundo antes y después de las optimizaciones.}
+    \label{tab:rendimiento}
+\end{table}
+
+La inferencia del modelo de clasificación tarda alrededor de 1,7\,ms por seña en la tableta, por lo que la detección de manos domina el tiempo de procesamiento.
+
+Ninguna de las dos optimizaciones se adoptó sin medir su efecto sobre los landmarks. Ambas se compararon sobre los mismos cuadros, durante el uso de la aplicación en el Galaxy A55:
+
+\begin{itemize}
+    \item GPU frente a CPU (1190 cuadros, 378 con manos): la misma cantidad de manos detectadas en el 99,7\,\% de los cuadros y una diferencia mediana en la posición de los puntos del 0,22\,\% del ancho de la imagen (0,44\,\% en el percentil 95).
+    \item Imagen sin compresión frente a JPEG de calidad 80 (1057 cuadros, 318 con manos): la misma cantidad de manos en el 99,3\,\% de los cuadros y una diferencia mediana del 0,15\,\% (0,6\,\% en el percentil 95).
+\end{itemize}
+
+Otras dos alternativas se evaluaron y se descartaron. El modo de video de MediaPipe no redujo el tiempo, porque con hasta dos manos configuradas busca la segunda mano en cada cuadro. Delegar la rotación a MediaPipe devolvió los puntos en otro sistema de coordenadas sin reducir el tiempo.
+
+\pendiente{Incorporar los dispositivos de gama baja (Galaxy A31) y la Galaxy Tab S7 medidos con la versión final, si se dispone de ellos. Las cifras preliminares de abril se obtuvieron con otra versión del pipeline y no son comparables.}
+
+\section{Variantes del modelo exportado}
+\label{sec:res-variantes}
+
+El modelo original utilizaba operaciones de TensorFlow no incluidas en el núcleo de TensorFlow Lite (\emph{Flex}), que obligaban a incluir en la aplicación una biblioteca de 169,4\,MB. Al reexportar el modelo con las capas LSTM desenrolladas en operaciones básicas, la aplicación dejó de necesitar esa biblioteca y su tamaño pasó de 243,5\,MB a 67,4\,MB ($-72$\,\%).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrr}
+        \toprule
+        Variante sin operaciones Flex & Tamaño (KB) & Misma predicción que Keras (\%) \\
+        \midrule
+        Punto flotante de 32 bits & 701 & 100 \\
+        Cuantización dinámica (adoptada) & 236 & 100 \\
+        Cuantización entera de 8 bits & 276 & 99,7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Variantes del modelo exportado sin operaciones Flex.}
+    \label{tab:variantes}
+\end{table}
+
+La exportación con la capa LSTM fusionada de TensorFlow~2.10 producía resultados incorrectos (coincidía con Keras solo en el 51\,\% de las predicciones), por lo que se adoptó la versión desenrollada. El modelo final publicado en la aplicación, en su variante con cuantización dinámica, ocupa 236\,KB y coincide con Keras en el 99,9\,\% de las predicciones.
