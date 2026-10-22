@@ -1,25 +1,121 @@
-\chapter{Marco teorico y antecedentes}
+\chapter{Marco teórico y estado del arte}
 
-\section{Accesibilidad y comunicacion en Lengua de Señas Argentina}
+Este capítulo presenta los conceptos y antecedentes en los que se apoya el trabajo. En primer lugar, se caracteriza a la LSA como objeto de reconocimiento automático. Luego se describen los enfoques de reconocimiento de lenguas de señas, la estimación de landmarks de manos, los modelos para secuencias temporales, la ejecución de modelos en dispositivos móviles y el aprendizaje federado. Por último, se revisan los conjuntos de datos y trabajos disponibles para la LSA y se sintetizan las brechas que motivan la propuesta.
 
-Completar con una descripcion de la LSA, su importancia como lengua natural de la comunidad sorda argentina y las barreras comunicacionales que pueden aparecer en la interaccion con personas oyentes.
+\section{La LSA como objeto de reconocimiento automático}
 
-\section{Sistemas de traduccion de señas}
+Como se mencionó en el Capítulo~1, la LSA es una lengua de modalidad visoespacial, con una gramática propia y distinta del castellano~\cite{ley27710}. Esta característica tiene consecuencias directas para su procesamiento automático: una seña no queda determinada solo por la forma de la mano, sino por la combinación de la configuración de las manos, su posición, su movimiento, la postura del cuerpo, la expresión facial y el movimiento de los labios~\cite{ronchetti2016lsa64}.
 
-Completar con antecedentes sobre sistemas de reconocimiento y traduccion de lenguas de señas, diferenciando enfoques basados en video, sensores, guantes, landmarks, glosas o representaciones intermedias.
+Además, las lenguas de señas difieren entre países e incluso entre regiones. Por ese motivo, si bien las técnicas de reconocimiento son en gran medida comunes a distintas lenguas, entrenar un sistema para una lengua determinada requiere contar con un conjunto de datos propio de esa lengua~\cite{ronchetti2016lsa64}. Este requisito resulta central para la LSA, cuya disponibilidad de datos es reducida en comparación con otras lenguas de señas, como se analiza en la Sección~\ref{sec:datos-lsa}.
 
-\section{Vision por computadora para reconocimiento gestual}
+\section{Reconocimiento y traducción automática de lenguas de señas}
 
-Completar con los conceptos principales de vision por computadora aplicados al reconocimiento de gestos: captura de imagen, deteccion de manos, seguimiento temporal y representacion de movimiento.
+\subsection{Tareas}
 
-\section{Landmarks de manos}
+Dentro del procesamiento automático de lenguas de señas se distinguen tareas de complejidad creciente. El \emph{reconocimiento de señas aisladas} consiste en clasificar un fragmento de video que contiene una única seña dentro de un vocabulario predefinido. El \emph{reconocimiento continuo} busca identificar la secuencia de señas presente en un enunciado completo. Finalmente, la \emph{traducción} apunta a producir un texto en una lengua oral a partir de un enunciado en lengua de señas~\cite{ronchetti2016lsa64, liang2023survey}.
 
-Completar con la idea de landmarks como puntos de referencia que representan la posicion de articulaciones de la mano. En este proyecto, estos puntos permiten transformar una imagen en una representacion numerica apta para un modelo de clasificacion.
+En la traducción suele emplearse una representación intermedia denominada \emph{glosa}, que transcribe cada seña mediante una palabra de la lengua oral. Liang et al.~\cite{liang2023survey} organizan los enfoques de traducción en cuatro subtareas según el uso que hacen de esta representación: de la seña a la glosa y luego al texto, de la seña directamente al texto, de la seña a la glosa y al texto en forma conjunta, y de la glosa al texto.
 
-\section{Modelos livianos en dispositivos moviles}
+El presente trabajo se ubica en la primera de las tareas: el reconocimiento de señas aisladas pertenecientes a un vocabulario acotado.
 
-Completar con la importancia de ejecutar modelos livianos en dispositivos moviles, considerando restricciones de CPU, memoria, bateria, latencia y disponibilidad offline.
+\subsection{Adquisición de los datos}
 
-\section{Limitaciones de los enfoques existentes}
+Los sistemas de reconocimiento pueden clasificarse según el modo en que capturan la información del gesto. Los enfoques basados en sensores emplean dispositivos como guantes instrumentados, que registran directamente la flexión de los dedos y la posición de la mano. Los enfoques basados en visión, en cambio, utilizan una o más cámaras~\cite{cheok2019review}. Los primeros registran el movimiento de manera directa, pero requieren que la persona utilice equipamiento específico. Los segundos resultan menos invasivos y aprovechan dispositivos de uso masivo, a costa de tener que resolver problemas propios de la imagen, como la variación de la iluminación, el fondo y las oclusiones.
 
-Completar con las principales limitaciones identificadas: escasez de datasets en LSA, dependencia de servidores externos, problemas de privacidad, necesidad de conectividad y dificultad de generalizar gestos entre distintas personas.
+Dentro de los enfoques basados en visión, el aprendizaje profundo se convirtió en la técnica predominante en los últimos años~\cite{rastgoo2021survey}.
+
+\subsection{Enfoques basados en pose}
+
+Una alternativa al procesamiento directo de los píxeles de la imagen consiste en estimar primero la pose de la persona, es decir, la posición de un conjunto de puntos clave del cuerpo y de las manos, y luego clasificar la seña a partir de la evolución temporal de esos puntos. Li et al.~\cite{li2020wlasl}, al presentar el conjunto de datos WLASL de lengua de señas americana, compararon enfoques basados en la apariencia con enfoques basados en pose y propusieron una red que modela en forma conjunta las dependencias espaciales y temporales de las trayectorias de los puntos clave.
+
+La representación basada en pose reduce de manera considerable la dimensión de los datos de entrada: en lugar de una imagen completa por cuadro, el modelo recibe un vector de pocas decenas o cientos de valores. Además, abstrae información que no es relevante para la seña, como el fondo o la vestimenta. Estas propiedades la hacen especialmente adecuada para dispositivos con recursos limitados, motivo por el cual es el enfoque adoptado en este trabajo.
+
+\section{Estimación de landmarks de manos con MediaPipe}
+
+MediaPipe es un \emph{framework} de código abierto desarrollado por Google para construir \emph{pipelines} de percepción. En MediaPipe, un \emph{pipeline} se define como un grafo de componentes modulares que incluyen la inferencia de modelos, algoritmos de procesamiento de imágenes y transformaciones de datos~\cite{lugaresi2019mediapipe}.
+
+Sobre este \emph{framework}, Zhang et al.~\cite{zhang2020mediapipehands} presentaron MediaPipe Hands, una solución de seguimiento de manos en tiempo real que opera sobre la imagen de una única cámara RGB y se ejecuta en el propio dispositivo. La solución se compone de dos modelos:
+
+\begin{enumerate}
+    \item Un \textbf{detector de palmas}, que analiza la imagen completa y devuelve un recuadro que delimita cada mano.
+    \item Un \textbf{modelo de landmarks}, que opera sobre la región recortada y estima la posición de 21 puntos de la mano, con coordenadas $x$ e $y$ en la imagen y una profundidad $z$ relativa a la muñeca.
+\end{enumerate}
+
+Una optimización relevante para el uso en tiempo real es que el detector de palmas no se ejecuta en cada cuadro. En un flujo de video, la región de la mano en el cuadro actual se deriva de los landmarks estimados en el cuadro anterior, y el detector solo vuelve a aplicarse cuando el modelo indica que la mano se perdió~\cite{zhang2020mediapipehands}.
+
+El modelo de landmarks produce, además, una salida que indica si la mano detectada es la izquierda o la derecha, atributo denominado \emph{handedness} o lateralidad~\cite{zhang2020mediapipehands}. Este dato tiene particular importancia en el reconocimiento de señas, ya que el papel de cada mano dentro de una seña no es intercambiable. Su interpretación depende, a su vez, de si la imagen de entrada está espejada, cuestión que se analiza en el Capítulo~\ref{cap:desafios}.
+
+La versión actual de esta solución se distribuye como la tarea \emph{Hand Landmarker} de MediaPipe, que entrega los landmarks en coordenadas de imagen y en coordenadas del mundo, junto con la lateralidad de cada mano detectada~\cite{mediapipeHands}.
+
+\section{Modelos para secuencias temporales}
+
+Una seña se desarrolla a lo largo del tiempo, por lo que su reconocimiento requiere modelos capaces de procesar secuencias. Las redes neuronales recurrentes (RNN) procesan una secuencia elemento por elemento y mantienen un estado interno que resume la información vista hasta el momento. Sin embargo, las RNN clásicas presentan dificultades para aprender dependencias de largo plazo, ya que la señal de error utilizada durante el entrenamiento tiende a desvanecerse o a crecer sin control al propagarse hacia atrás en el tiempo~\cite{hochreiter1997lstm}.
+
+Las redes LSTM (\emph{Long Short-Term Memory}), propuestas por Hochreiter y Schmidhuber~\cite{hochreiter1997lstm}, abordan este problema mediante una celda de memoria cuyo contenido se regula con compuertas multiplicativas. En la formulación habitual, para cada instante $t$ con entrada $\mathbf{x}_t$ y salida previa $\mathbf{h}_{t-1}$ se calculan:
+
+\begin{align}
+    \mathbf{f}_t &= \sigma(\mathbf{W}_f \mathbf{x}_t + \mathbf{U}_f \mathbf{h}_{t-1} + \mathbf{b}_f) \\
+    \mathbf{i}_t &= \sigma(\mathbf{W}_i \mathbf{x}_t + \mathbf{U}_i \mathbf{h}_{t-1} + \mathbf{b}_i) \\
+    \mathbf{o}_t &= \sigma(\mathbf{W}_o \mathbf{x}_t + \mathbf{U}_o \mathbf{h}_{t-1} + \mathbf{b}_o) \\
+    \mathbf{c}_t &= \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tanh(\mathbf{W}_c \mathbf{x}_t + \mathbf{U}_c \mathbf{h}_{t-1} + \mathbf{b}_c) \\
+    \mathbf{h}_t &= \mathbf{o}_t \odot \tanh(\mathbf{c}_t)
+\end{align}
+
+donde $\mathbf{f}_t$, $\mathbf{i}_t$ y $\mathbf{o}_t$ son las compuertas de olvido, de entrada y de salida, $\mathbf{c}_t$ es el estado de la celda, $\sigma$ es la función sigmoide y $\odot$ denota el producto elemento a elemento. Las compuertas permiten que la red decida qué información conservar, incorporar o descartar en cada paso, lo que facilita capturar la dinámica de un movimiento a lo largo de varios cuadros.
+
+En el contexto del reconocimiento basado en pose, la entrada $\mathbf{x}_t$ corresponde al vector de landmarks del cuadro $t$, y la salida final de la red se utiliza para clasificar la seña completa. Existen otras arquitecturas para el mismo problema, como las redes convolucionales sobre grafos aplicadas a las trayectorias de los puntos clave~\cite{li2020wlasl}; la elección de la arquitectura de este trabajo se justifica en el Capítulo~\ref{cap:dataset-modelo}.
+
+\section{Aprendizaje automático en dispositivos móviles}
+
+Ejecutar un modelo directamente en el dispositivo, en lugar de enviar los datos a un servidor, presenta ventajas relevantes para una aplicación de asistencia a la comunicación: elimina la latencia de red, permite el funcionamiento sin conexión y evita que las imágenes captadas por la cámara salgan del dispositivo. Como contrapartida, el modelo debe ajustarse a las restricciones de un teléfono móvil en cuanto a capacidad de procesamiento, memoria y consumo de batería.
+
+\subsection{TensorFlow Lite}
+
+TensorFlow Lite es el entorno de ejecución de Google para modelos de aprendizaje automático en dispositivos móviles y embebidos. Los modelos entrenados se convierten a un formato propio (\texttt{.tflite}) optimizado para la inferencia en el dispositivo~\cite{tensorflowLite}. En 2024 Google renombró este entorno como LiteRT; el cambio es de denominación y los modelos en formato \texttt{.tflite} siguen siendo compatibles~\cite{litert2024}. En este documento se conserva el nombre TensorFlow Lite, que es el utilizado por las bibliotecas empleadas en el desarrollo.
+
+\subsection{Cuantización}
+
+Una de las técnicas más utilizadas para adaptar un modelo a un dispositivo móvil es la cuantización, que consiste en representar los pesos y, eventualmente, las activaciones de la red con menor precisión numérica, por ejemplo con enteros de 8 bits en lugar de números de punto flotante de 32 bits. Jacob et al.~\cite{jacob2018quantization} propusieron un esquema de cuantización que permite realizar la inferencia utilizando únicamente aritmética entera, más eficiente en el hardware disponible en los dispositivos móviles, junto con un procedimiento de entrenamiento que preserva la precisión del modelo luego de la cuantización. La cuantización reduce el tamaño del modelo y puede disminuir el tiempo de inferencia, aunque su efecto sobre la precisión debe verificarse en cada caso.
+
+\section{Aprendizaje federado}
+
+El aprendizaje federado es un enfoque en el que un modelo se entrena de forma colaborativa entre muchos clientes, como teléfonos móviles, bajo la coordinación de un servidor central, mientras los datos de entrenamiento permanecen en cada cliente~\cite{mcmahan2017fedavg, kairouz2021advances}. En lugar de transferir los datos, cada cliente calcula una actualización del modelo con sus datos locales y envía únicamente esa actualización.
+
+McMahan et al.~\cite{mcmahan2017fedavg} introdujeron el término y propusieron el algoritmo \emph{Federated Averaging} (FedAvg). En cada ronda, el servidor envía el modelo global a un subconjunto de clientes; cada cliente lo entrena durante algunas épocas con sus propios datos, y el servidor combina los modelos resultantes mediante un promedio ponderado por la cantidad de muestras de cada cliente:
+
+\begin{equation}
+    \mathbf{w}_{t+1} = \sum_{k=1}^{K} \frac{n_k}{n} \, \mathbf{w}_{t+1}^{k}
+\end{equation}
+
+donde $\mathbf{w}_{t+1}^{k}$ son los pesos obtenidos por el cliente $k$, $n_k$ es su cantidad de muestras y $n$ es el total de muestras de los clientes participantes. Los autores mostraron que este esquema reduce entre 10 y 100 veces la cantidad de rondas de comunicación necesarias en comparación con un entrenamiento distribuido sincrónico basado en descenso por gradiente~\cite{mcmahan2017fedavg}.
+
+Un ejemplo de aplicación a gran escala es el teclado Gboard de Google, en el que se entrenó de manera federada un modelo de predicción de la siguiente palabra a partir del uso del teclado en los teléfonos de las personas usuarias~\cite{hard2018gboard}.
+
+El aprendizaje federado presenta desafíos propios. Los datos de cada cliente no suelen ser independientes ni idénticamente distribuidos (no IID), ya que reflejan el uso particular de cada persona; los clientes difieren en capacidad de cómputo y disponibilidad; y la comunicación entre clientes y servidor es costosa~\cite{kairouz2021advances}. En el reconocimiento de señas, la condición no IID es esperable: cada persona realiza las señas con su propia morfología de mano, velocidad y estilo.
+
+\section{Conjuntos de datos y trabajos sobre LSA}
+\label{sec:datos-lsa}
+
+La disponibilidad de datos es una de las principales limitaciones para el avance del reconocimiento y la traducción de lenguas de señas. De Sisto et al.~\cite{desisto2022challenges} señalan que los corpus de lenguas de señas son, en general, mucho más pequeños que los corpus disponibles para el reconocimiento del habla, que sus formatos de anotación son heterogéneos y que muchos de ellos no pueden descargarse para su uso en aprendizaje automático.
+
+Para la LSA, el principal antecedente es LSA64, desarrollado en el Instituto de Investigación en Informática LIDI de la Universidad Nacional de La Plata~\cite{ronchetti2016lsa64}. El conjunto contiene 3200 videos de 64 señas, realizadas por 10 personas con 5 repeticiones cada una. Las señas se seleccionaron entre las más utilizadas del léxico de la LSA e incluyen verbos y sustantivos, con señas de una y de dos manos. Las grabaciones se realizaron en un ambiente exterior con luz natural y en un ambiente interior con luz artificial. Las personas que realizaron las señas utilizaron guantes de colores para facilitar el seguimiento y la segmentación de las manos, de modo que los experimentos pudieran concentrarse en el reconocimiento de las señas~\cite{ronchetti2016lsa64}.
+
+Posteriormente, el mismo grupo de investigación presentó LSA-T, el primer conjunto de datos de LSA continua orientado a la traducción. Está compuesto por 14.880 videos a nivel de oración, con más de 20 horas de contenido extraído de un canal audiovisual de la comunidad sorda, acompañados de su traducción al castellano y de los puntos clave de cada persona~\cite{dalbianco2022lsat}.
+
+Estos conjuntos constituyen aportes significativos, pero responden a objetivos distintos de los de este trabajo. LSA64 se registró con guantes de colores y en condiciones controladas, lo que difiere de la captura con la cámara de un teléfono sin elementos auxiliares. LSA-T, por su parte, se orienta al reconocimiento continuo y a la traducción, una tarea de mayor complejidad que el reconocimiento de un vocabulario acotado de señas aisladas.
+
+\pendiente{Completar con un relevamiento de aplicaciones existentes de traducción de LSA o de otras lenguas de señas (tiendas de aplicaciones y trabajos publicados), indicando si funcionan sin conexión y qué vocabulario cubren.}
+
+\section{Síntesis y brechas identificadas}
+
+La revisión realizada permite identificar los siguientes puntos:
+
+\begin{itemize}
+    \item El reconocimiento de lenguas de señas basado en visión y en aprendizaje profundo es un área activa, pero cada lengua requiere sus propios datos, y los disponibles para la LSA son escasos.
+    \item Los enfoques basados en pose, y en particular la estimación de landmarks de manos con MediaPipe, permiten obtener una representación compacta del gesto a partir de una cámara convencional y en tiempo real en dispositivos móviles.
+    \item Las redes LSTM constituyen una alternativa establecida para modelar la evolución temporal de esa representación.
+    \item Herramientas como TensorFlow Lite y técnicas como la cuantización hacen posible ejecutar estos modelos en el propio dispositivo, lo que favorece la privacidad y el funcionamiento sin conexión.
+    \item El aprendizaje federado ofrece un mecanismo para mejorar un modelo con datos de nuevas personas sin centralizar sus grabaciones, aunque debe enfrentar la heterogeneidad de los datos entre clientes.
+\end{itemize}
+
+Los trabajos revisados sobre LSA se concentran en la construcción de conjuntos de datos y en la evaluación de modelos en entornos de investigación. No abordan la integración del reconocimiento en una aplicación móvil que funcione en el dispositivo, ni la mejora colaborativa del modelo mediante aprendizaje federado. Esta combinación es la que explora el presente trabajo.

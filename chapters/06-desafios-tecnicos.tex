@@ -1,0 +1,21 @@
+\chapter{Desafíos técnicos y decisiones de diseño}
+\label{cap:desafios}
+
+% Cada sección sigue el esquema: problema observado, causa identificada,
+% alternativas evaluadas, solución adoptada e impacto.
+
+\section{Espejado de las manos entre la cámara, MediaPipe y el modelo}
+
+\pendiente{Describir la inconsistencia entre la imagen espejada de la cámara frontal, la lateralidad (handedness) informada por MediaPipe y la disposición de los datos con que se entrenó el modelo; cómo se detectó, cómo se resolvió y qué efecto tuvo en el reconocimiento.}
+
+\section{Rendimiento en dispositivos de gama baja}
+
+\pendiente{Describir las dificultades observadas al ejecutar la aplicación en dispositivos antiguos, la identificación del cuello de botella (captura, conversión de imagen, detección de landmarks o inferencia) y las optimizaciones aplicadas.}
+
+\section{Orientación de la cámara y estabilidad del seguimiento}
+
+\pendiente{Describir el efecto de la orientación del dispositivo sobre la estabilidad de los landmarks.}
+
+\section{Otros desafíos}
+
+\pendiente{Agregar otros problemas relevantes encontrados durante el desarrollo, por ejemplo la limpieza del texto reconocido o los cambios de nomenclatura de las señas.}

@@ -19,7 +19,7 @@ Si tenes MiKTeX, TeX Live u Overleaf:
 
 ```bash
 pdflatex main.tex
-biber main
+bibtex main
 pdflatex main.tex
 pdflatex main.tex
 ```
@@ -32,4 +32,4 @@ latexmk -pdf main.tex
 
 ## Nota
 
-En esta computadora no se detecto todavia un compilador LaTeX instalado. El proyecto queda preparado para abrirlo en Overleaf o para compilarlo localmente cuando instales MiKTeX o TeX Live.
+Se compila localmente con MiKTeX ejecutando `build.ps1`; Overleaf es opcional.

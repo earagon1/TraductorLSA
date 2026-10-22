@@ -110,15 +110,37 @@ Archivos de configuracion:
 - `README.md`
 - `NOTAS_DE_TRABAJO.md`
 
-Capitulos:
+Capitulos (reestructurados el 2026-10-01):
 
 - `chapters/01-introduccion.tex`
-- `chapters/02-marco-teorico.tex`
-- `chapters/03-analisis-problema.tex`
-- `chapters/04-propuesta-solucion.tex`
-- `chapters/05-implementacion.tex`
-- `chapters/06-pruebas-resultados.tex`
-- `chapters/07-conclusiones.tex`
+- `chapters/02-marco-teorico.tex` (marco teorico y estado del arte)
+- `chapters/03-metodologia.tex`
+- `chapters/04-dataset-modelo.tex`
+- `chapters/05-diseno-implementacion.tex` (incluye requisitos, antes en analisis-problema)
+- `chapters/06-desafios-tecnicos.tex` (espejado de manos/handedness, dispositivos de gama baja, orientacion)
+- `chapters/07-experimentos-resultados.tex`
+- `chapters/08-discusion.tex` (incluye requisitos minimos de hardware)
+- `chapters/09-conclusiones.tex`
+
+Decisiones de la sesion 2026-10-01:
+
+- Aprendizaje federado queda fuera del informe por ahora; hay un comentario en `main.tex` donde ira su capitulo (despues del 5).
+- Citas numericas con BibTeX (`unsrt`, orden de aparicion), igual que la plantilla. Ya no se usa biblatex/APA; las entradas web van como `@misc`.
+- Contenido pendiente se marca con `\pendiente{...}` (definido en `preamble.tex`, sale en rojo en el PDF).
+- Decisiones abiertas de la autora se marcan con `\revisar{pregunta}{contenido}` (naranja). Hoy: palabras clave del resumen (dejar o sacar).
+- Abreviaciones y glosario viven en `preliminares/`; agregar terminos a medida que aparecen en los capitulos.
+- Cap. 1 aprobado por la autora (2026-10-04). Cap. 2 redactado el 2026-10-04 con 18 fuentes verificadas; queda pendiente el relevamiento de apps existentes (seccion 2.7).
+- Dos referencias de la propuesta aprobada tenian autores incorrectos: el survey de Electronics 12(12) 2678 es de Zeyu Liang et al. (no "Liang, R."), y "Challenges with Sign Language Datasets" (LREC 2022) es de De Sisto et al. (no Koller). En el informe se usan las versiones corregidas.
+- MediaPipe Hands (Zhang et al. 2020) estima 21 landmarks 2.5D (x, y, profundidad relativa a la muneca) y tiene una salida de handedness; util para el Cap. 6 (espejado).
+- Pendiente para la migracion a la plantilla: `unsrt` imprime "and", "In", "et al." en ingles; evaluar estilo en espanol.
+- No poner supervisor/a en la portada hasta que la autora lo confirme con el profesor del taller.
+- La migracion a la plantilla oficial UNGS (portada IDEI, `tesina.tex`) se hace al final; la autora tiene la plantilla en `Downloads/plantilla.zip`.
+- Dispositivos de prueba: tres antiguos, un telefono reciente y dos tablets de alta gama (seis en total). Faltan modelos exactos de los que no son Tab S7, A55 y A31.
+- El modelo sigue en entrenamiento: no cerrar capitulos 4 y 7 hasta tener el modelo final.
+- Se avanza capitulo por capitulo.
+- Entrenamiento en el dispositivo y aprendizaje federado todavia no estan implementados en la app (hoy solo se graban muestras con `client_id`). Figuran como objetivos especificos 5 y 6 del Cap. 1; no redactarlos como hechos hasta que la autora los termine.
+- MiKTeX esta instalado (`C:\Users\Evelin\AppData\Local\Programs\MiKTeX`). Se compila localmente con `build.ps1` (pdflatex + bibtex) y se revisa el PDF en Edge, que no bloquea el archivo. Overleaf queda como opcion, no es necesario.
+- Archivos en UTF-8 sin BOM: no escribir .tex con `Set-Content -Encoding UTF8` de PowerShell 5.1 porque agrega BOM.
 
 Carpetas auxiliares:
 
@@ -184,6 +206,18 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 ## Datos tecnicos conocidos del proyecto Android
 
+Estado revisado contra el codigo Android el 2026-04-20.
+
+Tambien se leyo `Propuesta de Proyecto de Tesina-Aragon Evelin-2.pdf` el 2026-04-20. Ese PDF es la propuesta original del proyecto. La autora aclaro que dos dispositivos/modos y aprendizaje federado siguen siendo requisitos del proyecto, aunque federado aun esta pendiente de implementacion.
+
+Regla de interpretacion de la propuesta aprobada:
+
+- La propuesta aprobada por el profesor funciona como guia base de objetivos y compromisos.
+- En futuras sesiones, contrastar siempre propuesta aprobada, estado actual del codigo, pendientes y agregados evolutivos.
+- El codigo actual puede contener funcionalidades no mencionadas en la propuesta, como Clerk, Lottie, onboarding, diccionario o modo invitada.
+- Esos agregados no deben tratarse automaticamente como errores o fuera de alcance: pueden mantenerse si se justifican como decisiones surgidas durante el desarrollo.
+- En el informe, distinguir con claridad entre el nucleo comprometido por la propuesta y las mejoras de implementacion/UX incorporadas despues.
+
 Arquitectura general:
 
 1. Captura de imagen con CameraX.
@@ -203,6 +237,7 @@ Paquetes principales del proyecto Android:
 - `features/`: extraccion de caracteristicas y buffer temporal.
 - `ml/`: motor de inferencia y clasificacion.
 - `speech/`: sintesis de voz.
+- `voice/`: voz a texto mediante `SpeechRecognizer` de Android.
 - `ui/`: pantallas, overlays y componentes visuales.
 - `model/`: modelos de datos simples.
 
@@ -212,6 +247,57 @@ Archivos/modelos relevantes:
 - `app/src/main/assets/actions_15_opt.tflite`
 - `app/src/main/assets/actions_15_f32.tflite`
 - `app/src/main/assets/words.json`
+- `app/src/main/assets/dictionary/*.jpg`
+- `app/src/main/assets/entrenamiento28-10/` como copia historica o alternativa a validar.
+
+Vocabulario vigente observado en `words.json`:
+
+- `hola`
+- `adios`
+- `bien`
+- `como_estas`
+- `gracias`
+- `e`
+- `v`
+- `l`
+- `i`
+- `n`
+
+Pantallas/funciones actuales de la app:
+
+- Splash y onboarding.
+- Autenticacion opcional con Clerk o modo invitada.
+- Home con acceso a traducir señas, traducir voz, entrenamiento, diccionario y ajustes.
+- Traduccion de señas con camara, overlay, prediccion textual y Text-to-Speech.
+- Voz a texto como funcion complementaria.
+- Modo entrenamiento protegido por cuenta, con seleccion de seña, captura de secuencias etiquetadas, guardado local y exportacion JSON.
+- Diccionario de señas con imagenes desde assets.
+
+Requisito de dos dispositivos/modos:
+
+- No se desarrollan dos apps separadas.
+- La misma app debe poder usarse en dos dispositivos Android.
+- Un dispositivo puede operar en modo LSA a texto/voz.
+- El otro dispositivo puede operar en modo voz a texto.
+- Esta organizacion representa las dos perspectivas de uso de la propuesta original: persona que realiza señas y persona oyente.
+
+Requisito de aprendizaje federado:
+
+- Aprendizaje federado es obligatorio y esta pendiente.
+- Debe definirse la arquitectura concreta: simulacion controlada, backend agregador, Flower, TensorFlow Federated u otra alternativa.
+- El modo entrenamiento y el archivo `lsa_samples.json` pueden servir como fuente de datos local, pero esto debe confirmarse tecnicamente.
+- Hasta implementarlo, no afirmar resultados de federado ni mejoras de precision.
+
+Nota importante para redaccion:
+
+- La frase "ejecucion local/offline" debe aplicarse con precision al pipeline principal de reconocimiento LSA a texto/voz: captura, landmarks, features, TFLite y TTS.
+- No afirmar que toda la aplicacion es completamente offline, porque hay autenticacion/sincronizacion opcional con Clerk y voz a texto mediante `SpeechRecognizer`, cuya disponibilidad offline depende del dispositivo/motor instalado.
+- Para privacidad, conviene redactar que el flujo de video/reconocimiento no requiere enviar imagenes a servidores externos.
+- El modo entrenamiento actual no reentrena el modelo en el telefono; recolecta muestras etiquetadas y permite exportarlas para trabajo posterior.
+- La propuesta original planteaba dos dispositivos Android complementarios, offline total, modelo LSTM, aprendizaje federado y metricas como accuracy, F1-score, matrices de confusion y consistencia estadistica. En el informe final, esos puntos deben validarse contra el codigo y las pruebas actuales.
+- Voz a texto debe presentarse como el segundo modo requerido para la perspectiva de la persona oyente.
+- Aprendizaje federado debe presentarse como requisito pendiente hasta que se implemente y valide.
+- Clerk, Lottie, onboarding, diccionario y otros agregados posteriores pueden mencionarse solo si aportan a explicar la app implementada. No deben desplazar el eje academico principal: accesibilidad, reconocimiento LSA, procesamiento local, dos modos y federado.
 
 Resultados preliminares mencionados en el README Android:
 
@@ -260,6 +346,13 @@ El commit inicial contiene:
 - Reemplazar placeholders de director/a, fecha institucional y datos de portada.
 - Verificar formato exigido por la universidad o por la plantilla provista en `Tutorial.pdf`.
 - Incorporar bibliografia academica real sobre reconocimiento de lenguas de señas, LSA, MediaPipe y modelos moviles.
+- Definir como nombrar la app en el informe: "SeÑAR" o "Traductor LSA".
+- Validar orientacion, mirroring y handedness antes de cerrar la descripcion tecnica.
+- Confirmar modelo final usado para demo y resultados.
+- Documentar condiciones de prueba antes de presentar metricas como resultados finales.
+- Definir e implementar aprendizaje federado.
+- Preparar diagrama del escenario con dos dispositivos usando la misma app en dos modos.
+- Preparar una tabla de trazabilidad entre propuesta aprobada, codigo actual, pendientes y agregados evolutivos.
 
 ## Recordatorio para Codex
 

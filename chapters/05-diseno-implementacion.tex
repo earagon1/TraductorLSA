@@ -1,0 +1,85 @@
+\chapter{Diseño e implementación de la aplicación}
+
+\section{Requisitos del sistema}
+
+\subsection{Requisitos funcionales}
+
+\begin{itemize}
+    \item Capturar imagen desde la cámara del dispositivo móvil.
+    \item Detectar manos y landmarks en tiempo real.
+    \item Construir una secuencia temporal de características.
+    \item Clasificar la seña realizada.
+    \item Mostrar el resultado en pantalla.
+    \item Reproducir el resultado mediante síntesis de voz.
+    \item Transcribir voz a texto para la persona oyente.
+\end{itemize}
+
+\subsection{Requisitos no funcionales}
+
+\begin{itemize}
+    \item Ejecutar el reconocimiento de señas localmente en Android.
+    \item Reducir la dependencia de conexión a internet.
+    \item Mantener tiempos de respuesta aceptables para uso interactivo.
+    \item Preservar la privacidad evitando el envío de imágenes a servidores externos.
+\end{itemize}
+
+\section{Arquitectura general}
+
+La solución propuesta se organiza como un pipeline de procesamiento en tiempo real ejecutado localmente en el dispositivo móvil. A partir de la imagen capturada por la cámara, el sistema detecta landmarks de las manos, construye una representación numérica de la secuencia gestual e infiere la seña correspondiente mediante un modelo liviano de clasificación.
+
+La arquitectura se compone de los siguientes módulos principales:
+
+\begin{itemize}
+    \item Captura de imagen mediante CameraX.
+    \item Detección de manos mediante MediaPipe Hand Landmarker.
+    \item Extracción de características a partir de landmarks.
+    \item Normalización de secuencias temporales.
+    \item Clasificación mediante TensorFlow Lite.
+    \item Presentación del resultado en texto y voz.
+\end{itemize}
+
+\section{Flujo de procesamiento}
+
+\pendiente{Describir paso a paso el flujo: cámara, frame, landmarks, vector de características, buffer temporal, modelo, predicción, texto y voz. Incluir diagrama.}
+
+\section{Decisiones tecnológicas}
+
+\pendiente{Justificar el uso de Android, Kotlin, CameraX, MediaPipe, TensorFlow Lite y Text-to-Speech.}
+
+\subsection{Justificación de la ejecución local}
+
+La ejecución local permite reducir la dependencia de conectividad, mejorar la disponibilidad de la aplicación en diferentes contextos y evitar el envío de imágenes o datos sensibles a servidores externos. Esta decisión resulta especialmente relevante en aplicaciones vinculadas con accesibilidad y comunicación personal.
+
+\section{Implementación del pipeline de reconocimiento}
+
+\subsection{Captura de imagen con CameraX}
+
+\pendiente{Describir el uso de CameraX, el análisis de frames y la estrategia para evitar acumulación de imágenes pendientes.}
+
+\subsection{Detección de manos con MediaPipe}
+
+\pendiente{Explicar el uso de MediaPipe Hand Landmarker para detectar landmarks de hasta dos manos.}
+
+\subsection{Construcción de características}
+
+\pendiente{Describir el vector de 126 valores y el buffer temporal.}
+
+\subsection{Clasificación con TensorFlow Lite}
+
+\pendiente{Explicar cómo se integra el modelo, cómo se cargan las etiquetas y cómo se obtiene la predicción.}
+
+\subsection{Salida en texto y voz}
+
+\pendiente{Describir la presentación del texto reconocido y la síntesis de voz mediante el motor TTS de Android.}
+
+\section{Modo voz a texto y escenario con dos dispositivos}
+
+\pendiente{Describir el modo de transcripción de voz y el escenario de uso con dos dispositivos que ejecutan la misma aplicación en modos complementarios. Incluir diagrama.}
+
+\section{Modo de entrenamiento y recolección de muestras}
+
+\pendiente{Describir la captura de secuencias etiquetadas desde la aplicación, el guardado local y la exportación para reentrenamiento.}
+
+\section{Interfaz de usuario}
+
+\pendiente{Describir las pantallas principales con capturas. Distinguir el núcleo comprometido en la propuesta de las mejoras de experiencia de usuario incorporadas durante el desarrollo.}

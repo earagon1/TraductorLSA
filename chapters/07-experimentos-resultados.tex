@@ -1,0 +1,36 @@
+\chapter{Experimentos y resultados}
+
+\section{Desempeño del modelo}
+
+\pendiente{Reportar accuracy, F1 macro y micro y matriz de confusión sobre el conjunto de prueba. Completar cuando el entrenamiento esté cerrado.}
+
+\section{Consistencia estadística}
+
+\pendiente{Reportar la métrica de consistencia $\sigma$ definida en la propuesta.}
+
+\section{Robustez ante condiciones variables}
+
+\pendiente{Reportar resultados según usuario, iluminación, ángulo y distancia de cámara.}
+
+\section{Rendimiento en distintos dispositivos}
+
+\pendiente{Completar la tabla con los seis dispositivos probados (tres antiguos, un teléfono reciente y dos tablets de alta gama), indicando condiciones de medición. Los valores actuales son preliminares y deben revalidarse con el modelo final.}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        Dispositivo & SoC & FPS efectivos & Inferencia \\
+        \midrule
+        Galaxy Tab S7 & Snapdragon 865+ & 14.0 & 32 ms \\
+        Galaxy A55 & Exynos 1480 & 5.3 & 30 ms \\
+        Galaxy A31 & Helio P65 & 3.0 & 559 ms \\
+        \bottomrule
+    \end{tabular}
+    \caption{Resultados preliminares de rendimiento en distintos dispositivos.}
+    \label{tab:rendimiento-dispositivos}
+\end{table}
+
+\section{Comparación entre variantes del modelo}
+
+\pendiente{Comparar tamaño, latencia y precisión entre la variante float32 y la variante optimizada.}

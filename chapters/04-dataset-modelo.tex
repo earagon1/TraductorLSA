@@ -1,0 +1,30 @@
+\chapter{Construcción del conjunto de datos y del modelo}
+\label{cap:dataset-modelo}
+
+\section{Selección del vocabulario}
+
+\pendiente{Justificar las señas elegidas y su cantidad. Validar contra el vocabulario vigente al cerrar el entrenamiento.}
+
+\section{Protocolo de captura}
+
+\pendiente{Describir cómo se capturaron las muestras: personas, repeticiones, condiciones de luz, posición de cámara, herramienta de captura y cantidad total de muestras.}
+
+\section{Representación de las señas}
+
+\pendiente{Explicar la representación de cada seña como secuencia de $T$ cuadros con 126 valores por cuadro (21 puntos por mano, dos manos, tres coordenadas), es decir, una matriz $\mathbf{X} \in \mathbb{R}^{T \times 126}$.}
+
+\section{Preprocesamiento y normalización}
+
+\pendiente{Describir la normalización temporal a longitud fija, el tratamiento de manos ausentes y cualquier normalización espacial aplicada.}
+
+\section{Arquitectura del modelo}
+
+\pendiente{Describir la arquitectura final y justificarla. Contrastar con la arquitectura LSTM planteada en la propuesta si hubo cambios.}
+
+\section{Entrenamiento}
+
+\pendiente{Partición de datos, hiperparámetros, regularización y curvas de entrenamiento.}
+
+\section{Conversión a TensorFlow Lite y cuantización}
+
+\pendiente{Describir la conversión del modelo y comparar variantes (por ejemplo, float32 frente a optimizada) en tamaño y desempeño.}

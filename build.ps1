@@ -7,8 +7,8 @@ if (Get-Command latexmk -ErrorAction SilentlyContinue) {
 
 if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
     pdflatex main.tex
-    if (Get-Command biber -ErrorAction SilentlyContinue) {
-        biber main
+    if (Get-Command bibtex -ErrorAction SilentlyContinue) {
+        bibtex main
     }
     pdflatex main.tex
     pdflatex main.tex
