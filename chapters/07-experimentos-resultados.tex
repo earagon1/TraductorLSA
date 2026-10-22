@@ -76,7 +76,16 @@ La Tabla~\ref{tab:por-persona} detalla el acierto por persona y la Tabla~\ref{ta
     \label{tab:f1-por-sena}
 \end{table}
 
-\pendiente{Agregar la matriz de confusión del esquema persona no vista como figura.}
+La Figura~\ref{fig:matriz-confusion} muestra la matriz de confusión del esquema persona no vista, acumulada sobre las cinco semillas (1590 predicciones) y normalizada por fila.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.92\textwidth]{matriz_confusion_persona.pdf}
+    \caption{Matriz de confusión con persona no vista (cinco semillas, 1590 predicciones). Cada fila suma 100\,\%; las celdas vacías no tienen predicciones.}
+    \label{fig:matriz-confusion}
+\end{figure}
+
+Las señas mejor reconocidas son N (98\,\%), hola (92\,\%), por favor (88\,\%) y V (86\,\%). Las confusiones se concentran en pares de señas con formas o ubicaciones de la mano similares: el 34\,\% de las tomas de «bien» se predice como «mi nombre es» y el 18\,\% de «mi nombre es», como «bien»; «gracias» se confunde con ambas (28\,\% y 29\,\%); «¿cómo estás?» se confunde con «por favor» (20\,\%) y con E (19\,\%), y las letras E y L se confunden entre sí (15\,\% y 20\,\%). La clase «nada» recibe predicciones de casi todas las señas, entre el 2 y el 12\,\% de cada una.
 
 \section{Calibración de la confianza}
 \label{sec:res-calibracion}

@@ -22,7 +22,46 @@ El modelo se divide en dos partes:
 
 La aplicación clasifica las señas con la parte de extracción y la cabeza vigente. La cabeza se implementó en Kotlin, con propagación hacia atrás y el optimizador Adam, porque entrenar en el dispositivo con TensorFlow Lite exige operaciones que el núcleo de la biblioteca no incluye. La implementación se verificó contra TensorFlow con una tolerancia de $10^{-5}$ en la salida, la pérdida, los gradientes y los pesos tras uno y tres pasos de optimización.
 
-\pendiente{Agregar un diagrama de la arquitectura: servidor en la red local, dispositivos, rondas y paquetes.}
+La Figura~\ref{fig:arquitectura-federado} resume la arquitectura y lo que circula entre el servidor y los dispositivos.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    caja/.style={draw=black!70, rounded corners=2pt, align=center, minimum height=0.9cm, inner sep=4pt, fill=white},
+    grupo/.style={draw=black!45, rounded corners=4pt, inner sep=7pt},
+    flecha/.style={-{Stealth[length=2.2mm]}, thick},
+    etiqueta/.style={font=\footnotesize, align=center, fill=white, inner sep=1.5pt},
+]
+    % Servidor (columna izquierda) y dispositivo (columna derecha), con posiciones fijas
+    % para que las flechas queden horizontales.
+    \node[caja, text width=3.7cm] (cabeza) at (0,0) {Cabeza global $w_r$};
+    \node[caja, text width=3.7cm] (agregacion) at (0,-1.35) {Límite a la norma\\ y FedAvg};
+    \node[caja, text width=3.7cm] (control) at (0,-2.7) {Control de calidad\\ (prueba fija)};
+    \node[caja, text width=3.7cm] (paquetes) at (0,-4.05) {Reentrenamiento y\\ paquetes versionados};
+    \begin{scope}[on background layer]
+        \node[grupo, fill=black!4, fit=(cabeza)(paquetes), label={[font=\small\bfseries]above:Servidor (red local)}] (servidor) {};
+    \end{scope}
+
+    \node[caja, text width=3.7cm] (ext1) at (10.6,0) {Extracción de\\ características (fija)};
+    \node[caja, text width=3.7cm] (cab1) at (10.6,-1.75) {Cabeza (Kotlin):\\ entrena y traduce};
+    \node[caja, text width=3.7cm, dashed] (tomas1) at (10.6,-3.5) {Tomas propias\\ (no salen)};
+    \coordinate (fondo) at (10.6,-4.05);
+    \begin{scope}[on background layer]
+        \node[grupo, fill=black!4, fit=(ext1)(tomas1)(fondo), label={[font=\small\bfseries]above:Dispositivo $k$}] (disp) {};
+    \end{scope}
+    \node[font=\footnotesize, below=0.12cm of disp] {(tableta, teléfono, \ldots)};
+
+    % Flujos
+    \draw[flecha] (servidor.east |- 0,0.3) -- node[etiqueta, above=1pt] {1. Cabeza $w_r$ + SHA-256} (disp.west |- 0,0.3);
+    \draw[flecha] (disp.west |- 0,-0.8) -- node[etiqueta, above=1pt] {2. Actualización $\Delta_k$ a 8 bits + $n_k$} (servidor.east |- 0,-0.8);
+    \draw[flecha] (servidor.east |- 0,-1.85) -- node[etiqueta, above=1pt] {3. Cabeza combinada $w_{r+1}$} (disp.west |- 0,-1.85);
+    \draw[flecha, dashed] (disp.west |- 0,-3.0) -- node[etiqueta, above=1pt] {Opcional: puntos de las manos} (servidor.east |- 0,-3.0);
+    \draw[flecha] (servidor.east |- 0,-4.05) -- node[etiqueta, above=1pt] {Paquete nuevo del modelo} (disp.west |- 0,-4.05);
+\end{tikzpicture}
+\caption{Arquitectura del esquema federado. Las flechas continuas son el ciclo de una ronda y la distribución de modelos; la discontinua, el aporte opcional de tomas para el reentrenamiento completo. Las imágenes nunca salen del dispositivo.}
+\label{fig:arquitectura-federado}
+\end{figure}
 
 \section{Ciclo de una ronda}
 
