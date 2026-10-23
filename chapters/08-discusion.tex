@@ -3,16 +3,59 @@
 
 \section{Interpretación de los resultados}
 
-\pendiente{Analizar qué muestran los resultados del modelo y del rendimiento, sin repetirlos.}
+\subsection{Generalización a personas nuevas}
+
+El resultado central del trabajo es la diferencia entre medir el desempeño con tomas mezcladas al azar (94,3\,\%) y medirlo con una persona que el modelo no vio (67,3\,\%). Los 27 puntos de diferencia no reflejan un error del modelo, sino de la forma de evaluarlo: cuando las tomas de una misma persona y sesión quedan a ambos lados de la partición, el modelo se evalúa sobre ejemplos casi idénticos a los que ya vio. La cifra que describe el uso real de la aplicación, una persona nueva frente a la cámara, es la segunda.
+
+Los resultados por persona refuerzan que la diversidad de personas pesa más que la cantidad de repeticiones. Las cien repeticiones por seña de la cámara web, todas de la misma persona, no alcanzaron para reconocer a otras personas: el modelo original acertaba el 28,5\,\% de las tomas de los dispositivos. Con la evaluación por persona, P1 obtiene el acierto más bajo (60,0\,\%), lo que es coherente con que, al excluirla, el modelo pierde también todas las tomas de la cámara web y entrena solo con las 212 tomas de P2 y P3.
+
+\subsection{Robustez y detección de manos}
+
+De las cuatro condiciones adversas, solo el giro del cuerpo produce una caída que los datos permiten afirmar. Tres resultados coinciden en explicarla por la etapa de detección y no por el clasificador: a 30° MediaPipe detecta las dos manos en una fracción mucho menor de los cuadros, los intentos de captura que se interrumpen por pérdida de la mano llegan al 69\,\% en un teléfono, y las tomas giradas casi no tienen vecinas en el espacio de entrada, es decir, el modelo recibe secuencias distintas de todas las que vio. La fuerte dependencia del dispositivo (entre 22 y 77\,\% según la persona y el equipo) apunta en la misma dirección: con más cuadros por segundo, el detector pierde la mano con menos frecuencia.
+
+Las demás condiciones muestran caídas de entre 6 y 16 puntos que no alcanzan significación con doce tomas por persona y condición. Corresponde leerlas como una tendencia y no como un efecto demostrado.
+
+\subsection{Consistencia y confianza}
+
+La métrica $\sigma$ de la propuesta se comporta como se esperaba: crece en las condiciones adversas y es entre tres y cuatro veces mayor en las tomas que el modelo clasifica mal. Este último resultado sugiere un uso práctico que no estaba previsto en la propuesta: como $\sigma$ no requiere etiquetas, podría utilizarse en la aplicación como una señal adicional para decidir cuándo no mostrar una predicción. La calibración aporta en el mismo sentido: con la temperatura y el umbral adoptados, de lo que la aplicación muestra acierta el 83\,\%, frente al 32\,\% del modelo original, que mostraba casi todas sus predicciones con una confianza que no se correspondía con su acierto.
+
+\subsection{Aprendizaje federado}
+
+El piloto muestra que el ciclo completo es viable en dispositivos reales: el entrenamiento local de la cabeza tarda una décima de segundo, cada actualización ocupa 13\,KB y la cabeza combinada llega a cada dispositivo sin alteraciones. La simulación reproduce exactamente el resultado de las rondas reales, lo que respalda las conclusiones obtenidas en simulación con más rondas y semillas.
+
+El experimento con una persona nueva matiza el aporte del esquema. Las rondas mejoraron el modelo compartido para todas las personas, incluida una que no participó, pero la mejora propia de la persona nueva fue pequeña. Promediar las actualizaciones entre dispositivos produce un modelo para el conjunto de los participantes, en el que lo específico de cada uno se diluye; la personalización local, que no se promedia, lo recupera en buena medida. Este comportamiento es conocido en la literatura del área~\cite{kairouz2021advances} y es el motivo por el que los esquemas federados suelen combinar un modelo global con un ajuste local.
+
+Un hallazgo adicional es que ajustar la cabeza solo con las tomas de una persona también mejora el reconocimiento de otra. Esto indica que una parte importante de la mejora proviene de adaptar el modelo al dominio de los dispositivos móviles (la cámara, la iluminación y el encuadre de un teléfono, frente a la cámara web con la que se entrenó la mayor parte de los datos) y no a la forma de señar de cada persona.
+
+\subsection{Rendimiento}
+
+El tiempo de procesamiento está dominado por la detección de manos y no por el modelo de clasificación, cuya inferencia tarda menos de 2\,ms. Por eso las optimizaciones con mayor efecto actuaron sobre la preparación de la imagen y sobre el detector, y no sobre el modelo. Ambas se adoptaron solo después de comprobar, sobre los mismos cuadros, que no modificaban de forma apreciable los landmarks que recibe el modelo.
 
 \section{Requisitos mínimos de hardware}
 
-\pendiente{A partir de las pruebas en los seis dispositivos, establecer qué características de hardware permiten un uso interactivo aceptable y cuáles no.}
+Con la versión final, los tres dispositivos evaluados superan los 9 cuadros por segundo: el Galaxy A55, el más lento, procesa 9,6. A ese ritmo la aplicación es utilizable en la condición estándar, aunque los intentos de captura que se interrumpen aumentan en condiciones adversas. Con alrededor de 6 cuadros por segundo, como el Galaxy A55 antes de las optimizaciones, la captura de una seña se extiende a más de un segundo y medio y la pérdida de la mano en condiciones adversas se vuelve frecuente.
+
+\pendiente{Completar con las mediciones del Galaxy A31 (gama baja) y de la Galaxy Tab S7 para establecer el piso de hardware con datos.}
 
 \section{Comparación con trabajos relacionados}
 
-\pendiente{Contrastar los resultados con los antecedentes revisados en el Capítulo 2, explicitando las diferencias de condiciones.}
+Una comparación directa de cifras con los antecedentes sobre LSA no es posible en condiciones equivalentes. LSA64 reúne 64 señas realizadas por diez personas con guantes de colores, en condiciones controladas~\cite{ronchetti2016lsa64}; este trabajo utiliza un vocabulario de doce señas, tres personas sin elementos auxiliares y la cámara de un teléfono, y ejecuta el reconocimiento en el propio dispositivo. LSA-T, por su parte, aborda el reconocimiento continuo y la traducción~\cite{dalbianco2022lsat}, una tarea de otra naturaleza.
+
+El resultado sobre los esquemas de validación tiene, sin embargo, una consecuencia para la lectura de la literatura: cuando un trabajo informa el acierto con particiones aleatorias de las tomas, la cifra puede sobreestimar en decenas de puntos el desempeño con personas nuevas. En este trabajo la diferencia fue de 27 puntos.
+
+En cuanto al aprendizaje federado, las experiencias de referencia, como el teclado Gboard~\cite{hard2018gboard}, operan a una escala de dispositivos varios órdenes de magnitud mayor. El piloto de este trabajo, con dos dispositivos reales, no busca compararse en escala, sino verificar que el ciclo completo es viable en el contexto de la LSA y con un modelo de reconocimiento de señas.
+
+\pendiente{Ampliar la comparación con aplicaciones existentes cuando se complete el relevamiento de la Sección~2.7.}
 
 \section{Limitaciones y amenazas a la validez}
 
-\pendiente{Tamaño y diversidad del conjunto de datos, cantidad de personas que realizaron las señas, vocabulario acotado y condiciones de prueba.}
+\begin{itemize}
+    \item \textbf{Personas.} Participaron tres personas, ninguna de ellas señante de LSA. Además, 1091 de las 1409 muestras de entrenamiento son de una sola persona (la autora, con la cámara web). Los resultados describen el reconocimiento de señas producidas por aprendices y no pueden extrapolarse sin más a personas sordas usuarias de la lengua.
+    \item \textbf{Vocabulario.} El modelo reconoce doce señas aisladas. No se aborda el reconocimiento de señas continuas ni la riqueza gramatical de la LSA.
+    \item \textbf{Tamaño de las muestras de evaluación.} Con doce tomas por persona y condición, los intervalos de confianza de la robustez son amplios; además, faltan las tomas giradas de P3 y su condición de distancia quedó combinada con poca luz.
+    \item \textbf{Representación en la aplicación.} El modelo se entrena con la representación del contrato de características, pero en la versión actual de la aplicación la traducción en vivo todavía construye la secuencia con el procedimiento anterior. La ejecución del contrato en Kotlin está implementada y verificada con los casos de prueba, y la usan el entrenamiento en el dispositivo y el esquema federado, pero aún no la cámara en tiempo real.
+    \item \textbf{Aprendizaje federado.} El piloto utilizó dos dispositivos reales y pocas rondas, y la parte de extracción de características se entrenó con las mismas personas que participaron como clientes. La comunicación con el servidor se realiza sin cifrado dentro de una red local.
+    \item \textbf{Mediciones en vivo.} Los porcentajes de intentos de captura interrumpidos se obtuvieron de los registros de la aplicación y son aproximados. La personalización en el dispositivo se midió con una sola ejecución.
+\end{itemize}
+
+\pendiente{Retirar la limitación sobre la representación en la aplicación si se conecta el contrato de características a la cámara antes de la entrega.}
