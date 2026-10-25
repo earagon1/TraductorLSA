@@ -66,6 +66,7 @@ import com.example.traductorlsa.ui.camera.DialogoSesionTerminada
 import com.example.traductorlsa.ui.camera.EstadoTraduccion
 import com.example.traductorlsa.ui.camera.FijarVertical
 import com.example.traductorlsa.ui.camera.MantenerPantallaEncendida
+import com.example.traductorlsa.ui.camera.MonitorDeEncuadre
 import com.example.traductorlsa.ui.camera.ProgresoSesion
 import com.example.traductorlsa.ui.camera.TiraSesionGuiada
 import com.example.traductorlsa.ui.camera.UltimaLectura
@@ -271,6 +272,8 @@ fun CameraScreen(
 
     val overlayState = remember { mutableStateOf(OverlayData()) }
     var lastHandsAt by remember { mutableStateOf(0L) }
+    val monitorEncuadre = remember { MonitorDeEncuadre() }
+    var manosMuyArriba by remember { mutableStateOf(false) }
     var currentTranslation by rememberSaveable { mutableStateOf("") }
     var recentTranslations by rememberSaveable { mutableStateOf(listOf<String>()) }
 
@@ -487,6 +490,7 @@ fun CameraScreen(
         engine.onHands = { hands, w, h, rot, isFront ->
             lastHandsAt = SystemClock.uptimeMillis()
             overlayState.value = OverlayData(w, h, hands, rot, isFront)
+            manosMuyArriba = monitorEncuadre.agregar(hands)
         }
 
         engine.onPrediction = { prediction ->
@@ -678,7 +682,7 @@ fun CameraScreen(
         // persona y mas grandes le quedan las manos al detector.
         if (!trainingMode || senaElegida != null) {
             GuiaDeEncuadre(
-                encuadreCorrecto = hayManos,
+                encuadreCorrecto = hayManos && !manosMuyArriba,
                 modifier = Modifier
                     .fillMaxSize()
                     .statusBarsPadding()
@@ -769,6 +773,16 @@ fun CameraScreen(
                     ultimaLectura = UltimaLectura.Ninguna
                 },
                 modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+
+        // Va en los dos modos: en entrenamiento, para que las tomas nuevas tengan el
+        // encuadre con el que se entrenó el modelo (ver MonitorDeEncuadre).
+        if (manosMuyArriba) {
+            AvisoDeEncuadre(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 140.dp),
             )
         }
 
@@ -1099,6 +1113,19 @@ private fun GuiaDeEncuadre(
         linea(m, alto - largo, m, alto); linea(m, alto, m + largo, alto)
         linea(ancho - largo, alto, ancho, alto); linea(ancho, alto, ancho, alto - largo)
     }
+}
+
+@Composable
+private fun AvisoDeEncuadre(modifier: Modifier = Modifier) {
+    Text(
+        text = MonitorDeEncuadre.AVISO,
+        color = SenarGrafito900,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(SenarAmbar)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    )
 }
 
 /**
