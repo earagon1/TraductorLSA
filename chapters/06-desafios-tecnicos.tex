@@ -89,7 +89,9 @@ En una tableta, la orientación fija tiene un costo de uso: apoyada en horizonta
     \label{tab:encuadre}
 \end{table}
 
-\textbf{Decisión.} En lo inmediato, la aplicación indica en pantalla dónde ubicar las manos. La solución de fondo es expresar los puntos de forma relativa, por ejemplo respecto de la muñeca y del tamaño de la mano, en una nueva versión del contrato de características, y reentrenar el modelo; queda planteada como trabajo futuro.
+\textbf{Alternativa descartada.} Se probó un aviso en pantalla que pedía alejarse cuando la muñeca quedaba, de forma sostenida, en la mitad superior de la imagen. En la prueba se activó al hacer la «I», que se realiza junto a la cara. Contrastado con las tomas de entrenamiento, el criterio no era viable: varias señas se hacen a esa altura (la muñeca aparece al 35\,\% de la altura de la imagen en la «N», al 43\,\% en la «E» y al 49\,\% en «adiós»), por lo que el aviso se habría activado en el 23\,\% de las tomas correctas. Además, la «V» mal encuadrada de la tableta (42\,\%) tenía la misma altura que una «E» normal: sin conocer la seña, ningún umbral fijo separa ambos casos. El aviso se retiró.
+
+\textbf{Decisión.} La solución es expresar los puntos de forma relativa, por ejemplo respecto de la muñeca y del tamaño de la mano, en una nueva versión del contrato de características, y reentrenar el modelo; queda planteada como trabajo futuro. Mientras tanto, la recomendación de uso es ubicar el dispositivo de modo que la persona quede encuadrada del pecho hacia arriba, como en las sesiones de captura.
 
 \section{Captura de la seña y experiencia de uso}
 
