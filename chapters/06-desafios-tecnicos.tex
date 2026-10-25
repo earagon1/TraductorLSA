@@ -61,6 +61,36 @@ Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sob
 
 \textbf{Decisión.} La pantalla de cámara queda fija en orientación vertical, que es la forma habitual de sostener un teléfono para una videollamada. Al salir de esa pantalla, la aplicación recupera la orientación que tenía. Todas las tomas de las sesiones de captura se grabaron en vertical.
 
+En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. Las pruebas con la Galaxy Tab S7 confirmaron que, aun así, la imagen llega al detector con la geometría correcta en las dos orientaciones, por lo que el inconveniente es de la interfaz y no del reconocimiento.
+
+\section{Dependencia del encuadre}
+\label{sec:encuadre}
+
+\textbf{Problema.} En la Galaxy Tab S7, un dispositivo rápido (12 cuadros por segundo), la mayoría de las señas de la primera prueba se clasificó como «nada» o como otra seña; en particular, la «V» se confundía con la «E». En los teléfonos, con las mismas señas, el reconocimiento era correcto.
+
+\textbf{Diagnóstico.} Para descartar un error de la aplicación, se grabaron tomas en el modo entrenamiento, que conserva los landmarks crudos y la geometría de la imagen, y se clasificaron en la computadora con el mismo modelo. El resultado coincidió con el de la tableta, de modo que la aplicación procesaba bien la imagen. La diferencia estaba en la posición de la mano: en la tableta, la muñeca aparecía al 42\,\% de la altura de la imagen, a la altura de la cara, mientras que en las tomas de los teléfonos aparecía entre el 63 y el 77\,\%, a la altura del pecho.
+
+\textbf{Causa.} El modelo recibe las coordenadas de los puntos referidas a la imagen y no a la propia mano. Como todas las tomas de entrenamiento con dispositivos tenían un encuadre parecido, el modelo aprendió también en qué zona de la imagen y con qué tamaño aparece cada seña.
+
+\textbf{Verificación.} Con la persona más alejada y las manos en la mitad inferior de la imagen, las mismas señas se reconocieron correctamente en las dos orientaciones (Tabla~\ref{tab:encuadre}).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lll}
+        \toprule
+        Toma & Mano a la altura de la cara & Mano a la altura del pecho \\
+        \midrule
+        «V», vertical & «E» (0,79 y 0,72) & «V» (0,96 y 0,90) \\
+        «V», horizontal & «¿cómo estás?» (0,58 y 0,53) & «V» (0,95 y 0,95) \\
+        «hola», horizontal & --- & «hola» (1,00 y 1,00) \\
+        \bottomrule
+    \end{tabular}
+    \caption{Clase predicha y confianza para dos tomas de cada seña en la Galaxy Tab S7, según el encuadre.}
+    \label{tab:encuadre}
+\end{table}
+
+\textbf{Decisión.} En lo inmediato, la aplicación indica en pantalla dónde ubicar las manos. La solución de fondo es expresar los puntos de forma relativa, por ejemplo respecto de la muñeca y del tamaño de la mano, en una nueva versión del contrato de características, y reentrenar el modelo; queda planteada como trabajo futuro.
+
 \section{Captura de la seña y experiencia de uso}
 
 Las sesiones de captura, seguidas en vivo a través de los registros de la aplicación, revelaron varios problemas de experiencia de uso:

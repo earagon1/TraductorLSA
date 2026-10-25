@@ -287,7 +287,7 @@ La rotación aleatoria previa a la cuantización no redujo el error con estas ac
 \section{Rendimiento en los dispositivos}
 \label{sec:res-rendimiento}
 
-El rendimiento se midió en tres dispositivos durante el uso real de la aplicación, a partir de las métricas que la propia aplicación registra por cada captura. La Tabla~\ref{tab:rendimiento} compara la versión utilizada en la segunda sesión de captura con la versión final, que incorpora dos optimizaciones: la recepción de la imagen en formato RGBA, sin pasar por compresión JPEG ni por una rotación posterior, y la ejecución de MediaPipe en la unidad de procesamiento gráfico (GPU).
+El rendimiento se midió en los tres dispositivos de las sesiones de captura durante el uso real de la aplicación, a partir de las métricas que la propia aplicación registra por cada captura. La Tabla~\ref{tab:rendimiento} compara la versión utilizada en la segunda sesión de captura con la versión final, que incorpora dos optimizaciones: la recepción de la imagen en formato RGBA, sin pasar por compresión JPEG ni por una rotación posterior, y la ejecución de MediaPipe en la unidad de procesamiento gráfico (GPU).
 
 \begin{table}[h]
     \centering
@@ -317,7 +317,33 @@ Ninguna de las dos optimizaciones se adoptó sin medir su efecto sobre los landm
 
 Otras dos alternativas se evaluaron y se descartaron. El modo de video de MediaPipe no redujo el tiempo, porque con hasta dos manos configuradas busca la segunda mano en cada cuadro. Delegar la rotación a MediaPipe devolvió los puntos en otro sistema de coordenadas sin reducir el tiempo.
 
-\pendiente{Incorporar los dispositivos de gama baja (Galaxy A31) y la Galaxy Tab S7 medidos con la versión final, si se dispone de ellos. Las cifras preliminares de abril se obtuvieron con otra versión del pipeline y no son comparables.}
+\subsection{Dispositivos adicionales}
+
+Con la versión final se midieron otros tres dispositivos, que no participaron de las sesiones de captura: dos teléfonos de gama baja de 2019 y 2020 y una tableta de gama alta (Tabla~\ref{tab:rendimiento-extra}). En cada uno se utilizó la aplicación durante alrededor de un minuto, con señas variadas, en la condición estándar.
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{llrrrr}
+        \toprule
+        Dispositivo & Procesador, memoria & Preparación (ms) & MediaPipe (ms) & Cuadros/s & Capturas \\
+        \midrule
+        Samsung Galaxy A20 & Exynos 7884, 3\,GB & 13,9 & 130 & 6,6 & 13 \\
+        Samsung Galaxy A31 & Helio P65, 4\,GB & 5,3 & 92 & 9,6 & 22 \\
+        Samsung Galaxy Tab S7 & Snapdragon 865, 6\,GB & 24,5 & 53 & 12,1 & 20 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Tiempo por cuadro (mediana) y cuadros por segundo en los dispositivos medidos solo con la versión final.}
+    \label{tab:rendimiento-extra}
+\end{table}
+
+En los tres, MediaPipe se ejecutó en la GPU, sin recurrir al procesador central. El Galaxy A31 alcanza los mismos cuadros por segundo que el Galaxy A55, un equipo más reciente. El Galaxy A20, el más antiguo, queda en 6,6 cuadros por segundo; como no llega a nueve, la aplicación captura 10 cuadros por seña en lugar de 15, de modo que cada captura dura lo mismo que en el Galaxy A31 (alrededor de 1,5\,s). En los teléfonos de gama baja la inferencia del modelo tarda unos 8\,ms, todavía muy por debajo del tiempo de detección.
+
+En estos teléfonos, las señas de una mano se reconocieron con confianza alta. Las señas de dos manos fueron las más afectadas: cuando el detector perdía una de las manos durante la captura, la confianza caía por debajo del umbral y la aplicación no mostraba la predicción, mientras que, con las dos manos detectadas en todos los cuadros, «por favor» y «¿cómo estás?» se reconocieron con confianzas de entre 0,86 y 1,0.
+
+En la Galaxy Tab S7 la velocidad fue adecuada, pero en la primera prueba la mayoría de las señas se clasificó como «nada» o como otra seña. El análisis de esas tomas mostró que no se trataba de un problema de la aplicación, sino del encuadre (Sección~\ref{sec:encuadre}).
+
+Las cifras preliminares de abril, obtenidas con otra versión del pipeline, no son comparables con estas y no se informan.
 
 \section{Variantes del modelo exportado}
 \label{sec:res-variantes}

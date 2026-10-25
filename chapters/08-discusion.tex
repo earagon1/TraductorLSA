@@ -33,9 +33,13 @@ El tiempo de procesamiento está dominado por la detección de manos y no por el
 
 \section{Requisitos mínimos de hardware}
 
-Con la versión final, los tres dispositivos evaluados superan los 9 cuadros por segundo: el Galaxy A55, el más lento, procesa 9,6. A ese ritmo la aplicación es utilizable en la condición estándar, aunque los intentos de captura que se interrumpen aumentan en condiciones adversas. Con alrededor de 6 cuadros por segundo, como el Galaxy A55 antes de las optimizaciones, la captura de una seña se extiende a más de un segundo y medio y la pérdida de la mano en condiciones adversas se vuelve frecuente.
+Con la versión final se midieron seis dispositivos. Cinco superan los 9 cuadros por segundo, incluido un teléfono de gama baja de 2020 (Galaxy A31, 9,6), que iguala al Galaxy A55. A ese ritmo la aplicación es utilizable en la condición estándar, aunque los intentos de captura que se interrumpen aumentan en condiciones adversas.
 
-\pendiente{Completar con las mediciones del Galaxy A31 (gama baja) y de la Galaxy Tab S7 para establecer el piso de hardware con datos.}
+El dispositivo más antiguo, un Galaxy A20 de 2019 con 3\,GB de memoria, procesa 6,6 cuadros por segundo. Aun así reconoció correctamente las señas de la prueba en la condición estándar, porque la aplicación reduce la cantidad de cuadros por captura según la velocidad del dispositivo. Con estos datos, el piso de hardware puede ubicarse en un teléfono de gama baja de alrededor de 2019 con soporte de GPU para MediaPipe, con la salvedad de que, por debajo de 9 cuadros por segundo, las señas de dos manos y las condiciones adversas son las primeras en resentirse: el detector pierde una de las manos con más frecuencia y la predicción no alcanza el umbral de confianza.
+
+\subsection{Encuadre}
+
+La prueba con la Galaxy Tab S7 mostró una limitación que las sesiones de captura no habían revelado: el modelo depende de la posición y del tamaño de la mano en la imagen. Con un encuadre distinto del habitual en los teléfonos, el reconocimiento falló aunque el dispositivo fuera rápido y la detección funcionara bien; con el encuadre corregido, las mismas señas se reconocieron con confianzas superiores a 0,9. Esta sensibilidad es consecuencia de usar las coordenadas referidas a la imagen y de que los datos de entrenamiento con dispositivos compartían un encuadre similar.
 
 \section{Comparación con trabajos relacionados}
 
@@ -55,6 +59,7 @@ En cuanto al aprendizaje federado, las experiencias de referencia, como el tecla
     \item \textbf{Tamaño de las muestras de evaluación.} Con doce tomas por persona y condición, los intervalos de confianza de la robustez son amplios; además, faltan las tomas giradas de P3 y su condición de distancia quedó combinada con poca luz.
     \item \textbf{Representación en la aplicación.} El modelo se entrena con la representación del contrato de características, pero en la versión actual de la aplicación la traducción en vivo todavía construye la secuencia con el procedimiento anterior. La ejecución del contrato en Kotlin está implementada y verificada con los casos de prueba, y la usan el entrenamiento en el dispositivo y el esquema federado, pero aún no la cámara en tiempo real.
     \item \textbf{Aprendizaje federado.} El piloto utilizó dos dispositivos reales y pocas rondas, y la parte de extracción de características se entrenó con las mismas personas que participaron como clientes. La comunicación con el servidor se realiza sin cifrado dentro de una red local.
+    \item \textbf{Encuadre y orientación.} El modelo es sensible a la posición y al tamaño de la mano en la imagen, porque utiliza coordenadas referidas a la imagen. Además, la pantalla de cámara está fija en orientación vertical, lo que resulta incómodo en una tableta apoyada en horizontal.
     \item \textbf{Mediciones en vivo.} Los porcentajes de intentos de captura interrumpidos se obtuvieron de los registros de la aplicación y son aproximados. La personalización en el dispositivo se midió con una sola ejecución.
 \end{itemize}
 
