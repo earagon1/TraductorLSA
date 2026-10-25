@@ -61,7 +61,7 @@ Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sob
 
 \textbf{Decisión.} La pantalla de cámara queda fija en orientación vertical, que es la forma habitual de sostener un teléfono para una videollamada. Al salir de esa pantalla, la aplicación recupera la orientación que tenía. Todas las tomas de las sesiones de captura se grabaron en vertical.
 
-En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. Las pruebas con la Galaxy Tab S7 confirmaron que, aun así, la imagen llega al detector con la geometría correcta en las dos orientaciones, por lo que el inconveniente es de la interfaz y no del reconocimiento.
+En una tableta, la orientación fija no alcanza. Apoyada en horizontal, la pantalla de cámara queda de costado y, además, la Galaxy Tab S7 entrega la imagen en formato apaisado (640$\times$480), mientras que todas las tomas de entrenamiento son verticales (480$\times$640). La corrección a lienzo cuadrado comprime entonces el eje vertical en lugar del horizontal y la misma seña llega al modelo con otras coordenadas: en la prueba, una «V» con la mano en la misma posición y del mismo tamaño que en las tomas de entrenamiento de esa persona se clasificó como «¿cómo estás?».
 
 \section{Dependencia del encuadre}
 \label{sec:encuadre}
