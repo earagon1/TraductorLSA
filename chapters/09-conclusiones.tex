@@ -1,23 +1,57 @@
 \chapter{Conclusiones y trabajo futuro}
+\label{cap:conclusiones}
 
 \section{Conclusiones}
 
-\pendiente{Retomar el objetivo general y cada objetivo específico, indicando en qué medida se cumplieron.}
+El objetivo general del trabajo fue desarrollar y evaluar un prototipo de aplicación Android que facilite la comunicación entre personas sordas y oyentes, con reconocimiento local de un conjunto acotado de señas de LSA, salida en texto y voz, transcripción de voz a texto y un esquema experimental de aprendizaje federado. El prototipo SeÑAR cumple ese objetivo dentro del alcance planteado: reconoce doce señas y una clase de rechazo en el propio dispositivo, sin conexión, en teléfonos de gama baja, media y alta, y el ciclo federado completo funcionó con dispositivos reales. A continuación se revisa cada objetivo específico.
+
+\begin{enumerate}
+    \item \textbf{Conjunto de datos propio.} Se cumplió. El conjunto reúne 1091 tomas de cámara web y 449 tomas de tres personas grabadas con la propia aplicación en dos sesiones, la segunda en condiciones adversas, siguiendo un protocolo definido antes de grabar. Las tomas de los dispositivos conservan los landmarks crudos y sus metadatos, lo que permite recalcular las características con cualquier versión futura de la representación. Su principal límite es la cantidad y el perfil de las personas: tres aprendices, ninguna de ellas señante de LSA.
+
+    \item \textbf{Modelo liviano para TensorFlow Lite.} Se cumplió. El modelo recurrente de 160\,973 parámetros ocupa 236\,KB con cuantización dinámica, coincide con el modelo de Keras en el 99,9\,\% de las predicciones y su inferencia tarda menos de 2\,ms en la tableta y unos 8\,ms en los teléfonos de gama baja. Exportarlo sin operaciones adicionales redujo la aplicación de 243,5 a 67,4\,MB.
+
+    \item \textbf{Pipeline de reconocimiento en tiempo real.} Se cumplió. La aplicación procesa entre 6,6 y 24,9 cuadros por segundo en los seis dispositivos medidos, y adapta la cantidad de cuadros por captura a la velocidad de cada uno. La traducción en vivo todavía no utiliza la implementación del contrato de características, aunque ya está disponible y verificada en la aplicación.
+
+    \item \textbf{Transcripción de voz a texto y escenario con dos dispositivos.} Se cumplió. El modo voz a texto transcribe con resultados parciales, pide al sistema el reconocimiento en el dispositivo y limpia la forma del texto sin alterar su contenido.
+
+    \item \textbf{Captura de muestras y entrenamiento local.} Se cumplió. El modo de entrenamiento y la sesión guiada permitieron grabar todo el conjunto de datos de los dispositivos; solo una toma debió descartarse por no corresponder a la seña indicada. La cabeza de clasificación se entrena en el teléfono con una implementación propia, verificada contra TensorFlow, que se usa tanto en las rondas federadas como en la personalización.
+
+    \item \textbf{Esquema experimental de aprendizaje federado.} Se cumplió. El esquema promedia las actualizaciones de la cabeza con FedAvg, las cuantiza a 8 bits, limita su norma y solo distribuye un modelo nuevo si no empeora sobre un conjunto de prueba fijo. Cada actualización ocupa unos 13\,KB y se entrena en alrededor de una décima de segundo. El piloto con dos dispositivos reales mostró que el modelo compartido mejora para todas las personas, pero que la mejora propia de una persona nueva es pequeña; la personalización local la recupera en buena medida.
+
+    \item \textbf{Evaluación.} Se cumplió. El modelo se evaluó con cinco esquemas de validación y cinco semillas, con la métrica de consistencia $\sigma$ planteada en la propuesta, en cuatro condiciones adversas y en seis dispositivos.
+\end{enumerate}
+
+Más allá del cumplimiento de los objetivos, el trabajo deja tres conclusiones.
+
+\textbf{La forma de evaluar determina la cifra.} Con tomas mezcladas al azar, el modelo acierta el 94,3\,\%; con una persona que no vio, el 67,3\,\%. La segunda cifra es la que describe el uso real de la aplicación, y la diferencia de 27 puntos muestra que la cantidad de repeticiones de una misma persona no reemplaza la diversidad de personas.
+
+\textbf{En el dispositivo, la etapa crítica es la detección de las manos.} El tiempo de procesamiento está dominado por MediaPipe y no por el clasificador, y los fallos con el cuerpo girado, en los dispositivos más lentos y en las señas de dos manos se explican porque el detector pierde una mano. Mejorar la preparación de la imagen y ejecutar el detector en la GPU tuvo más efecto que cualquier cambio en el modelo.
+
+\textbf{La coherencia entre el entrenamiento y la aplicación es tan importante como el modelo.} Las cuatro diferencias de preprocesamiento entre la cámara web y el teléfono hacían que el modelo original acertara el 28,5\,\% en los dispositivos, y corregirlas lo llevó al 56,0\,\% sin agregar datos. La prueba con la tableta Galaxy Tab S7 mostró una forma más sutil del mismo problema: el modelo depende de la posición de la mano en la imagen porque aprendió con un encuadre uniforme.
 
 \section{Aportes del trabajo}
 
 \begin{itemize}
-    \item Desarrollo de un prototipo funcional de traducción de LSA a texto y voz.
-    \item Integración de visión por computadora y aprendizaje automático en Android.
-    \item Ejecución local orientada a privacidad y disponibilidad.
-    \item Evaluación en distintos dispositivos móviles.
+    \item Un prototipo funcional de traducción de LSA a texto y voz y de voz a texto, que procesa las señas y la voz en el dispositivo.
+    \item Un conjunto de datos de landmarks de manos para doce señas de LSA, grabado con un protocolo explícito, con datos crudos y metadatos de sesión, condición y dispositivo.
+    \item Un contrato de características compartido entre el entrenamiento y la aplicación, con casos de prueba que ambas implementaciones deben reproducir.
+    \item Un esquema de aprendizaje federado completo, con entrenamiento en el dispositivo, protección de las actualizaciones, control de calidad del modelo distribuido y personalización local, probado con dispositivos reales.
+    \item Una evaluación con validación por persona, métrica de consistencia, condiciones adversas y seis dispositivos, que permite ubicar el piso de hardware en un teléfono de gama baja de alrededor de 2019.
+    \item Un registro de los problemas técnicos encontrados, incluidas las alternativas que se probaron y descartaron.
 \end{itemize}
 
 \section{Trabajo futuro}
 
 \begin{itemize}
-    \item Ampliar el conjunto de señas reconocidas.
-    \item Mejorar y diversificar el conjunto de datos.
-    \item Optimizar la conversión de imagen y el procesamiento de landmarks.
-    \item Evaluar modelos más robustos para secuencias temporales.
+    \item \textbf{Más personas, y personas sordas.} Es la mejora con mayor efecto esperado sobre el reconocimiento de personas nuevas, y la condición para que los resultados describan el uso real de la LSA.
+    \item \textbf{Coordenadas relativas a la mano.} Una nueva versión del contrato de características que exprese los puntos respecto de la muñeca y del tamaño de la mano, combinada con una posición aproximada en la imagen para no perder la información que distingue señas como la «I» o la «N», reduciría la dependencia del encuadre.
+    \item \textbf{Contrato de características en la traducción en vivo.} Conectar la implementación ya verificada a la cámara en tiempo real.
+    \item \textbf{Captura por tiempo.} Capturar una duración fija en lugar de una cantidad de cuadros, para que una seña larga entre completa en un dispositivo rápido.
+    \item \textbf{Detección de dos manos.} Ajustar la captura para tolerar la pérdida momentánea de una mano en las señas de dos manos, que son las más afectadas en los dispositivos lentos.
+    \item \textbf{Uso de $\sigma$ como señal de rechazo.} Como no requiere etiquetas, podría complementar el umbral de confianza para decidir cuándo no mostrar una predicción.
+    \item \textbf{Vocabulario y reconocimiento continuo.} Ampliar el vocabulario, lo que el sistema admite sin cambios en la aplicación, y avanzar hacia el reconocimiento de frases.
+    \item \textbf{Aprendizaje federado a mayor escala.} Comunicación cifrada, agregación segura y evaluación con más dispositivos y rondas.
+    \item \textbf{Interfaz para tabletas.} Una pantalla de cámara utilizable en orientación horizontal.
 \end{itemize}
+
+\pendiente{Confirmar con una prueba en modo avión que la traducción de señas y la transcripción de voz funcionan sin conexión en al menos un dispositivo, y registrar el resultado.}
