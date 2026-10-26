@@ -1,12 +1,17 @@
 \chapter{Diseño e implementación de la aplicación}
+\label{cap:diseno}
+
+Este capítulo describe la aplicación SeÑAR tal como quedó al cierre del trabajo: los requisitos que guiaron su diseño, la arquitectura, el recorrido de cada cuadro de la cámara hasta la palabra que se muestra y se pronuncia, y los modos complementarios de voz a texto y de entrenamiento. Los problemas que obligaron a cambiar el diseño en el camino se tratan en el Capítulo~\ref{cap:desafios}, y las mediciones de rendimiento, en el Capítulo~\ref{cap:resultados}.
 
 \section{Requisitos del sistema}
 
 \subsection{Requisitos funcionales}
 
+Los requisitos comprometidos en la propuesta son los siguientes:
+
 \begin{itemize}
     \item Capturar imagen desde la cámara del dispositivo móvil.
-    \item Detectar manos y landmarks en tiempo real.
+    \item Detectar las manos y sus puntos de referencia (\emph{landmarks}) en tiempo real.
     \item Construir una secuencia temporal de características.
     \item Clasificar la seña realizada.
     \item Mostrar el resultado en pantalla.
@@ -14,72 +19,189 @@
     \item Transcribir voz a texto para la persona oyente.
 \end{itemize}
 
+Durante el desarrollo se sumaron tres funciones que no estaban en la propuesta y que surgieron de la necesidad de obtener datos reales: un modo de entrenamiento para grabar tomas etiquetadas desde la propia aplicación, una sesión guiada que ordena la grabación según un protocolo, y el aprendizaje federado (Capítulo~\ref{cap:federado}).
+
 \subsection{Requisitos no funcionales}
 
 \begin{itemize}
-    \item Ejecutar el reconocimiento de señas localmente en Android.
-    \item Reducir la dependencia de conexión a internet.
-    \item Mantener tiempos de respuesta aceptables para uso interactivo.
-    \item Preservar la privacidad evitando el envío de imágenes a servidores externos.
+    \item Ejecutar el reconocimiento de señas y la transcripción de voz en el dispositivo, sin conexión a internet.
+    \item No enviar imágenes ni audio a servidores externos.
+    \item Mantener tiempos de respuesta aceptables para una conversación: la captura de una seña no debería superar alrededor de un segundo y medio en un teléfono de gama media.
+    \item Funcionar en teléfonos de gama media y baja, no solo en equipos de gama alta.
+    \item Ser utilizable por personas sin conocimientos técnicos.
 \end{itemize}
 
 \section{Arquitectura general}
 
-La solución propuesta se organiza como un pipeline de procesamiento en tiempo real ejecutado localmente en el dispositivo móvil. A partir de la imagen capturada por la cámara, el sistema detecta landmarks de las manos, construye una representación numérica de la secuencia gestual e infiere la seña correspondiente mediante un modelo liviano de clasificación.
+La aplicación está escrita en Kotlin para Android y organizada en paquetes con una responsabilidad cada uno (Tabla~\ref{tab:paquetes}). El reconocimiento de señas se estructura como un pipeline que se ejecuta íntegramente en el dispositivo: la cámara entrega cuadros, MediaPipe detecta las manos, la aplicación construye una secuencia de características y un modelo de TensorFlow Lite la clasifica.
 
-La arquitectura se compone de los siguientes módulos principales:
-
-\begin{itemize}
-    \item Captura de imagen mediante CameraX.
-    \item Detección de manos mediante MediaPipe Hand Landmarker.
-    \item Extracción de características a partir de landmarks.
-    \item Normalización de secuencias temporales.
-    \item Clasificación mediante TensorFlow Lite.
-    \item Presentación del resultado en texto y voz.
-\end{itemize}
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{lp{10cm}}
+        \toprule
+        Paquete & Responsabilidad \\
+        \midrule
+        \texttt{camera} & Configuración de CameraX y conversión de cada cuadro a una imagen derecha. \\
+        \texttt{detection} & Detector de manos de MediaPipe, con elección de GPU o CPU. \\
+        \texttt{features} & Vector de 126 valores por cuadro, secuencia temporal e implementación en Kotlin del contrato de características. \\
+        \texttt{ml} & Máquina de estados de la captura, clasificador, etiquetas y calibración. \\
+        \texttt{speech} & Síntesis de voz con el motor de Android. \\
+        \texttt{voice} & Reconocimiento de voz y limpieza del texto transcripto. \\
+        \texttt{dataset} & Formato de las tomas de entrenamiento y seudónimo de quien graba. \\
+        \texttt{federado} & Paquetes de modelo, entrenamiento local y comunicación con el servidor. \\
+        \texttt{settings} & Preferencias de la persona usuaria. \\
+        \texttt{ui} & Interfaz en Jetpack Compose: navegación, pantallas y sistema de diseño. \\
+        \bottomrule
+    \end{tabular}
+    \caption{Paquetes de la aplicación.}
+    \label{tab:paquetes}
+\end{table}
 
 \section{Flujo de procesamiento}
+\label{sec:flujo}
 
-\pendiente{Describir paso a paso el flujo: cámara, frame, landmarks, vector de características, buffer temporal, modelo, predicción, texto y voz. Incluir diagrama.}
+La Figura~\ref{fig:flujo} resume el recorrido de un cuadro de la cámara hasta la palabra reconocida.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        caja/.style={draw, rounded corners, align=center, minimum height=1.1cm, text width=2.6cm, font=\small},
+        flecha/.style={-{Stealth}, thick}
+    ]
+        \node[caja] (cam) {Cámara\\(CameraX, RGBA)};
+        \node[caja, right=0.7cm of cam] (rot) {Imagen derecha\\(rotación en la copia)};
+        \node[caja, right=0.7cm of rot] (mp) {MediaPipe\\Hand Landmarker};
+        \node[caja, below=1.0cm of mp] (vec) {Vector de 126\\valores por cuadro};
+        \node[caja, left=0.7cm of vec] (seq) {Secuencia de\\10, 15 o 20 cuadros};
+        \node[caja, left=0.7cm of seq] (tfl) {Modelo TFLite\\$15 \times 126 \rightarrow 13$};
+        \node[caja, below=1.0cm of tfl] (cal) {Calibración\\y umbral};
+        \node[caja, right=0.7cm of cal] (txt) {Texto\\en pantalla};
+        \node[caja, right=0.7cm of txt] (voz) {Voz\\(TTS)};
+        \draw[flecha] (cam) -- (rot);
+        \draw[flecha] (rot) -- (mp);
+        \draw[flecha] (mp) -- (vec);
+        \draw[flecha] (vec) -- (seq);
+        \draw[flecha] (seq) -- (tfl);
+        \draw[flecha] (tfl) -- (cal);
+        \draw[flecha] (cal) -- (txt);
+        \draw[flecha] (txt) -- (voz);
+    \end{tikzpicture}
+    \caption{Recorrido de un cuadro en el modo de traducción de señas.}
+    \label{fig:flujo}
+\end{figure}
+
+El pipeline no clasifica de forma continua, sino seña por seña. Una máquina de estados decide cuándo empieza y termina cada captura:
+
+\begin{enumerate}
+    \item \textbf{En espera.} No hay manos en el cuadro.
+    \item \textbf{Preparación.} Aparecen manos y se mantienen durante 500\,ms. La espera evita capturar un movimiento casual al entrar al encuadre.
+    \item \textbf{Captura.} Se acumulan cuadros con manos hasta completar la cantidad prevista. Si las manos desaparecen, la captura se descarta y se vuelve a la espera.
+    \item \textbf{Clasificación.} La secuencia se lleva a 15 cuadros y se clasifica. Para habilitar la siguiente seña, la persona tiene que bajar las manos durante 600\,ms.
+\end{enumerate}
+
+La cantidad de cuadros por captura se ajusta a la velocidad del dispositivo: se capturan 10 cuadros si el dispositivo procesa menos de 8 por segundo, 20 si procesa más de 20 y 15 en los demás casos. De este modo, una seña dura aproximadamente lo mismo en un teléfono lento que en uno rápido, y el modelo siempre recibe la misma longitud.
 
 \section{Decisiones tecnológicas}
 
-\pendiente{Justificar el uso de Android, Kotlin, CameraX, MediaPipe, TensorFlow Lite y Text-to-Speech.}
+\begin{itemize}
+    \item \textbf{Android y Kotlin.} El público al que apunta la aplicación usa mayormente teléfonos Android, y Kotlin es el lenguaje recomendado para la plataforma. La interfaz se escribió con Jetpack Compose, el sistema declarativo actual de Android.
+    \item \textbf{CameraX.} Ofrece un caso de uso de análisis de imágenes que entrega los cuadros a un hilo propio y resuelve las diferencias entre fabricantes, que son frecuentes en el acceso directo a la cámara.
+    \item \textbf{MediaPipe Hand Landmarker.} Detecta hasta dos manos y entrega 21 puntos tridimensionales por mano, con un modelo de unos 8\,MB que funciona en el dispositivo y puede usar la GPU~\cite{zhang2020mediapipehands}. Es además el mismo detector que se usa en Python para extraer los landmarks de entrenamiento, lo que evita diferencias entre ambos extractores.
+    \item \textbf{TensorFlow Lite.} Ejecuta el modelo entrenado en Keras sin conexión y con un intérprete pequeño. El modelo se exportó solo con operaciones básicas para no depender de la biblioteca de operaciones adicionales (Capítulo~\ref{cap:desafios}).
+    \item \textbf{Servicios de voz del sistema.} La síntesis (\emph{TextToSpeech}) y el reconocimiento de voz (\emph{SpeechRecognizer}) son los de Android, que pueden funcionar sin conexión una vez descargado el paquete del idioma, y no agregan peso a la aplicación.
+\end{itemize}
 
 \subsection{Justificación de la ejecución local}
 
 La ejecución local permite reducir la dependencia de conectividad, mejorar la disponibilidad de la aplicación en diferentes contextos y evitar el envío de imágenes o datos sensibles a servidores externos. Esta decisión resulta especialmente relevante en aplicaciones vinculadas con accesibilidad y comunicación personal.
 
+La traducción de señas y la transcripción de voz no usan la red. La aplicación tiene, sin embargo, dos funciones que sí se comunican, ambas opcionales y fuera del uso de traducción:
+
+\begin{itemize}
+    \item \textbf{Cuenta de usuario.} El modo de entrenamiento requiere iniciar sesión, mediante el servicio de autenticación Clerk, para asociar las tomas a un seudónimo estable de la persona. La traducción y el diccionario se pueden usar sin cuenta.
+    \item \textbf{Aprendizaje federado.} La pantalla correspondiente se comunica con un servidor de la red local, y solo cuando la persona lo solicita explícitamente (Capítulo~\ref{cap:federado}).
+\end{itemize}
+
 \section{Implementación del pipeline de reconocimiento}
 
 \subsection{Captura de imagen con CameraX}
 
-\pendiente{Describir el uso de CameraX, el análisis de frames y la estrategia para evitar acumulación de imágenes pendientes.}
+La cámara se configura con el caso de uso de análisis de imágenes y la estrategia de conservar solo el cuadro más reciente: si el procesamiento de un cuadro todavía no terminó cuando llega el siguiente, el anterior se descarta en lugar de encolarse. Así, en un dispositivo lento la aplicación procesa menos cuadros por segundo, pero nunca acumula retraso respecto de lo que ocurre frente a la cámara.
+
+La resolución de análisis es configurable en tres niveles (360$\times$480, 480$\times$640 y 720$\times$960); el valor por defecto es el intermedio. La cámara entrega cada cuadro en formato RGBA y la aplicación lo copia a una imagen ya rotada a la orientación vertical, en una sola pasada y reutilizando la memoria entre cuadros (Sección~\ref{sec:res-rendimiento}).
 
 \subsection{Detección de manos con MediaPipe}
 
-\pendiente{Explicar el uso de MediaPipe Hand Landmarker para detectar landmarks de hasta dos manos.}
+El detector se configura para hasta dos manos, en modo de imagen (cada cuadro se procesa de forma independiente), con una confianza mínima de detección configurable que por defecto es 0,6. Se ejecuta en la GPU cuando el dispositivo lo permite y, si la inicialización falla, la aplicación vuelve automáticamente al procesador central. El cuadro llega al detector sin espejar; el espejado de la cámara frontal se aplica solo a la vista previa y al dibujo de los puntos en pantalla.
 
 \subsection{Construcción de características}
 
-\pendiente{Describir el vector de 126 valores y el buffer temporal.}
+Por cada cuadro con manos se arma un vector de 126 valores: las coordenadas de los 21 puntos de la mano izquierda seguidas de las de la mano derecha, con ceros en la mano que no se detecta y la corrección de las coordenadas a un lienzo cuadrado (Sección~\ref{sec:representacion}). Los vectores se acumulan durante la captura y, al completarla, la secuencia se lleva a 15 cuadros.
+
+El contrato de características está implementado en Kotlin y verificado con los mismos casos de prueba que la implementación de Python. Lo usan el entrenamiento en el dispositivo y el esquema federado; la traducción en vivo, en cambio, todavía arma la secuencia con el procedimiento anterior, lo que constituye una de las limitaciones del trabajo (Capítulo~\ref{cap:discusion}).
 
 \subsection{Clasificación con TensorFlow Lite}
 
-\pendiente{Explicar cómo se integra el modelo, cómo se cargan las etiquetas y cómo se obtiene la predicción.}
+El clasificador carga el modelo y la lista de clases (\texttt{words.json}), cuyo orden coincide con el de las salidas del modelo. Si el dispositivo recibió un modelo actualizado por el esquema federado, se usa ese; si no, o si el paquete recibido está dañado, se usa el modelo de fábrica incluido en la aplicación.
+
+La salida del modelo se ajusta con la temperatura de calibración ($T = 1{,}20$), y una predicción se muestra solo si su confianza calibrada supera el umbral, que por defecto es 0,75 y puede modificarse en los ajustes (Sección~\ref{sec:res-calibracion}). La clase «nada» nunca se muestra ni se pronuncia. Cuando una captura termina en «nada» o por debajo del umbral, la pantalla indica que la seña no se reconoció y sugiere repetirla.
 
 \subsection{Salida en texto y voz}
 
-\pendiente{Describir la presentación del texto reconocido y la síntesis de voz mediante el motor TTS de Android.}
+Cada seña reconocida se agrega a una frase de hasta seis palabras que se muestra en la parte inferior de la pantalla; una misma seña repetida en dos capturas seguidas no se duplica. La palabra se pronuncia con el motor de síntesis de Android, en la variante de español elegida (por defecto, la de Argentina) y con la velocidad y el tono configurados. La voz dice exactamente lo que muestra la pantalla: las predicciones descartadas no se pronuncian. La frase puede repetirse en voz alta o borrarse con un botón.
 
 \section{Modo voz a texto y escenario con dos dispositivos}
 
-\pendiente{Describir el modo de transcripción de voz y el escenario de uso con dos dispositivos que ejecutan la misma aplicación en modos complementarios. Incluir diagrama.}
+El modo voz a texto transcribe lo que dice la persona oyente para que la persona sorda lo lea. Usa el reconocedor de voz del sistema con resultados parciales, de modo que el texto aparece mientras la persona habla, y le pide resolver el reconocimiento en el dispositivo. Esa indicación es una preferencia que el servicio puede no respetar; por eso, cuando el modo local está activo, la aplicación no reintenta en la nube si el reconocimiento falla, sino que informa que falta el paquete de voz del idioma. Entre el reconocimiento y la pantalla se aplica la limpieza del texto descrita en el Capítulo~\ref{cap:desafios}.
+
+El escenario de uso previsto combina dos dispositivos con la misma aplicación en modos complementarios (Figura~\ref{fig:dos-dispositivos}): la persona sorda señala frente a su teléfono, que muestra y pronuncia la traducción, y la persona oyente responde hablando frente al suyo, que transcribe lo que dice para que la persona sorda lo lea.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        persona/.style={draw, circle, minimum size=1.3cm, align=center, font=\small},
+        disp/.style={draw, rounded corners, minimum width=2.8cm, minimum height=1.2cm, align=center, font=\small},
+        flecha/.style={-{Stealth}, thick}
+    ]
+        \node[persona] (sorda) {Persona\\sorda};
+        \node[disp, right=1.2cm of sorda, yshift=0.9cm] (d1) {Teléfono A\\Traducir señas};
+        \node[disp, right=1.2cm of sorda, yshift=-0.9cm] (d2) {Teléfono B\\Traducir voz};
+        \node[persona, right=1.2cm of d1, yshift=-0.9cm] (oyente) {Persona\\oyente};
+        \draw[flecha] (sorda) -- node[above, sloped, font=\scriptsize] {señas} (d1.west);
+        \draw[flecha] (d1.east) -- node[above, sloped, font=\scriptsize] {texto y voz} (oyente);
+        \draw[flecha] (oyente) -- node[below, sloped, font=\scriptsize] {habla} (d2.east);
+        \draw[flecha] (d2.west) -- node[below, sloped, font=\scriptsize] {texto} (sorda);
+    \end{tikzpicture}
+    \caption{Escenario de uso con dos dispositivos en modos complementarios.}
+    \label{fig:dos-dispositivos}
+\end{figure}
 
 \section{Modo de entrenamiento y recolección de muestras}
 
-\pendiente{Describir la captura de secuencias etiquetadas desde la aplicación, el guardado local y la exportación para reentrenamiento.}
+El modo de entrenamiento permite grabar tomas etiquetadas desde la propia aplicación. La persona elige una seña de la lista, que muestra cuántas tomas tiene cada una, y la aplicación graba sola cada vez que detecta una seña completa, con la misma máquina de estados de la traducción. Una imagen de referencia de la seña queda visible en una esquina mientras se graba, un contador indica el avance y un botón permite deshacer la última toma. También es posible agregar una seña nueva, que no forma parte del modelo, escribiendo su nombre.
+
+En la sesión guiada (Sección~\ref{sec:protocolo-captura}), la aplicación lee la planilla con el orden de las tomas de cada participante y avanza sola de una seña a la siguiente, con pausas entre tandas y una indicación de cómo debe quedar cada condición. Si la aplicación se cierra a mitad de la sesión, se retoma donde quedó.
+
+Cada toma se guarda en el almacenamiento propio de la aplicación en dos formatos: el formato original, con la secuencia ya procesada, y el formato v2 del conjunto de datos, que conserva los landmarks crudos de cada cuadro y sus metadatos (Sección~\ref{sec:representacion}). Las tomas se asocian a un seudónimo derivado de la cuenta, que no permite recuperar la identidad de la persona. Una pantalla de gestión del conjunto de datos muestra las tomas por seña y permite exportarlas mediante el menú de compartir del sistema, para incorporarlas al reentrenamiento.
+
+\section{Aprendizaje federado}
+
+La pantalla de aprendizaje federado reúne las funciones descritas en el Capítulo~\ref{cap:federado}: buscar una versión nueva del modelo, participar en una ronda de entrenamiento, aportar las propias tomas al servidor, personalizar el modelo con las tomas propias y volver al modelo de fábrica. Antes de participar o aportar, la aplicación explica en lenguaje simple qué datos salen del teléfono y pide confirmación.
 
 \section{Interfaz de usuario}
 
-\pendiente{Describir las pantallas principales con capturas. Distinguir el núcleo comprometido en la propuesta de las mejoras de experiencia de usuario incorporadas durante el desarrollo.}
+La pantalla principal ofrece las dos funciones de traducción, señas y voz, y debajo, el diccionario de señas y el modo de entrenamiento. Las pantallas son:
+
+\begin{itemize}
+    \item \textbf{Traducir señas.} La vista de la cámara ocupa toda la pantalla, con un recuadro que indica el encuadre y se resalta cuando se detectan manos, los puntos de las manos dibujados encima y, en la parte inferior, la frase traducida y un rótulo de estado («esperando señas», «leyendo la seña», «no la reconocí»).
+    \item \textbf{Traducir voz.} La transcripción en curso y las frases anteriores, en letra grande.
+    \item \textbf{Diccionario.} Las doce señas que reconoce el modelo, con una imagen de referencia de cada una.
+    \item \textbf{Modo entrenamiento y conjunto de datos.} La grabación de tomas y su gestión.
+    \item \textbf{Aprendizaje federado.} Las funciones de la sección anterior.
+    \item \textbf{Ajustes.} Resolución de análisis, cámara, sensibilidad de detección, dibujo de los puntos, lectura en voz alta, velocidad y tono de la voz, variante del español, umbral de confianza y reconocimiento de voz solo local.
+\end{itemize}
+
+\pendiente{Incorporar capturas de las pantallas principales, tomadas sin ninguna persona en cuadro.}
+
+El núcleo comprometido en la propuesta es el pipeline de traducción de señas, la salida en texto y voz y el modo voz a texto. Durante el desarrollo se incorporaron mejoras de experiencia de uso que surgieron de las pruebas: la presentación inicial, la precarga de los modelos mientras se muestra la pantalla de inicio para que la primera traducción no espere, el rótulo de estado de la traducción, la pantalla que permanece encendida durante la traducción y la grabación, y la pantalla de cámara fija en orientación vertical (Capítulo~\ref{cap:desafios}).

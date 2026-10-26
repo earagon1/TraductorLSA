@@ -15,6 +15,7 @@ La Tabla~\ref{tab:escenarios} compara el mismo problema bajo cinco esquemas de e
 \begin{table}[h]
     \centering
     \small
+    \small
     \begin{tabular}{p{4.6cm}p{5.0cm}rr}
         \toprule
         Esquema & Qué mide & Accuracy (\%) & F1 macro (\%) \\
@@ -270,7 +271,7 @@ El límite se fijó en una norma L2 de 2,0, tres veces la mediana de las actuali
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{lrr}
+    \begin{tabular}{p{8.5cm}rr}
         \toprule
         Actualización maliciosa simulada & Sin límite & Con límite \\
         \midrule
@@ -326,11 +327,11 @@ Con la versión final se midieron otros tres dispositivos, que no participaron d
     \small
     \begin{tabular}{llrrrr}
         \toprule
-        Dispositivo & Procesador, memoria & Preparación (ms) & MediaPipe (ms) & Cuadros/s & Capturas \\
+        Dispositivo & Procesador, memoria & Prep. (ms) & MediaPipe (ms) & Cuadros/s & Capturas \\
         \midrule
-        Samsung Galaxy A20 & Exynos 7884, 3\,GB & 13,9 & 130 & 6,6 & 13 \\
-        Samsung Galaxy A31 & Helio P65, 4\,GB & 5,3 & 92 & 9,6 & 22 \\
-        Samsung Galaxy Tab S7 & Snapdragon 865, 6\,GB & 24,5 & 53 & 12,1 & 20 \\
+        Galaxy A20 & Exynos 7884, 3\,GB & 13,9 & 130 & 6,6 & 13 \\
+        Galaxy A31 & Helio P65, 4\,GB & 5,3 & 92 & 9,6 & 22 \\
+        Galaxy Tab S7 & Snapdragon 865, 6\,GB & 24,5 & 53 & 12,1 & 20 \\
         \bottomrule
     \end{tabular}
     \caption{Tiempo por cuadro (mediana) y cuadros por segundo en los dispositivos medidos solo con la versión final.}
@@ -354,7 +355,7 @@ El modelo original utilizaba operaciones de TensorFlow no incluidas en el núcle
     \centering
     \begin{tabular}{lrr}
         \toprule
-        Variante sin operaciones Flex & Tamaño (KB) & Misma predicción que Keras (\%) \\
+        Variante sin operaciones Flex & Tamaño (KB) & Coincide con Keras (\%) \\
         \midrule
         Punto flotante de 32 bits & 701 & 100 \\
         Cuantización dinámica (adoptada) & 236 & 100 \\
