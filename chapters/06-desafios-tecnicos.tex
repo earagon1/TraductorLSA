@@ -61,7 +61,7 @@ Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sob
 
 \textbf{Decisión.} La pantalla de cámara queda fija en orientación vertical, que es la forma habitual de sostener un teléfono para una videollamada. Al salir de esa pantalla, la aplicación recupera la orientación que tenía. Todas las tomas de las sesiones de captura se grabaron en vertical.
 
-En una tableta, la orientación fija no alcanza. Apoyada en horizontal, la pantalla de cámara queda de costado y, además, la Galaxy Tab S7 entrega la imagen en formato apaisado (640$\times$480), mientras que todas las tomas de entrenamiento son verticales (480$\times$640). La corrección a lienzo cuadrado comprime entonces el eje vertical en lugar del horizontal y la misma seña llega al modelo con otras coordenadas: en la prueba, una «V» con la mano en la misma posición y del mismo tamaño que en las tomas de entrenamiento de esa persona se clasificó como «¿cómo estás?».
+En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. La imagen, en cambio, sigue la orientación física del dispositivo: la Galaxy Tab S7 la entregó en formato apaisado (640$\times$480) y, en otras sesiones, cuadrado (1088$\times$1088). La corrección a lienzo cuadrado divide las coordenadas por el lado mayor de la imagen, por lo que la mano conserva su escala en todos esos formatos y solo cambia su posición. En la prueba, las tomas de «V» y de «hola» en horizontal y en formato cuadrado se reconocieron con confianzas de entre 0,87 y 1,0. Se evaluó recortar el centro de la imagen apaisada a formato vertical, y se descartó porque cambia el lado mayor y, con él, la escala de la mano.
 
 \section{Dependencia del encuadre}
 \label{sec:encuadre}
@@ -81,7 +81,7 @@ En una tableta, la orientación fija no alcanza. Apoyada en horizontal, la panta
         Toma & Mano a la altura de la cara & Mano a la altura del pecho \\
         \midrule
         «V», vertical & «E» (0,79 y 0,72) & «V» (0,96 y 0,90) \\
-        «V», horizontal & «¿cómo estás?» (0,58 y 0,53) & «V» (0,95 y 0,95) \\
+        «V», horizontal & --- & «V» (0,95 y 0,95) \\
         «hola», horizontal & --- & «hola» (1,00 y 1,00) \\
         \bottomrule
     \end{tabular}
