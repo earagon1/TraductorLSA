@@ -281,7 +281,7 @@ fun SettingsScreen(navController: NavHostController) {
                     rango = 0.4f..0.95f,
                     onCambio = { v -> repo.actualizar { it.copy(confianzaMinima = v) } },
                 )
-                AyudaAjuste("Por debajo de este valor la app no muestra ni dice nada. Subilo si te confunde señas parecidas.")
+                AyudaAjuste("Por debajo de este valor la app no escribe ni dice la seña: avisa que no la reconoció. Subilo si te confunde señas parecidas.")
             }
         }
 

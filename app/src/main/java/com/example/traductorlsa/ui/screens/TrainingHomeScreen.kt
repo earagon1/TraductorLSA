@@ -98,7 +98,7 @@ fun TrainingHomeScreen(navController: NavHostController) {
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = "Las muestras se exportan como JSON para reentrenar el modelo en Python. Nada se sube a ningún lado.",
+                text = "Las muestras se exportan como JSON para reentrenar el modelo en Python. No salen del teléfono salvo que las aportes desde Aprendizaje federado.",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp),
                 color = SenarAzul700,
             )
