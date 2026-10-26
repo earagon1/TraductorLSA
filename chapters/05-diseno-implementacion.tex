@@ -196,12 +196,57 @@ La pantalla principal ofrece las dos funciones de traducción, señas y voz, y d
 \begin{itemize}
     \item \textbf{Traducir señas.} La vista de la cámara ocupa toda la pantalla, con un recuadro que indica el encuadre y se resalta cuando se detectan manos, los puntos de las manos dibujados encima y, en la parte inferior, la frase traducida y un rótulo de estado («esperando señas», «leyendo la seña», «no la reconocí»).
     \item \textbf{Traducir voz.} La transcripción en curso y las frases anteriores, en letra grande.
-    \item \textbf{Diccionario.} Las doce señas que reconoce el modelo, con una imagen de referencia de cada una.
+    \item \textbf{Diccionario.} Las señas que reconoce el modelo, organizadas en palabras y letras, con un buscador y una imagen de referencia de cada seña; «mi nombre es» y «por favor» todavía no tienen imagen.
     \item \textbf{Modo entrenamiento y conjunto de datos.} La grabación de tomas y su gestión.
     \item \textbf{Aprendizaje federado.} Las funciones de la sección anterior.
     \item \textbf{Ajustes.} Resolución de análisis, cámara, sensibilidad de detección, dibujo de los puntos, lectura en voz alta, velocidad y tono de la voz, variante del español, umbral de confianza y reconocimiento de voz solo local.
 \end{itemize}
 
-\pendiente{Incorporar capturas de las pantallas principales, tomadas sin ninguna persona en cuadro.}
+Las Figuras~\ref{fig:pantallas-principales} a~\ref{fig:pantallas-ajustes} muestran las pantallas principales, capturadas en la tableta Lenovo con la cámara apuntando al techo, para que no aparezca ninguna persona.
+
+\newcommand{\captura}[2]{%
+    \begin{minipage}[t]{0.31\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{capturas/#1}\\[2pt]
+        {\small #2}
+    \end{minipage}%
+}
+
+\begin{figure}[p]
+    \centering
+    \captura{bienvenida}{(a) Bienvenida}\hfill
+    \captura{inicio}{(b) Inicio}\hfill
+    \captura{senas}{(c) Traducir señas}
+    \caption{Pantalla de bienvenida, pantalla principal y traducción de señas en espera, con el recuadro de encuadre y el rótulo de estado.}
+    \label{fig:pantallas-principales}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \captura{voz}{(a) Traducir voz}\hfill
+    \captura{diccionario}{(b) Diccionario}\hfill
+    \captura{federado}{(c) Aprendizaje federado}
+    \caption{Modo voz a texto, diccionario de señas y pantalla de aprendizaje federado, con el texto que explica qué datos salen del dispositivo.}
+    \label{fig:pantallas-voz}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \captura{entrenamiento_inicio}{(a) Modo entrenamiento}\hfill
+    \captura{entrenamiento_lista}{(b) Elección de la seña}\hfill
+    \captura{entrenamiento_camara}{(c) Grabación}
+    \caption{Modo entrenamiento: menú, lista de señas con la cantidad de tomas de cada una y pantalla de grabación, con la imagen de referencia y el contador.}
+    \label{fig:pantallas-entrenamiento}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \captura{dataset}{(a) Conjunto de datos}\hspace{0.04\textwidth}
+    \captura{ajustes}{(b) Ajustes}
+    \caption{Gestión del conjunto de datos, con la exportación, y parte de la pantalla de ajustes.}
+    \label{fig:pantallas-ajustes}
+\end{figure}
+
+\pendiente{Citar la fuente de las imágenes de referencia del diccionario.}
 
 El núcleo comprometido en la propuesta es el pipeline de traducción de señas, la salida en texto y voz y el modo voz a texto. Durante el desarrollo se incorporaron mejoras de experiencia de uso que surgieron de las pruebas: la presentación inicial, la precarga de los modelos mientras se muestra la pantalla de inicio para que la primera traducción no espere, el rótulo de estado de la traducción, la pantalla que permanece encendida durante la traducción y la grabación, y la pantalla de cámara fija en orientación vertical (Capítulo~\ref{cap:desafios}).
