@@ -346,6 +346,18 @@ En la Galaxy Tab S7 la velocidad fue adecuada, pero en la primera prueba la mayo
 
 Las cifras preliminares de abril, obtenidas con otra versión del pipeline, no son comparables con estas y no se informan.
 
+\section{Funcionamiento sin conexión}
+\label{sec:res-sin-conexion}
+
+Para verificar la premisa de procesamiento local, el 1 de noviembre se usó la aplicación en la tableta Lenovo con el modo avión activado y el Wi-Fi apagado.
+
+\begin{itemize}
+    \item \textbf{Traducción de señas.} Funcionó sin conexión: la aplicación escribió y pronunció las señas reconocidas. Como en el uso con conexión, «bien» y «por favor» fueron las que más costó reconocer.
+    \item \textbf{Transcripción de voz.} No funcionó, porque la tableta no tenía instalado el paquete de reconocimiento de voz sin conexión para el español. La aplicación se comportó como se diseñó: no recurrió a internet, sino que informó que faltaba el paquete y cómo instalarlo, o cómo desactivar el reconocimiento local para usar el servicio en línea.
+\end{itemize}
+
+El resultado confirma que la traducción de señas no depende de la red. La transcripción sin conexión depende, en cambio, de un componente del sistema operativo que debe descargarse una vez por idioma.
+
 \section{Variantes del modelo exportado}
 \label{sec:res-variantes}
 
