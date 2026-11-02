@@ -40,7 +40,7 @@ Desarrollar y evaluar un prototipo de aplicación móvil para Android que facili
 
 El trabajo se focaliza en el desarrollo de un prototipo funcional orientado a validar la factibilidad técnica de la propuesta. No se busca resolver la traducción completa de la LSA ni abarcar su riqueza lingüística, sino reconocer un conjunto limitado de señas aisladas previamente definidas. Quedan fuera del alcance el reconocimiento de oraciones completas, la interpretación de estructuras gramaticales y la traducción de texto o voz a LSA.
 
-La ejecución local se aplica al flujo principal de reconocimiento de señas: captura de imagen, detección de landmarks, clasificación y síntesis de voz. La transcripción de voz a texto utiliza el servicio de reconocimiento de voz provisto por el sistema operativo, cuya disponibilidad sin conexión depende del dispositivo.
+La ejecución local se aplica al flujo principal de reconocimiento de señas: captura de imagen, detección de landmarks, clasificación y síntesis de voz. La transcripción de voz a texto utiliza el servicio de reconocimiento de voz provisto por el sistema operativo, que funciona sin conexión una vez descargado el paquete del idioma.
 
 El aprendizaje federado se aborda con carácter experimental, con el fin de evaluar su viabilidad en el contexto del proyecto y no como un mecanismo de producción.
 
@@ -51,13 +51,26 @@ Por último, no se realiza una comparación directa con aplicaciones comerciales
 Los principales aportes del trabajo son:
 
 \begin{itemize}
-    \item Un conjunto de datos propio de secuencias de landmarks de manos para un vocabulario acotado de LSA.
-    \item Un prototipo de aplicación Android que integra reconocimiento de señas, síntesis de voz y transcripción de voz a texto, con el reconocimiento de señas ejecutado localmente.
-    \item Un esquema experimental de entrenamiento local y aprendizaje federado aplicado al reconocimiento de LSA.
-    \item Una evaluación del rendimiento del prototipo en dispositivos de distintas gamas, que permite identificar los requisitos de hardware para su uso en tiempo real.
+    \item Un conjunto de datos propio de secuencias de landmarks de manos para un vocabulario acotado de LSA, grabado con un protocolo explícito y con los datos crudos de cada toma.
+    \item Un prototipo de aplicación Android que integra reconocimiento de señas, síntesis de voz y transcripción de voz a texto, todo ejecutado localmente.
+    \item Un contrato de características compartido entre el entrenamiento y la aplicación, verificado con casos de prueba en ambas implementaciones.
+    \item Un esquema de entrenamiento local y aprendizaje federado aplicado al reconocimiento de LSA, probado con dispositivos reales.
+    \item Una evaluación con validación por persona, condiciones adversas y seis dispositivos de distintas gamas, que permite identificar los requisitos de hardware para su uso en tiempo real.
     \item Un registro de los desafíos técnicos encontrados durante el desarrollo y de las decisiones de diseño adoptadas para resolverlos.
 \end{itemize}
 
 \section{Estructura del documento}
 
-\pendiente{Reescribir al cerrar la estructura definitiva, incluyendo el capítulo de aprendizaje federado. Capítulos actuales: 2 Marco teórico y estado del arte; 3 Metodología; 4 Construcción del conjunto de datos y del modelo; 5 Diseño e implementación de la aplicación; 6 Desafíos técnicos y decisiones de diseño; 7 Experimentos y resultados; 8 Discusión; 9 Conclusiones y trabajo futuro.}
+El resto del documento se organiza de la siguiente manera:
+
+\begin{itemize}
+    \item El \textbf{Capítulo 2} presenta el marco teórico: la LSA, el reconocimiento de lenguas de señas, la detección de manos, los modelos de secuencias, la ejecución de modelos en dispositivos móviles y el aprendizaje federado, junto con los trabajos relacionados.
+    \item El \textbf{Capítulo 3} describe la metodología: las etapas del trabajo, las herramientas, los participantes y dispositivos, los esquemas de validación, las métricas y las consideraciones éticas.
+    \item El \textbf{Capítulo 4} detalla la construcción del conjunto de datos y su protocolo de captura, la representación de las señas mediante el contrato de características y la arquitectura, el entrenamiento y la exportación del modelo.
+    \item El \textbf{Capítulo 5} presenta el diseño y la implementación de la aplicación: arquitectura, flujo de procesamiento, modos de uso e interfaz.
+    \item El \textbf{Capítulo 6} describe el esquema de aprendizaje federado: entrenamiento en el dispositivo, protocolo, protección de las actualizaciones y personalización.
+    \item El \textbf{Capítulo 7} reúne los problemas técnicos encontrados durante el desarrollo, sus causas y las decisiones adoptadas, incluidas las alternativas descartadas.
+    \item El \textbf{Capítulo 8} presenta los resultados: desempeño según el esquema de validación, calibración, consistencia, robustez, aprendizaje federado, rendimiento en seis dispositivos y funcionamiento sin conexión.
+    \item El \textbf{Capítulo 9} discute los resultados, los requisitos de hardware, la relación con trabajos previos y las limitaciones.
+    \item El \textbf{Capítulo 10} expone las conclusiones, los aportes y el trabajo futuro.
+\end{itemize}
