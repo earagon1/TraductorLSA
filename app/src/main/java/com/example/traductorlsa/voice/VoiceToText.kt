@@ -36,6 +36,7 @@ class VoiceToText(
     private var recognizer: SpeechRecognizer? = null
     private var isListening = false
     private var soloLocal = true
+    private var idiomasPendientes = ArrayDeque<String>()
     private val mainHandler = Handler(Looper.getMainLooper())
 
     companion object {
@@ -87,6 +88,14 @@ class VoiceToText(
 
                         override fun onError(error: Int) {
                             isListening = false
+                            val porIdioma = error == ERROR_IDIOMA_NO_SOPORTADO || error == ERROR_IDIOMA_NO_DISPONIBLE
+                            val siguiente = if (soloLocal && porIdioma) idiomasPendientes.removeFirstOrNull() else null
+                            if (siguiente != null) {
+                                // Otro paquete sin conexión de español (ver IdiomasDeReconocimiento).
+                                Log.w(TAG, "Idioma rechazado sin conexión ($error), se prueba con $siguiente")
+                                mainHandler.post { escuchar(siguiente) }
+                                return
+                            }
                             val message = mensajeDeError(error)
                             Log.e(TAG, "Error STT ($error, soloLocal=$soloLocal): $message")
                             onError(message)
@@ -113,24 +122,30 @@ class VoiceToText(
                 }
             }
 
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeTag)
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                // El pedido de procesamiento en el dispositivo. El servicio
-                // puede ignorarlo; onError distingue ese caso.
-                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, soloLocal)
-                // Esto ayuda a que el servicio identifique el origen
-                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, appContext.packageName)
-            }
+            val idiomas = if (soloLocal) IdiomasDeReconocimiento.enOrden(localeTag) else listOf(localeTag)
+            idiomasPendientes = ArrayDeque(idiomas.drop(1))
+            escuchar(idiomas.first())
+        }
+    }
 
-            try {
-                isListening = true
-                recognizer?.startListening(intent)
-            } catch (e: Exception) {
-                isListening = false
-                onError("Fallo al iniciar el motor: ${e.message}")
-            }
+    private fun escuchar(localeTag: String) {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeTag)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            // El pedido de procesamiento en el dispositivo. El servicio
+            // puede ignorarlo; onError distingue ese caso.
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, soloLocal)
+            // Esto ayuda a que el servicio identifique el origen
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, appContext.packageName)
+        }
+
+        try {
+            isListening = true
+            recognizer?.startListening(intent)
+        } catch (e: Exception) {
+            isListening = false
+            onError("Fallo al iniciar el motor: ${e.message}")
         }
     }
 
