@@ -353,10 +353,10 @@ Para verificar la premisa de procesamiento local, el 1 de noviembre se usó la a
 
 \begin{itemize}
     \item \textbf{Traducción de señas.} Funcionó sin conexión: la aplicación escribió y pronunció las señas reconocidas. Como en el uso con conexión, «bien» y «por favor» fueron las que más costó reconocer.
-    \item \textbf{Transcripción de voz.} No funcionó, porque la tableta no tenía instalado el paquete de reconocimiento de voz sin conexión para el español. La aplicación se comportó como se diseñó: no recurrió a internet, sino que informó que faltaba el paquete y cómo instalarlo, o cómo desactivar el reconocimiento local para usar el servicio en línea.
+    \item \textbf{Transcripción de voz.} En la primera prueba no funcionó: la aplicación informó que faltaba el paquete de reconocimiento sin conexión, sin recurrir a internet, como se había diseñado. Instalar los paquetes de español no lo resolvió. El registro de la aplicación mostró la causa: el servicio de voz de Google solo ofrece paquetes sin conexión de español de España y de Estados Unidos, y rechaza al instante cualquier otra variante, incluida la de Argentina que la aplicación pedía por defecto. Se modificó la aplicación para que, si el reconocimiento sin conexión rechaza la variante pedida, vuelva a intentar con esos dos paquetes, siempre en el dispositivo. Con ese cambio, el 2 de noviembre la tableta transcribió correctamente una frase en modo avión; el registro del sistema confirma la desconexión de la red antes de la prueba.
 \end{itemize}
 
-El resultado confirma que la traducción de señas no depende de la red. La transcripción sin conexión depende, en cambio, de un componente del sistema operativo que debe descargarse una vez por idioma.
+El resultado confirma que la traducción de señas y la transcripción de voz funcionan sin conexión. La segunda depende de un componente del sistema operativo que debe descargarse una vez y que no existe para la variante argentina del español; la aplicación lo resuelve usando la variante de Estados Unidos para el reconocimiento, mientras que la voz que lee las señas conserva la variante elegida.
 
 \section{Variantes del modelo exportado}
 \label{sec:res-variantes}
