@@ -1,0 +1,90 @@
+\chapter{Ficha del modelo}
+\label{ap:ficha-modelo}
+
+Esta ficha resume, en un formato inspirado en las fichas de modelo propuestas en la literatura, la información necesaria para usar o evaluar el modelo publicado en la aplicación.
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{p{4cm}p{10cm}}
+        \toprule
+        \textbf{Nombre} & \texttt{actions\_15\_opt.tflite} \\
+        \textbf{Tarea} & Clasificación de señas aisladas de LSA a partir de landmarks de manos. \\
+        \textbf{Entrada} & Matriz de $15 \times 126$: 15 cuadros con las coordenadas $(x, y, z)$ de los 21 puntos de cada mano, primero la izquierda y luego la derecha, según el contrato de características (Sección~\ref{sec:representacion}). \\
+        \textbf{Salida} & Distribución de probabilidad sobre 13 clases, en el orden de \texttt{words.json} (Tabla~\ref{tab:clases}). \\
+        \textbf{Arquitectura} & LSTM de 64 y de 128 unidades, dos capas densas de 64 neuronas y una capa de salida de 13; 160\,973 parámetros (Tabla~\ref{tab:arquitectura}). \\
+        \textbf{Formato} & TensorFlow Lite sin operaciones adicionales, con las capas LSTM desenrolladas y cuantización dinámica; 236\,KB. \\
+        \textbf{Entrenamiento} & 1409 tomas de la cámara web y de la sesión~1 de tres personas; Adam, lotes de 32, hasta 300 épocas con parada temprana y pesos por clase. \\
+        \textbf{Calibración} & Temperatura $T = 1{,}20$ y umbral de confianza 0,75, publicados junto con el modelo en \texttt{calibracion.json}. \\
+        \textbf{Desempeño} & 67,3\,\% $\pm$ 2,3 de exactitud con personas no vistas en el entrenamiento; con el umbral adoptado se muestra el 59,6\,\% de las predicciones y se acierta el 83,0\,\% de lo mostrado (Capítulo~\ref{cap:resultados}). \\
+        \textbf{Uso previsto} & Prototipo de investigación para facilitar intercambios breves entre personas sordas y oyentes, con un vocabulario acotado. \\
+        \textbf{Usos no previstos} & Reemplazar a un intérprete de LSA; situaciones en las que un error de traducción tenga consecuencias (salud, trámites legales). \\
+        \textbf{Limitaciones} & Tres personas en el entrenamiento, ninguna señante de LSA; doce señas aisladas; sensibilidad al encuadre y a la pérdida de una mano en las señas de dos manos; caída significativa con el cuerpo girado 30° (Capítulo~\ref{cap:discusion}). \\
+        \bottomrule
+    \end{tabular}
+    \caption{Ficha del modelo publicado en la aplicación.}
+    \label{tab:ficha-modelo}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{rll}
+        \toprule
+        Índice de salida & Identificador & Se muestra como \\
+        \midrule
+        0 & \texttt{hola} & Hola \\
+        1 & \texttt{adios} & Adiós \\
+        2 & \texttt{bien} & Bien \\
+        3 & \texttt{como estas} & ¿Cómo estás? \\
+        4 & \texttt{gracias} & Gracias \\
+        5 & \texttt{e} & E \\
+        6 & \texttt{v} & V \\
+        7 & \texttt{l} & L \\
+        8 & \texttt{i} & I \\
+        9 & \texttt{n} & N \\
+        10 & \texttt{mi nombre es} & Mi nombre es \\
+        11 & \texttt{por favor} & Por favor \\
+        12 & \texttt{nada} & (no se muestra) \\
+        \bottomrule
+    \end{tabular}
+    \caption{Clases del modelo en el orden de sus salidas.}
+    \label{tab:clases}
+\end{table}
+
+\chapter{Ficha del conjunto de datos}
+\label{ap:ficha-datos}
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{p{4cm}p{10cm}}
+        \toprule
+        \textbf{Contenido} & Secuencias de landmarks de manos de doce señas de LSA y de la clase «nada». No contiene imágenes de las personas de los dispositivos móviles: solo las coordenadas de los puntos de las manos. \\
+        \textbf{Fuentes} & 1091 tomas de cámara web de la autora (de 1200 grabadas) y 449 tomas de tres personas grabadas con la aplicación: 318 en la sesión~1 y 131 en la sesión~2. \\
+        \textbf{Protocolo} & Sesión~1 en condición estándar (bloques A y N); sesión~2 en cuatro condiciones adversas (bloque B), solo para evaluación (Sección~\ref{sec:protocolo-captura}). \\
+        \textbf{Dispositivos} & Tableta Lenovo TB321FU, Samsung Galaxy A55 y OnePlus CPH2663, con la cámara frontal y en orientación vertical. \\
+        \textbf{Formato} & JSON Lines (esquema \texttt{senar-muestra-v2}): una toma por línea con los landmarks crudos de cada cuadro, la etiqueta y la confianza de lateralidad de cada mano, el tamaño y la rotación de la imagen, los cuadros por segundo, el dispositivo, la versión de Android y, en las sesiones guiadas, el bloque, la tanda y la condición. \\
+        \textbf{Identificación} & Seudónimo por persona (P1, P2, P3) y un identificador derivado de la cuenta mediante SHA-256, que no permite recuperar la identidad. \\
+        \textbf{Exclusiones} & Tomas con menos de cinco cuadros con manos; las tomas giradas de P3, por fallas reiteradas de detección; una toma de P2 que no correspondía a la seña indicada. \\
+        \textbf{Consentimiento} & Participación voluntaria, con un documento de consentimiento informado que describe qué se registra y con qué fin (Capítulo~\ref{cap:metodologia}). \\
+        \textbf{Sesgos conocidos} & El 77\,\% de las tomas de entrenamiento es de una sola persona; ninguna persona participante es señante de LSA; encuadre uniforme en las tomas de los dispositivos. \\
+        \bottomrule
+    \end{tabular}
+    \caption{Ficha del conjunto de datos.}
+    \label{tab:ficha-datos}
+\end{table}
+
+\pendienteautora{Definir si el conjunto de datos se publica y en qué condiciones, de acuerdo con lo consentido por las personas participantes.}
+
+\chapter{Reglas del contrato de características}
+\label{ap:contrato}
+
+El contrato de características (versión 2) fija cómo se transforma una toma cruda en la entrada del modelo. Lo implementan el entrenamiento en Python y la aplicación en Kotlin, y ambas implementaciones deben reproducir 25 casos de prueba con una tolerancia de $10^{-6}$. Sus reglas son:
+
+\begin{enumerate}
+    \item \textbf{Imagen.} El cuadro se procesa sin espejar, rotado a la orientación vertical.
+    \item \textbf{Lateralidad.} La mano que MediaPipe etiqueta como izquierda ocupa los valores 0 a 62 del vector, y la derecha, los valores 63 a 125. Si las dos manos reciben la misma etiqueta, la de mayor confianza conserva su posición y la otra ocupa la libre. La mano que no se detecta se completa con ceros.
+    \item \textbf{Relación de aspecto.} Con $M = \max(W, H)$, las coordenadas se llevan a un lienzo cuadrado mediante $x' = x \cdot W/M + (1 - W/M)/2$ y $y' = y \cdot H/M + (1 - H/M)/2$. La coordenada $z$ no se modifica.
+    \item \textbf{Cuadros sin manos.} Se descartan antes de armar la secuencia. Una toma con menos de cinco cuadros válidos se excluye.
+    \item \textbf{Longitud.} Con $n$ cuadros válidos, si $n > 15$ se toma el cuadro $\lfloor i \cdot n / 15 \rfloor$ para $i = 0, \ldots, 14$, calculado con enteros; si $n < 15$ se interpola linealmente entre cuadros vecinos; si $n = 15$ la secuencia no se modifica.
+\end{enumerate}
