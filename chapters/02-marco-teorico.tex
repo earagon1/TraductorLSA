@@ -104,7 +104,40 @@ Posteriormente, el mismo grupo de investigación presentó LSA-T, el primer conj
 
 Estos conjuntos constituyen aportes significativos, pero responden a objetivos distintos de los de este trabajo. LSA64 se registró con guantes de colores y en condiciones controladas, lo que difiere de la captura con la cámara de un teléfono sin elementos auxiliares. LSA-T, por su parte, se orienta al reconocimiento continuo y a la traducción, una tarea de mayor complejidad que el reconocimiento de un vocabulario acotado de señas aisladas.
 
-\pendiente{Completar con un relevamiento de aplicaciones existentes de traducción de LSA o de otras lenguas de señas (tiendas de aplicaciones y trabajos publicados), indicando si funcionan sin conexión y qué vocabulario cubren.}
+\section{Aplicaciones y sistemas existentes}
+\label{sec:apps-existentes}
+
+Para ubicar el prototipo respecto de las herramientas disponibles, se relevaron en noviembre de 2026 aplicaciones y sistemas de traducción de lenguas de señas, con foco en la LSA (Tabla~\ref{tab:apps-existentes}). El relevamiento no pretende ser exhaustivo: se basa en publicaciones académicas, sitios de los proyectos y notas periodísticas, y para varios sistemas no hay información pública sobre su funcionamiento sin conexión.
+
+\begin{itemize}
+    \item \textbf{Traducción de texto o voz a lengua de señas.} Las aplicaciones más difundidas trabajan en la dirección inversa a la de este trabajo. Hand Talk, desarrollada en Brasil, traduce texto y audio a la lengua de señas brasileña (Libras) y a la americana (ASL) mediante personajes animados~\cite{handtalk}; no reconoce señas a partir de la cámara.
+    \item \textbf{Sistema web para LSA de la Universidad Nacional de Córdoba.} Severini Montanari et al.\ desarrollaron una aplicación web que traduce señas aisladas de LSA a glosa en español~\cite{severini2025lsaweb}. Utiliza landmarks de MediaPipe Holistic y un modelo que combina convoluciones unidimensionales con Transformers, entrenado con LSA64 más 62 señas nuevas grabadas con una intérprete, hasta 126 señas. Informan una exactitud de 0,82 con validación cruzada. La arquitectura es cliente-servidor: el reconocimiento se realiza en un servidor.
+    \item \textbf{Sign Language Translator.} Estudiantes de una escuela técnica de Lomas de Zamora desarrollaron una aplicación para Android que reconoce diez señas de LSA, a partir de un prototipo para computadora basado en MediaPipe que normaliza los puntos respecto de la muñeca~\cite{infobae2026slt}. La fuente no indica si funciona sin conexión.
+    \item \textbf{SignAI.} Proyecto que busca construir un conjunto de datos abierto y colaborativo de LSA, grabado por personas voluntarias, para entrenar modelos de traducción; la aplicación y el modelo figuran como etapas futuras~\cite{signai}.
+    \item \textbf{Lengua de señas portuguesa.} Fonseca et al.\ presentaron una aplicación móvil que traduce a texto el alfabeto manual de la lengua de señas portuguesa, con dos variantes: una red convolucional ejecutada en el dispositivo con TensorFlow Lite y un esquema de MediaPipe con un perceptrón multicapa cuyo tiempo de respuesta depende de la red~\cite{fonseca2025lgp}.
+    \item \textbf{SignGemma.} Google anunció en 2025 un modelo abierto para traducir lengua de señas a texto, con mejor desempeño en ASL e inglés, que a la fecha de su anuncio no estaba disponible~\cite{techcrunch2025signgemma}.
+\end{itemize}
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{p{3.4cm}p{2.0cm}p{2.6cm}p{2.6cm}p{2.4cm}}
+        \toprule
+        Sistema & Lengua & Dirección & Vocabulario & Procesamiento \\
+        \midrule
+        Hand Talk~\cite{handtalk} & Libras, ASL & Texto y voz a señas & --- & No informado \\
+        UNC~\cite{severini2025lsaweb} & LSA & Señas a texto & 126 señas aisladas & Servidor \\
+        Sign Language Translator~\cite{infobae2026slt} & LSA & Señas a texto & 10 señas & No informado \\
+        SignAI~\cite{signai} & LSA & Señas a texto y voz & En construcción & No informado \\
+        Fonseca et al.~\cite{fonseca2025lgp} & LGP & Señas a texto & Alfabeto manual & Dispositivo o servidor \\
+        SeÑAR (este trabajo) & LSA & Señas a texto y voz; voz a texto & 12 señas & Dispositivo \\
+        \bottomrule
+    \end{tabular}
+    \caption{Sistemas de traducción de lenguas de señas relevados.}
+    \label{tab:apps-existentes}
+\end{table}
+
+En la LSA, los sistemas de reconocimiento relevados son prototipos o proyectos en desarrollo, con vocabularios de entre diez y algo más de un centenar de señas. Ninguno de los que informan su arquitectura combina el reconocimiento de señas en el dispositivo, sin conexión, con la transcripción de la voz de la persona oyente en la misma aplicación, ni incorpora un mecanismo para mejorar el modelo con datos de nuevas personas sin centralizarlos.
 
 \section{Síntesis y brechas identificadas}
 
@@ -118,4 +151,4 @@ La revisión realizada permite identificar los siguientes puntos:
     \item El aprendizaje federado ofrece un mecanismo para mejorar un modelo con datos de nuevas personas sin centralizar sus grabaciones, aunque debe enfrentar la heterogeneidad de los datos entre clientes.
 \end{itemize}
 
-Los trabajos revisados sobre LSA se concentran en la construcción de conjuntos de datos y en la evaluación de modelos en entornos de investigación. No abordan la integración del reconocimiento en una aplicación móvil que funcione en el dispositivo, ni la mejora colaborativa del modelo mediante aprendizaje federado. Esta combinación es la que explora el presente trabajo.
+Los trabajos académicos sobre LSA se concentran en la construcción de conjuntos de datos y en la evaluación de modelos en entornos de investigación, y los sistemas de reconocimiento disponibles son prototipos que, cuando informan su arquitectura, procesan las señas en un servidor (Sección~\ref{sec:apps-existentes}). Ninguno aborda la integración del reconocimiento en una aplicación móvil que funcione en el dispositivo junto con la transcripción de voz, ni la mejora colaborativa del modelo mediante aprendizaje federado. Esta combinación es la que explora el presente trabajo.
