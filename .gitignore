@@ -22,7 +22,6 @@ build/
 .DS_Store 
 *.rar
 /backup
-/.codex_tmp
 # Bytecode de los scripts de docs/design
 __pycache__/
 *.pyc

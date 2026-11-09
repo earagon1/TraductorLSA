@@ -1,12 +1,12 @@
 # Notas de trabajo del informe de Tesina
 
-Este archivo funciona como memoria persistente del proyecto para futuras sesiones de trabajo con Codex.
+Este archivo funciona como memoria persistente del proyecto para futuras sesiones de trabajo con el asistente.
 
 ## Uso de esta memoria
 
 Este archivo no debe tratarse como una nota estatica. Debe actualizarse durante el trabajo cuando aparezca informacion relevante para futuras sesiones.
 
-Codex debe agregar o ajustar notas cuando:
+El asistente debe agregar o ajustar notas cuando:
 
 - La usuaria defina una nueva regla de trabajo.
 - Se resuelva un problema tecnico o de flujo de trabajo y la solucion pueda repetirse.
@@ -19,11 +19,11 @@ Las actualizaciones deben ser breves, accionables y ubicarse en la seccion mas a
 
 Regla importante: si solo se modifica esta memoria y no cambia el contenido compilable del informe, al final de la respuesta debe aclararse que no hace falta subir archivos a Overleaf para ver cambios en el PDF.
 
-## Instrucciones locales para Codex
+## Instrucciones locales para el asistente
 
-- Leer `AGENTS.md` y este archivo antes de trabajar sobre el informe.
-- Respetar las reglas de redaccion, estructura, LaTeX y flujo de trabajo definidas en `AGENTS.md`.
-- Si existe conflicto entre una instruccion general y `AGENTS.md`/`NOTAS_DE_TRABAJO.md`, pedir aclaracion o priorizar la regla mas especifica del proyecto cuando no haya riesgo.
+- Leer `CLAUDE.md` y este archivo antes de trabajar sobre el informe.
+- Respetar las reglas de redaccion, estructura, LaTeX y flujo de trabajo definidas en `CLAUDE.md`.
+- Si existe conflicto entre una instruccion general y `CLAUDE.md`/`NOTAS_DE_TRABAJO.md`, pedir aclaracion o priorizar la regla mas especifica del proyecto cuando no haya riesgo.
 - Mantener esta memoria actualizada cuando se aprenda algo nuevo durante la sesion.
 
 ## Contexto general
@@ -158,7 +158,6 @@ Carpetas auxiliares:
 - Las referencias a tablas en el texto dicen «Tabla» (babel con `es-tabla`), no «Cuadro».
 - La tabla preliminar de abril (Tab S7, A55, A31) se sacó: se midió con otra versión del pipeline. Los dispositivos medidos con la versión final son Galaxy A55, OnePlus CPH2663 y Lenovo TB321FU.
 - Compilación local (bash): `PATH=/c/Users/Evelin/AppData/Local/Programs/MiKTeX/miktex/bin/x64:$PATH`; `pdflatex main; bibtex main; pdflatex main; pdflatex main`.
-- El repo del informe tiene dueño distinto (sandbox de Codex): usar `git -c safe.directory=* ...` en cada comando, sin tocar la configuración global.
 - Orden acordado con la autora: capítulo 8 (resultados, hecho), luego 4 (datos y modelo), 5 (diseño e implementación), 3 (metodología), 9 y 10 (discusión y conclusiones), y al final ajustar 1 y 2.
 
 ## Flujo de trabajo con Overleaf
@@ -167,14 +166,14 @@ La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mant
 
 Regla principal:
 
-- Codex edita los archivos localmente en `informe-tesina-latex`.
+- El asistente edita los archivos localmente en `informe-tesina-latex`.
 - Overleaf se usa para visualizar, compilar y revisar como queda el PDF.
-- Despues de cada cambio, Codex debe listar explicitamente que archivos modifico y cuales debe subir la usuaria a Overleaf.
+- Despues de cada cambio, el asistente debe listar explicitamente que archivos modifico y cuales debe subir la usuaria a Overleaf.
 - La usuaria debe subir solamente esos archivos modificados, no todo el proyecto en `.zip`, salvo que se indique lo contrario.
-- Si Codex agrega un archivo nuevo, una imagen, una tabla o una referencia bibliografica, debe indicarlo claramente.
+- Si el asistente agrega un archivo nuevo, una imagen, una tabla o una referencia bibliografica, debe indicarlo claramente.
 - Si la usuaria edita mucho contenido directamente en Overleaf, antes de seguir trabajando localmente conviene descargar el ZIP actualizado desde Overleaf y reemplazar/sincronizar la version local.
 
-Al finalizar cada tarea sobre el informe, Codex debe incluir una seccion breve:
+Al finalizar cada tarea sobre el informe, el asistente debe incluir una seccion breve:
 
 ```text
 Archivos para subir a Overleaf:
@@ -328,11 +327,10 @@ Interpretacion tecnica preliminar:
 ## Decisiones importantes ya tomadas
 
 - El informe se escribira en LaTeX.
-- El repo del informe esta separado dentro del proyecto Android, pero con `.git` propio.
-- El repo Android ignora `/informe-tesina-latex/` para evitar mezclar historiales.
+- El informe se versiona dentro del repo TraductorLSA (carpeta `informe-tesina-latex/`); su historial original se incorporo con `git subtree` el 2026-11-09.
 - Overleaf se usa como entorno de compilacion/visualizacion.
-- Codex debe mantener la estructura por capitulos, salvo que la usuaria pida simplificarla.
-- Codex debe evitar modificar archivos generados por Overleaf o LaTeX.
+- El asistente debe mantener la estructura por capitulos, salvo que la usuaria pida simplificarla.
+- El asistente debe evitar modificar archivos generados por Overleaf o LaTeX.
 
 ## Estado inicial del repo LaTeX
 
@@ -368,12 +366,12 @@ El commit inicial contiene:
 - Preparar diagrama del escenario con dos dispositivos usando la misma app en dos modos.
 - Preparar una tabla de trazabilidad entre propuesta aprobada, codigo actual, pendientes y agregados evolutivos.
 
-## Recordatorio para Codex
+## Recordatorio para el asistente
 
 Antes de trabajar en el informe en futuras sesiones:
 
 1. Leer este archivo.
-2. Revisar `git status` dentro de `informe-tesina-latex`.
+2. Revisar `git status` (el informe es parte del repo TraductorLSA).
 3. No asumir que Overleaf esta sincronizado automaticamente.
 4. Al terminar, informar archivos modificados para subir a Overleaf.
 5. Si hay cambios locales sin commit, preguntar o revisar antes de sobrescribir.

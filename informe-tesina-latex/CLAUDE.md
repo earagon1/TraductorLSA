@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md: informe de la tesina
 
 ## Antes de trabajar
 - Leer primero `NOTAS_DE_TRABAJO.md`.

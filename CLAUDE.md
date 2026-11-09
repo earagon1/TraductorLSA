@@ -11,7 +11,7 @@ cualquier cambio que agregue red, nube, cuentas o telemetría remota necesita su
 | Esta app | `C:\Users\Evelin\Desktop\Tesis\TraductorLSA` (rama `master`) |
 | Entrenamiento (Python) | `C:\Users\Evelin\Desktop\Tesis\LSA-training\modelo_LSA` (repo propio, **anidado** dentro de `LSA-training`; ver su `CLAUDE.md`) |
 | Plan de trabajo y avance | `C:\Users\Evelin\Desktop\Tesis\plan\` (`PLAN_MAESTRO.md`, `progreso.md`). **Leer `progreso.md` al empezar** |
-| Informe LaTeX | `informe-tesina-latex/` (sin versionar acá; tiene su propio `AGENTS.md` y `NOTAS_DE_TRABAJO.md`) |
+| Informe LaTeX | `informe-tesina-latex/` (versionado acá con su historial; tiene su propio `CLAUDE.md` y `NOTAS_DE_TRABAJO.md`) |
 | Propuesta (la referencia de la tesis) | `docs/Propuesta de Proyecto de Tesina-Aragon Evelin-2.pdf` |
 
 ## Pipeline de la seña
