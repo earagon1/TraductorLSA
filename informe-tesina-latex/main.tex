@@ -1,0 +1,85 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+\input{preamble}
+
+\title{Traductor móvil en tiempo real para Lengua de Señas Argentina basado en aprendizaje automático y ejecución local en Android}
+\author{Evelin Emilce Aragón}
+\date{\today}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    {\Large Universidad Nacional de General Sarmiento\par}
+    \vspace{1.5cm}
+    {\large Licenciatura en Sistemas\par}
+    \vspace{2.5cm}
+    {\Huge\bfseries Traductor móvil en tiempo real para Lengua de Señas Argentina\par}
+    \vspace{0.4cm}
+    {\Large basado en aprendizaje automático y ejecución local en Android\par}
+    \vspace{2.5cm}
+    {\large Autora: Evelin Emilce Aragón\par}
+    \vspace{0.3cm}
+    \vfill
+    {\large \today\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+Este trabajo presenta SeÑAR, un prototipo de aplicación Android que facilita la comunicación entre personas sordas y oyentes: reconoce en tiempo real doce señas de Lengua de Señas Argentina (LSA) y las traduce a texto y voz, y transcribe a texto la voz de la persona oyente. Todo el procesamiento ocurre en el dispositivo, sin conexión a internet.
+
+La aplicación detecta las manos con MediaPipe, construye una secuencia de 15 cuadros con las coordenadas de 21 puntos por mano y la clasifica con una red recurrente de 236\,KB ejecutada con TensorFlow Lite. El conjunto de datos reúne tomas de cámara web y 449 tomas de tres personas grabadas con la propia aplicación, siguiendo un protocolo que incluye cuatro condiciones adversas. Se incorporó además un esquema de aprendizaje federado en el que los dispositivos entrenan la parte final del modelo con sus propias tomas y envían solo una actualización de unos 13\,KB, que un servidor combina y redistribuye; en el piloto, ese servidor funcionó en una computadora de la red local.
+
+El modelo reconoce correctamente el 67,3\,\% de las señas de personas que no participaron de su entrenamiento. Si, en cambio, las tomas se mezclan al azar entre entrenamiento y evaluación, el acierto sube al 94,3\,\%: la diferencia muestra que la diversidad de personas pesa más que la cantidad de repeticiones. Con la confianza calibrada, la aplicación acierta el 83\,\% de lo que muestra. De las condiciones adversas, solo el cuerpo girado produce una caída significativa, atribuible a la detección de las manos. La aplicación funciona en seis dispositivos, entre 6,6 y 24,9 cuadros por segundo, incluido un teléfono de gama baja de 2019, y una prueba en modo avión confirmó que la traducción de señas y la transcripción de voz funcionan sin conexión. El piloto federado con dos dispositivos reales mostró que el ciclo completo es viable y que la personalización local complementa al modelo compartido.
+\chapter*{Agradecimientos}
+\addcontentsline{toc}{chapter}{Agradecimientos}
+\pendienteautora{Borrador para personalizar: completar los nombres y agregar o quitar lo que corresponda.}
+
+A mi director/a, \textcolor{blue}{[nombre]}, por su guía y sus devoluciones a lo largo de este trabajo.
+
+A las personas que participaron de las sesiones de captura, que dedicaron su tiempo a grabar una y otra vez las mismas señas, en distintas condiciones y con distintos dispositivos. Sin sus tomas, este trabajo no hubiera podido evaluar lo que más importa: cómo funciona la aplicación con personas distintas de quien la desarrolló.
+
+A la Universidad Nacional de General Sarmiento y a sus docentes, por la formación recibida en la Licenciatura en Sistemas.
+
+A mi familia y a mis afectos, por el apoyo y la paciencia durante todo el recorrido.
+
+\input{preliminares/abreviaciones}
+\input{preliminares/glosario}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Índice de figuras}
+\listoffigures
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Índice de cuadros}
+\listoftables
+
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\input{chapters/01-introduccion}
+\input{chapters/02-marco-teorico}
+\input{chapters/03-metodologia}
+\input{chapters/04-dataset-modelo}
+\input{chapters/05-diseno-implementacion}
+\input{chapters/05b-aprendizaje-federado}
+\input{chapters/06-desafios-tecnicos}
+\input{chapters/07-experimentos-resultados}
+\input{chapters/08-discusion}
+\input{chapters/09-conclusiones}
+
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliografía}
+\bibliographystyle{unsrt}
+\bibliography{bibliografia}
+
+\appendix
+\input{chapters/apendices}
+
+\end{document}

@@ -1,0 +1,139 @@
+\chapter{Construcción del conjunto de datos y del modelo}
+\label{cap:dataset-modelo}
+
+\section{Selección del vocabulario}
+
+El vocabulario está formado por doce señas: siete palabras y expresiones de uso cotidiano (hola, adiós, bien, ¿cómo estás?, gracias, mi nombre es y por favor) y cinco letras del alfabeto dactilológico (E, V, L, I y N). El conjunto combina señas estáticas, como las letras, con señas que involucran movimiento, y señas de una mano con señas de dos manos («por favor» y «¿cómo estás?»).
+
+La selección no responde a un criterio lingüístico: las doce señas funcionan como una muestra acotada para validar el prototipo, y el vocabulario podría haber sido otro o más amplio. El sistema no depende de la cantidad de señas: incorporar una seña nueva requiere grabar sus tomas, reentrenar el modelo y publicar el modelo junto con su lista de clases, sin modificar la aplicación. El esquema federado permite incluso distribuir un modelo con señas nuevas aportadas por las personas usuarias (Capítulo~\ref{cap:federado}).
+
+A las doce señas se suma una clase «nada», que agrupa movimientos que no son señas: bajar las manos, rascarse la cara, acomodarse el pelo o moverse sin señar. Su función es que el modelo no esté obligado a asignar siempre una de las doce señas cuando la cámara detecta manos. En la aplicación, esta clase no se muestra ni se pronuncia.
+
+\section{Fuentes de datos}
+
+El conjunto de datos reúne dos fuentes:
+
+\begin{itemize}
+    \item \textbf{Cámara web}: 1200 tomas grabadas por la autora con la cámara web de una computadora, cien por seña. Se conservan las imágenes de cada cuadro, lo que permitió volver a extraer los landmarks con el mismo extractor que utiliza la aplicación. De ellas, 109 tomas quedaron con menos de cinco cuadros con manos detectadas y se excluyeron, por lo que se utilizan 1091.
+    \item \textbf{Sesiones de captura con dispositivos móviles}: 449 tomas de tres personas, grabadas con la propia aplicación en dos sesiones: 318 en la sesión~1 (condición estándar) y 131 en la sesión~2 (condiciones adversas).
+\end{itemize}
+
+Las tomas de la cámara web son de una sola persona y se grabaron en secuencia, cien repeticiones de cada seña seguidas. Por eso resultan muy parecidas entre sí, y esa similitud es la que explica que el esquema de validación estratificado sobreestime el desempeño (Sección~\ref{sec:res-escenarios}).
+
+\section{Protocolo de captura}
+\label{sec:protocolo-captura}
+
+Las sesiones con dispositivos móviles siguieron un protocolo definido antes de grabar, que fija también cómo se utiliza cada bloque de datos en el análisis. Cada persona grabó con su propio dispositivo, en orientación vertical y con la cámara frontal; el protocolo indica apoyarlo en un soporte a la altura del pecho.
+
+\subsection{Sesión 1: condición estándar}
+
+La condición estándar es luz interior con la luz del techo encendida, la persona de frente a la cámara y a unos 70\,cm de distancia. Cada persona grabó:
+
+\begin{itemize}
+    \item \textbf{Bloque A}: las doce señas, ocho veces cada una, en dos tandas de cuatro repeticiones separadas por una pausa (96 tomas). Dentro de cada tanda las señas se presentan en orden aleatorio, para evitar repeticiones consecutivas casi idénticas.
+    \item \textbf{Bloque N}: diez tomas de «nada».
+\end{itemize}
+
+Cada persona grabó 106 tomas en la sesión~1.
+
+\subsection{Sesión 2: condiciones adversas}
+
+En otro día, cada persona grabó las doce señas una vez en cada una de cuatro condiciones, variando un factor por vez respecto de la condición estándar:
+
+\begin{itemize}
+    \item \textbf{Poca luz}: con la luz del techo apagada, solo luz indirecta.
+    \item \textbf{Girado 30°}: con el cuerpo girado unos 30° respecto de la cámara.
+    \item \textbf{Cerca}: a unos 40\,cm de la cámara.
+    \item \textbf{Lejos}: a unos 120\,cm de la cámara.
+\end{itemize}
+
+Las tomas de esta sesión no se utilizan nunca para entrenar: son solo de evaluación. El protocolo preveía también luz exterior y un giro de 60°; se priorizaron las cuatro condiciones anteriores por el tiempo disponible de cada participante.
+
+Durante la grabación se registraron tres incidencias que el análisis tiene en cuenta: las tomas de P3 en la condición «lejos» se grabaron además con poca luz y se analizan como una condición combinada; las tomas de P3 con el cuerpo girado se descartaron porque la detección de manos fallaba de forma reiterada, y de P2 se eliminó una toma girada que no correspondía a la seña indicada.
+
+\subsection{Sesión guiada}
+
+Para evitar errores de etiquetado, la aplicación incorpora un modo de sesión guiada. Lee la planilla con el orden de las tomas de cada participante, muestra en pantalla qué seña corresponde y en qué condición, y avanza sola a la siguiente después de guardar cada toma. Un botón permite deshacer la última toma si salió mal. Entre tandas y entre condiciones, la aplicación indica una pausa y describe cómo debe quedar la siguiente condición (luz, posición y distancia).
+
+\section{Conjunto de datos resultante}
+
+La Tabla~\ref{tab:muestras-por-clase} muestra la cantidad de muestras por clase del conjunto de entrenamiento, que reúne la cámara web y la sesión~1 (1409 muestras).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lr@{\hspace{2.5em}}lr}
+        \toprule
+        Clase & Muestras & Clase & Muestras \\
+        \midrule
+        hola & 124 & V & 102 \\
+        adiós & 122 & L & 112 \\
+        bien & 124 & I & 123 \\
+        ¿cómo estás? & 120 & N & 92 \\
+        gracias & 124 & mi nombre es & 124 \\
+        E & 110 & por favor & 102 \\
+        & & nada & 30 \\
+        \midrule
+        \multicolumn{4}{r}{Total: 1409} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Muestras por clase en el conjunto de entrenamiento (cámara web y sesión~1).}
+    \label{tab:muestras-por-clase}
+\end{table}
+
+Cada toma de los dispositivos se guarda con los landmarks crudos de cada cuadro, tal como los entrega el detector, sin remuestrear ni corregir, junto con sus metadatos: dispositivo, versión de Android, resolución y rotación de la imagen, cuadros por segundo, seudónimo de la persona y, en las sesiones guiadas, el bloque, la tanda y la condición. Conservar los datos crudos permite recalcular las características con cualquier versión futura de la representación sin volver a grabar.
+
+\section{Representación de las señas}
+\label{sec:representacion}
+
+Cada seña se representa como una secuencia de $T = 15$ cuadros, y cada cuadro como un vector de 126 valores: las coordenadas $(x, y, z)$ de los 21 puntos de cada mano, primero la izquierda y luego la derecha, con ceros en la mano que no se detecta. La entrada del modelo es, por lo tanto, una matriz $\mathbf{X} \in \mathbb{R}^{15 \times 126}$.
+
+Durante la verificación inicial se encontró que la cámara web y el teléfono producían vectores distintos para la misma seña, por cuatro motivos: el tratamiento de los cuadros sin manos, la forma de llevar la secuencia a 15 cuadros, la corrección de la relación de aspecto de la imagen y la asignación de cada mano a su posición en el vector (Capítulo~\ref{cap:desafios}). Para eliminar esas diferencias se definió un \emph{contrato de características}: una especificación única, compartida entre el entrenamiento y la aplicación, con un conjunto de 25 casos de prueba que ambas implementaciones deben reproducir con una tolerancia de $10^{-6}$. Sus reglas principales son:
+
+\begin{itemize}
+    \item \textbf{Imagen}: el cuadro se procesa sin espejar y rotado a la orientación vertical.
+    \item \textbf{Lateralidad}: la mano que MediaPipe etiqueta como izquierda va a la primera mitad del vector y la derecha, a la segunda. Si las dos manos reciben la misma etiqueta, la de mayor confianza conserva su posición y la otra ocupa la libre.
+    \item \textbf{Relación de aspecto}: las coordenadas se llevan a un lienzo cuadrado, con $M = \max(W, H)$, mediante $x' = x \cdot W/M + (1 - W/M)/2$ y $y' = y \cdot H/M + (1 - H/M)/2$, donde $W$ y $H$ son el ancho y el alto de la imagen.
+    \item \textbf{Cuadros sin manos}: se descartan antes de armar la secuencia. Una toma con menos de cinco cuadros válidos se excluye.
+    \item \textbf{Longitud fija}: con $n$ cuadros válidos, si $n > 15$ se toma el cuadro $\lfloor i \cdot n / 15 \rfloor$ para $i = 0, \ldots, 14$, calculado con enteros; si $n < 15$ se interpola linealmente. La secuencia nunca se trunca a los primeros cuadros ni se completa con ceros.
+\end{itemize}
+
+\section{Arquitectura del modelo}
+
+El modelo es una red recurrente liviana, en línea con la arquitectura planteada en la propuesta. Una primera capa LSTM extrae patrones locales de la secuencia y una segunda la resume en un vector de 128 valores; tres capas densas transforman ese resumen en la distribución de probabilidad sobre las 13 clases (Tabla~\ref{tab:arquitectura}).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llr}
+        \toprule
+        Capa & Configuración & Parámetros \\
+        \midrule
+        LSTM & 64 unidades, devuelve la secuencia, L2 0,01 & 48\,896 \\
+        Dropout & 0,5 & --- \\
+        LSTM & 128 unidades, devuelve el último estado, L2 0,001 & 98\,816 \\
+        Dropout & 0,5 & --- \\
+        Densa & 64 neuronas, ReLU, L2 0,001 & 8\,256 \\
+        Densa & 64 neuronas, ReLU, L2 0,001 & 4\,160 \\
+        Densa & 13 neuronas, softmax & 845 \\
+        \midrule
+        Total & & 160\,973 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Arquitectura del modelo de clasificación.}
+    \label{tab:arquitectura}
+\end{table}
+
+Las dos capas LSTM forman la parte de extracción de características y las tres capas densas, la \glos{cabeza}{cabeza de clasificación} (13\,261 parámetros). Esta división es la que aprovecha el esquema federado: solo la cabeza se entrena en el dispositivo (Capítulo~\ref{cap:federado}).
+
+\section{Entrenamiento}
+
+El modelo se entrena con el optimizador Adam y la entropía cruzada categórica, en lotes de 32 secuencias y durante un máximo de 300 épocas. Para compensar el desbalance entre clases, en particular la clase «nada», cada clase se pondera en forma inversa a su frecuencia. Se reserva el 15\,\% del conjunto de entrenamiento, estratificado por clase, para la parada temprana: el entrenamiento se detiene cuando la pérdida sobre esa porción no mejora durante 25 épocas, y se conservan los pesos de la mejor época.
+
+El modelo publicado en la aplicación se entrena con las 1409 muestras, sin reservar ninguna persona. Su acierto sobre los datos de entrenamiento (98,4\,\%) no constituye una evaluación; la evaluación se realiza con los esquemas descritos en la Sección~\ref{sec:esquemas}, que entrenan modelos sin la persona o la sesión evaluada.
+
+\section{Conversión a TensorFlow Lite}
+
+El modelo original se había exportado con operaciones de TensorFlow no incluidas en el núcleo de TensorFlow Lite (\emph{Flex}), lo que obligaba a incluir en la aplicación una biblioteca adicional de 169,4\,MB. Exportar la capa LSTM en su forma fusionada evitaba esa biblioteca, pero con TensorFlow~2.10 producía resultados incorrectos. La solución adoptada fue desenrollar las capas LSTM a lo largo de los 15 pasos de la secuencia, de modo que se expresan con operaciones básicas, conservando los mismos pesos.
+
+Se compararon tres variantes de cuantización (Sección~\ref{sec:res-variantes}) y se adoptó la cuantización dinámica, que reduce el modelo a 236\,KB y coincide con el modelo de Keras en el 99,9\,\% de las predicciones. La equivalencia entre el modelo de Python y su ejecución en el dispositivo se verifica con una prueba instrumentada en la tableta, sobre un conjunto de secuencias de referencia.
+
+Junto con el modelo se publica un archivo de calibración con la temperatura $T = 1{,}20$ y el umbral de confianza 0,75 (Sección~\ref{sec:res-calibracion}). La temperatura corresponde a un modelo determinado, por lo que ambos archivos se actualizan siempre juntos.

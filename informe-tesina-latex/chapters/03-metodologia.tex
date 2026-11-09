@@ -1,0 +1,113 @@
+\chapter{Metodología}
+\label{cap:metodologia}
+
+\section{Tipo de trabajo}
+
+El presente trabajo es de desarrollo tecnológico con evaluación experimental. Se construye un prototipo de aplicación móvil y se valida empíricamente su viabilidad mediante mediciones sobre datos reales y dispositivos reales. La evaluación no se limita al desempeño del modelo de clasificación: abarca también la generalización a personas que no participaron del entrenamiento, la robustez ante condiciones de captura adversas, la consistencia de las predicciones, el rendimiento en dispositivos de distintas gamas y la viabilidad del aprendizaje federado en teléfonos y tabletas.
+
+Para que los resultados sean reproducibles, cada cifra que se informa se obtiene de un programa que la recalcula a partir de los datos y de los resultados guardados en el repositorio de entrenamiento. Los conjuntos de datos se respaldan en un disco externo con un manifiesto de resúmenes criptográficos (SHA-256) de cada archivo.
+
+\section{Etapas del trabajo}
+
+La propuesta aprobada organizaba el desarrollo en seis fases consecutivas, de mayo a noviembre: el pipeline de captura y la extracción de landmarks; el entrenamiento del modelo y su conversión a TensorFlow Lite; la interfaz en Android; el módulo de aprendizaje federado; la validación sistemática, y la elaboración del informe.
+
+\pendiente{Validar con la autora las fechas de las etapas previas a octubre (primer pipeline, primer modelo con cámara web y primera versión de la aplicación).}
+
+Con una primera versión funcional de la aplicación y del modelo, el trabajo se reorganizó en las siguientes etapas, que mantienen los compromisos de la propuesta:
+
+\begin{enumerate}
+    \item \textbf{Verificación inicial.} Se contrastó el comportamiento de la aplicación y del entrenamiento con datos reales. Se detectaron diferencias entre los vectores de características que producían la cámara web y el teléfono para la misma seña (Capítulo~\ref{cap:desafios}).
+    \item \textbf{Contrato de características.} Se definió una especificación única de la entrada del modelo, compartida entre el entrenamiento en Python y la aplicación en Kotlin, con casos de prueba comunes que verifican que ambas implementaciones produzcan el mismo resultado (Sección~\ref{sec:representacion}).
+    \item \textbf{Instrumentación y línea base.} La aplicación se instrumentó para registrar, en cada captura, el tiempo de cada etapa del procesamiento, y se midió una línea base de rendimiento.
+    \item \textbf{Captura multipersona.} Se diseñó un protocolo y se realizaron dos sesiones de captura con tres personas y tres dispositivos (Sección~\ref{sec:protocolo-captura}).
+    \item \textbf{Modelo y validación.} Se reentrenó el modelo con todas las fuentes y se evaluó con esquemas que separan personas y sesiones (Sección~\ref{sec:esquemas}).
+    \item \textbf{Aprendizaje federado.} Se implementó el esquema en simulación, luego en el dispositivo y finalmente con un servidor y dispositivos reales (Capítulo~\ref{cap:federado}).
+    \item \textbf{Robustez, consistencia y rendimiento.} Se evaluó el modelo por condición de captura, se calculó la métrica de consistencia y se optimizó el procesamiento en los dispositivos.
+    \item \textbf{Informe.} Se redactó el presente documento a partir de los resultados registrados.
+\end{enumerate}
+
+\section{Herramientas utilizadas}
+
+El entrenamiento y la evaluación se realizaron en Python~3.10 con TensorFlow~2.10 (Keras) sobre una GPU NVIDIA RTX~2060, MediaPipe~0.10 para la extracción de landmarks y scikit-learn~1.5 para las particiones y las métricas.
+
+La aplicación se desarrolló para Android en Kotlin, con Jetpack Compose para la interfaz, CameraX~1.4 para la captura de imagen, MediaPipe Tasks (Hand Landmarker~0.10.29) para la detección de manos, TensorFlow Lite~2.14 para la inferencia, el motor de síntesis de voz de Android para la salida en audio y el servicio de reconocimiento de voz del sistema para el modo de voz a texto. El servidor del esquema federado se implementó en Python con la biblioteca estándar y NumPy.
+
+\section{Participantes y dispositivos}
+
+Participaron tres personas, identificadas en el informe solo por su seudónimo:
+
+\begin{itemize}
+    \item \textbf{P1}, la autora, que conoce las señas del vocabulario y aportó además los datos de la cámara web. Grabó con una tableta Lenovo TB321FU.
+    \item \textbf{P2} y \textbf{P3}, dos personas oyentes que aprendieron las doce señas para la sesión; el protocolo prevé una práctica previa, no grabada, con el diccionario de la aplicación. Grabaron con sus propios teléfonos: un OnePlus CPH2663 y un Samsung Galaxy A55, respectivamente.
+\end{itemize}
+
+Ninguna de las tres personas es señante de LSA. El modelo se evalúa, por lo tanto, sobre señas producidas por aprendices; un estudio con personas sordas usuarias de la lengua queda como trabajo futuro.
+
+Los tres dispositivos ejecutan Android~16 y cubren tres niveles de capacidad: la tableta procesa entre 16 y 18 cuadros por segundo durante la captura, el OnePlus alrededor de 8 y el Galaxy A55 alrededor de 6.
+
+\section{Esquemas de validación}
+\label{sec:esquemas}
+
+La evaluación compara cinco esquemas, porque cada uno responde una pregunta distinta:
+
+\begin{itemize}
+    \item \textbf{Modelo original}: el modelo con el que comenzó el trabajo, sobre la secuencia exacta que la aplicación calculó en cada toma de la sesión de captura. Mide cuánto acertaba la aplicación con personas nuevas.
+    \item \textbf{Solo cámara web}: se entrena solo con la cámara web, como el modelo original, pero con la representación de características corregida, y se evalúa con las tomas de los dispositivos.
+    \item \textbf{Persona no vista} (\emph{leave-one-person-out}, LOPO): se entrena sin la persona evaluada, incluidas sus tomas de cámara web, y se evalúa con sus tomas del dispositivo. Es el escenario de una persona que usa la aplicación por primera vez.
+    \item \textbf{Sesión no vista}: validación cruzada de cinco particiones agrupadas por sesión de grabación, de modo que las tomas de una misma sesión no queden a ambos lados de la partición.
+    \item \textbf{Estratificado}: validación cruzada de cinco particiones con las tomas mezcladas al azar. Es el esquema que se utilizaba antes del trabajo; se mantiene solo para cuantificar cuánto sobreestima el desempeño.
+\end{itemize}
+
+Cada esquema se repite con cinco semillas, y se informan la media y el desvío estándar entre repeticiones. Durante el entrenamiento, la parada temprana utiliza una porción de validación extraída del propio conjunto de entrenamiento, de modo que los datos de prueba no intervienen en ninguna decisión.
+
+\section{Métricas}
+
+\subsection{Clasificación}
+
+Se informan la exactitud (\emph{accuracy}), el F1 macro, que promedia el F1 de cada clase con igual peso, y la matriz de confusión. En una clasificación de una sola etiqueta con todas las clases, el F1 micro que menciona la propuesta coincide con la exactitud, por lo que no se informa por separado.
+
+\subsection{Calibración}
+
+La confianza del modelo se evalúa con el error de calibración esperado (ECE, con 15 intervalos), que mide la diferencia entre la confianza informada y el acierto observado. Se corrige con escalado de temperatura: las probabilidades se reescalan como $\mathrm{softmax}(\log p / T)$ con una única temperatura $T$, ajustada minimizando la verosimilitud negativa sobre personas no vistas. Para el umbral de confianza de la aplicación se analiza, para cada umbral, la fracción de predicciones que se muestra y el acierto entre ellas.
+
+\subsection{Consistencia estadística}
+
+La propuesta define una métrica de consistencia $\sigma$ que no utiliza etiquetas: si dos entradas son parecidas, el modelo debería producir salidas parecidas. Para cada entrada $X_i$ (la secuencia de $15 \times 126$ valores que recibe el modelo) se define su vecindad
+\begin{equation}
+    N_i = \{\, j : \lVert X_i - X_j \rVert < \varepsilon \,\},
+\end{equation}
+y la variabilidad local de las predicciones
+\begin{equation}
+    \sigma_i = \frac{1}{C} \sum_{c=1}^{C} \sqrt{\frac{1}{m} \sum_{j \in N_i} \left(\hat{y}_{jc} - \bar{y}_{c}\right)^2}, \qquad \bar{y}_c = \frac{1}{m} \sum_{j \in N_i} \hat{y}_{jc}, \quad m = |N_i|,
+\end{equation}
+donde $\hat{y}_{jc}$ es la probabilidad que el modelo asigna a la clase $c$ para la entrada $X_j$. La métrica global es el promedio de $\sigma_i$ sobre las entradas con al menos dos elementos en su vecindad:
+\begin{equation}
+    \sigma = \frac{1}{|I|} \sum_{i \in I} \sigma_i, \qquad I = \{\, i : |N_i| > 1 \,\}.
+\end{equation}
+
+La propuesta deja abiertas dos decisiones, que se resolvieron así:
+
+\begin{itemize}
+    \item La vecindad $N_i$ incluye a la propia entrada $X_i$, ya que su distancia a sí misma es cero. En consecuencia, $|N_i| > 1$ equivale a tener al menos otra entrada cercana.
+    \item El umbral $\varepsilon$ no se fija a mano: se toma el mayor percentil de las distancias entre pares de la sesión~1 para el cual al menos el 90\,\% de los vecinos corresponde a la misma seña. Con valores mayores entran a la vecindad señas distintas, y $\sigma$ pasa a medir cuánto se mezclan las clases y no la estabilidad del modelo. Se informa además $\sigma$ para otros valores de $\varepsilon$.
+\end{itemize}
+
+Un modelo que asigna la misma probabilidad a todas las clases obtiene un $\sigma$ bajo sin acertar ninguna; por eso $\sigma$ se informa siempre junto al acierto.
+
+\subsection{Robustez}
+
+Para cada condición de captura adversa se informa el acierto y su diferencia respecto de la condición estándar, calculados con el mismo modelo. Los intervalos de confianza al 95\,\% del acierto se calculan con el método de Wilson, adecuado para muestras chicas, y los de la diferencia, por \emph{bootstrap} sobre las tomas (10\,000 remuestreos).
+
+\subsection{Rendimiento en el dispositivo}
+
+La aplicación registra, en cada captura, los cuadros por segundo, el tiempo de cada etapa del procesamiento (conversión de la imagen, detección de manos con MediaPipe, construcción de características) y el tiempo de inferencia. Se informa la mediana de cada medida. Las optimizaciones que podían alterar los landmarks se evaluaron además de forma pareada: la configuración nueva y la anterior se ejecutan sobre el mismo cuadro y se compara la cantidad de manos detectadas y la distancia entre los puntos.
+
+\subsection{Aprendizaje federado}
+
+Se informa el acierto sobre datos que no participan del esquema federado, la cantidad de bytes enviados por cada dispositivo, el tiempo de entrenamiento en el dispositivo y la cantidad de rondas necesarias para acercarse al entrenamiento centralizado.
+
+\section{Consideraciones éticas}
+
+Para la captura se elaboró un documento de consentimiento informado que describe qué se registra y con qué fin. La aplicación no guarda fotografías, videos ni audio: de cada toma se conservan solo las coordenadas de los puntos de las manos, a partir de las cuales no puede reconstruirse la imagen de la persona. Cada toma se asocia a un identificador seudónimo derivado de la cuenta, y en el informe se nombra a las personas solo por su seudónimo. La participación fue voluntaria y podía interrumpirse en cualquier momento.
+
+\pendiente{Registrar la fecha de firma de los consentimientos de P2 y P3 y conservarlos fuera del informe.}

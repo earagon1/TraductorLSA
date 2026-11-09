@@ -1,0 +1,67 @@
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{csquotes}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{url}
+% Las URL largas de notas periodísticas solo tienen guiones como separadores.
+\expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks\do\-}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+
+\geometry{
+    left=3cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=2.5cm
+}
+
+\onehalfspacing
+\graphicspath{{figures/}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue,
+    pdftitle={Informe de Tesina},
+    pdfauthor={Evelin Emilce Aragón}
+}
+
+\titleformat{\chapter}
+  {\normalfont\Large\bfseries}
+  {\thechapter.}
+  {0.7em}
+  {}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection}
+  {0.7em}
+  {}
+
+% Marca visible para contenido pendiente de redactar o validar.
+% Antes de la entrega final no debe quedar ninguna en el PDF.
+\newcommand{\pendiente}[1]{\textcolor{red}{\textbf{[PENDIENTE:} #1\textbf{]}}}
+% Pendiente que resuelve la autora por su cuenta (por ejemplo, material propio).
+\newcommand{\pendienteautora}[1]{\textcolor{blue}{\textbf{[A CARGO DE LA AUTORA:} #1\textbf{]}}}
+
+% Marca para decisiones abiertas: el contenido ya está escrito, pero la autora
+% quiere volver a decidir si se queda. Antes de la entrega final no debe quedar ninguna.
+% Primera aparición de un término del glosario: enlaza a su definición y lleva una
+% marca, para que también se reconozca en una copia impresa.
+\newcommand{\glos}[2]{\hyperlink{glo:#1}{#2}\textsuperscript{\textdagger}}
+% Entrada del glosario, destino de los enlaces de \glos.
+\newcommand{\termino}[2]{\item[\hypertarget{glo:#1}{#2}]}
+\newcommand{\revisar}[2]{\textcolor{orange}{\textbf{[A DECIDIR:} #1\textbf{]}} {\color{orange}#2}}

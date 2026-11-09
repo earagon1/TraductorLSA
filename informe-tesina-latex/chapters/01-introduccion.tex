@@ -1,0 +1,76 @@
+\chapter{Introducción}
+
+\section{Contexto y motivación}
+
+La comunicación accesible constituye un aspecto central para la inclusión social. En Argentina, la Ley 27.710, sancionada en 2023, reconoce a la Lengua de Señas Argentina (LSA) como una lengua natural y originaria que forma parte de la identidad lingüística y la herencia cultural de las personas sordas en todo el territorio nacional~\cite{ley27710}. La norma define a la LSA como una lengua de modalidad visoespacial, con una estructura gramatical completa, compleja y distinta del castellano, y faculta al Poder Ejecutivo a promover su uso con el fin, entre otros, de eliminar las barreras comunicacionales y actitudinales.
+
+En cuanto a la población involucrada, el Estudio Nacional sobre el Perfil de las Personas con Discapacidad, realizado por el Instituto Nacional de Estadística y Censos (INDEC) en 2018, indica que el 10,2\,\% de la población de 6 años y más que reside en localidades urbanas de 5.000 habitantes y más presenta algún tipo de dificultad. De ese grupo, el 20,8\,\% declara dificultad auditiva y, dentro de este último, el 49,0\,\% no puede oír o utiliza audífono o implante coclear~\cite{indec2018}. El estudio no releva el uso de la LSA, por lo que estas cifras dimensionan a la población con dificultad auditiva y no a la comunidad usuaria de la lengua.
+
+Cuando una persona que se comunica en LSA interactúa con personas oyentes que no la conocen, surgen barreras en situaciones cotidianas como la atención en comercios, organismos públicos o servicios de salud, especialmente cuando no se cuenta con un intérprete.
+
+En los últimos años, el avance de la visión por computadora y del aprendizaje automático permitió desarrollar sistemas capaces de reconocer gestos a partir de imágenes. Al mismo tiempo, los dispositivos móviles alcanzaron una capacidad de cómputo suficiente para ejecutar modelos de aprendizaje automático de forma local. Esta combinación abre la posibilidad de construir herramientas de asistencia a la comunicación que funcionen en un dispositivo de uso masivo, sin depender de servidores externos.
+
+En este marco, el presente trabajo aborda el desarrollo de un prototipo de aplicación móvil para Android orientado a facilitar la comunicación entre personas sordas y oyentes. La aplicación reconoce un conjunto acotado de señas de LSA y las traduce a texto y voz, y transcribe a texto la voz de la persona oyente. El reconocimiento de señas se ejecuta localmente en el dispositivo, lo que favorece la privacidad, la disponibilidad y la autonomía del sistema.
+
+\section{Problema}
+
+A pesar del crecimiento de las tecnologías de asistencia, las soluciones de traducción automática de lengua de señas presentan limitaciones recurrentes. Muchas dependen de una conexión permanente a internet y procesan las imágenes en servidores externos, lo que compromete la privacidad de las personas usuarias y la disponibilidad del servicio. Además, la mayoría se desarrolla para lenguas de señas con amplia representación internacional, mientras que la LSA cuenta con escasos conjuntos de datos anotados.
+
+La escasez de datos plantea un problema adicional: mejorar un modelo de reconocimiento requiere incorporar muestras de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales. El \glos{federado}{aprendizaje federado} ofrece una alternativa, ya que permite entrenar un modelo de forma colaborativa a partir de actualizaciones calculadas en cada dispositivo, sin transferir los datos crudos.
+
+Frente a esta situación, el problema que orienta esta tesina puede expresarse mediante la siguiente pregunta: ¿es factible desarrollar una aplicación móvil que traduzca en tiempo real un conjunto acotado de señas de LSA a texto y voz, ejecutando el reconocimiento localmente en dispositivos Android, con un desempeño aceptable en condiciones realistas de uso y con la posibilidad de mejorar el modelo de forma colaborativa sin centralizar los datos?
+
+\section{Objetivo general}
+
+Desarrollar y evaluar un prototipo de aplicación móvil para Android que facilite la comunicación entre personas sordas y oyentes, mediante el reconocimiento en tiempo real de un conjunto acotado de señas de LSA, su traducción a texto y voz, y la transcripción de voz a texto, con procesamiento local en el dispositivo e incorporando un esquema experimental de aprendizaje federado para la mejora colaborativa del modelo.
+
+\section{Objetivos específicos}
+
+\begin{enumerate}
+    \item Construir un conjunto de datos propio de señas de LSA, compuesto por secuencias de puntos de referencia (\glos{landmark}{\emph{landmarks}}) de las manos capturadas en condiciones controladas.
+    \item Diseñar y entrenar un modelo liviano de clasificación de secuencias temporales, apto para ejecutarse en dispositivos móviles mediante TensorFlow Lite.
+    \item Implementar en Android el \glos{pipeline}{pipeline} de reconocimiento en tiempo real: captura de imagen, detección de landmarks, construcción de características, clasificación y salida en texto y voz.
+    \item Implementar un modo de transcripción de voz a texto, de manera que la misma aplicación, ejecutada en dos dispositivos, cubra las dos perspectivas de la conversación: la de la persona que se expresa en LSA y la de la persona oyente.
+    \item Incorporar a la aplicación la captura de muestras etiquetadas y el entrenamiento local del modelo en el propio dispositivo.
+    \item Diseñar e implementar un esquema experimental de aprendizaje federado que combine las actualizaciones locales de distintos dispositivos sin centralizar los datos crudos.
+    \item Evaluar el desempeño del modelo mediante métricas de clasificación, consistencia y robustez, y el rendimiento del prototipo en dispositivos móviles de distintas gamas.
+\end{enumerate}
+
+\section{Alcance y limitaciones}
+
+El trabajo se focaliza en el desarrollo de un prototipo funcional orientado a validar la factibilidad técnica de la propuesta. No se busca resolver la traducción completa de la LSA ni abarcar su riqueza lingüística, sino reconocer un conjunto limitado de \glos{aislada}{señas aisladas} previamente definidas. Quedan fuera del alcance el reconocimiento de oraciones completas, la interpretación de estructuras gramaticales y la traducción de texto o voz a LSA.
+
+La ejecución local se aplica al flujo principal de reconocimiento de señas: captura de imagen, detección de landmarks, clasificación y síntesis de voz. La transcripción de voz a texto utiliza el servicio de reconocimiento de voz provisto por el sistema operativo, que funciona sin conexión una vez descargado el paquete del idioma.
+
+El aprendizaje federado se aborda con carácter experimental, con el fin de evaluar su viabilidad en el contexto del proyecto y no como un mecanismo de producción.
+
+Por último, no se realiza una comparación directa con aplicaciones comerciales existentes, dado que en su mayoría son sistemas cerrados que no publican sus modelos ni sus datos y operan bajo arquitecturas centralizadas, lo que impide una comparación en condiciones equivalentes.
+
+\section{Contribuciones}
+
+Los principales aportes del trabajo son:
+
+\begin{itemize}
+    \item Un conjunto de datos propio de secuencias de landmarks de manos para un vocabulario acotado de LSA, grabado con un protocolo explícito y con los datos crudos de cada \glos{toma}{toma}.
+    \item Un prototipo de aplicación Android que integra reconocimiento de señas, síntesis de voz y transcripción de voz a texto, todo ejecutado localmente.
+    \item Un \glos{contrato}{contrato de características} compartido entre el entrenamiento y la aplicación, verificado con casos de prueba en ambas implementaciones.
+    \item Un esquema de entrenamiento local y aprendizaje federado aplicado al reconocimiento de LSA, probado con dispositivos reales.
+    \item Una evaluación con \glos{lopo}{validación por persona}, condiciones adversas y seis dispositivos de distintas gamas, que permite identificar los requisitos de hardware para su uso en tiempo real.
+    \item Un registro de los desafíos técnicos encontrados durante el desarrollo y de las decisiones de diseño adoptadas para resolverlos.
+\end{itemize}
+
+\section{Estructura del documento}
+
+El resto del documento se organiza de la siguiente manera:
+
+\begin{itemize}
+    \item El \textbf{Capítulo 2} presenta el marco teórico: la LSA, el reconocimiento de lenguas de señas, la detección de manos, los modelos de secuencias, la ejecución de modelos en dispositivos móviles y el aprendizaje federado, junto con los trabajos relacionados.
+    \item El \textbf{Capítulo 3} describe la metodología: las etapas del trabajo, las herramientas, los participantes y dispositivos, los esquemas de validación, las métricas y las consideraciones éticas.
+    \item El \textbf{Capítulo 4} detalla la construcción del conjunto de datos y su protocolo de captura, la representación de las señas mediante el contrato de características y la arquitectura, el entrenamiento y la exportación del modelo.
+    \item El \textbf{Capítulo 5} presenta el diseño y la implementación de la aplicación: arquitectura, flujo de procesamiento, modos de uso e interfaz.
+    \item El \textbf{Capítulo 6} describe el esquema de aprendizaje federado: entrenamiento en el dispositivo, protocolo, protección de las actualizaciones y personalización.
+    \item El \textbf{Capítulo 7} reúne los problemas técnicos encontrados durante el desarrollo, sus causas y las decisiones adoptadas, incluidas las alternativas descartadas.
+    \item El \textbf{Capítulo 8} presenta los resultados: desempeño según el esquema de validación, \glos{calibracion}{calibración}, consistencia, robustez, aprendizaje federado, rendimiento en seis dispositivos y funcionamiento sin conexión.
+    \item El \textbf{Capítulo 9} discute los resultados, los requisitos de hardware, la relación con trabajos previos y las limitaciones.
+    \item El \textbf{Capítulo 10} expone las conclusiones, los aportes y el trabajo futuro.
+\end{itemize}

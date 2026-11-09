@@ -1,0 +1,122 @@
+\chapter{Desafíos técnicos y decisiones de diseño}
+\label{cap:desafios}
+
+Este capítulo reúne los problemas técnicos más relevantes encontrados durante el desarrollo. Para cada uno se describe el problema observado, su causa, la solución adoptada y su efecto. Varios de ellos no eran visibles con las pruebas habituales del modelo y solo aparecieron al contrastar el comportamiento de la aplicación con datos reales.
+
+\section{Diferencias entre la cámara web y el teléfono}
+
+\textbf{Problema.} El modelo con el que comenzó el trabajo había sido entrenado solo con tomas de la cámara web y alcanzaba un acierto superior al 90\,\% en su validación. Sin embargo, sobre las tomas reales de los dispositivos acertaba el 28,5\,\% (Sección~\ref{sec:res-escenarios}).
+
+\textbf{Causa.} Al comparar los vectores de características que producían ambas fuentes para la misma seña, se encontraron cuatro diferencias en el preprocesamiento:
+
+\begin{itemize}
+    \item \textbf{Cuadros sin manos.} El 32,8\,\% de los cuadros de entrenamiento no tenía ninguna mano detectada, con un máximo del 71\,\% en «por favor». La aplicación, en cambio, nunca entrega al modelo un cuadro sin mano: si la pierde, reinicia la captura.
+    \item \textbf{Truncamiento.} La captura de la cámara web comenzaba antes de que las manos entraran al cuadro, y el entrenamiento conservaba los primeros 15 cuadros de cada toma. Así, el modelo veía la entrada de las manos y perdía el final de la seña. La aplicación, en cambio, remuestreaba la secuencia completa.
+    \item \textbf{Relación de aspecto.} La aplicación llevaba las coordenadas a un lienzo cuadrado y el entrenamiento no, por lo que las coordenadas horizontales de una misma seña tenían escalas distintas en cada fuente.
+    \item \textbf{Remuestreo.} La función de la aplicación que lleva la secuencia a 15 cuadros acumulaba el paso en coma flotante y, para 65 longitudes de entrada entre 16 y 300, elegía un cuadro distinto del esperado; por ejemplo, con 20 cuadros tomaba el séptimo donde correspondía el octavo.
+\end{itemize}
+
+\textbf{Solución.} Se definió un contrato de características compartido entre el entrenamiento y la aplicación, con reglas explícitas para cada uno de estos puntos y 25 casos de prueba que ambas implementaciones deben reproducir (Sección~\ref{sec:representacion}). Las tomas de la cámara web se volvieron a procesar desde sus imágenes con el mismo extractor que utiliza la aplicación.
+
+\textbf{Efecto.} Entrenado con los mismos datos de la cámara web pero con el preprocesamiento corregido, el modelo pasa de 28,5\,\% a 56,0\,\% sobre las tomas de los dispositivos.
+
+\section{Espejado de las manos y lateralidad}
+
+\textbf{Problema.} La cámara frontal muestra en pantalla una imagen espejada, y MediaPipe informa para cada mano si es izquierda o derecha. Se sospechaba que la aplicación podía estar asignando cada mano a la posición equivocada del vector de características, lo que intercambiaría la mano dominante entre el entrenamiento y el uso.
+
+\textbf{Verificación.} Se comparó la etiqueta de lateralidad del extractor utilizado en el entrenamiento original (MediaPipe Holistic) con la del extractor de la aplicación (Hand Landmarker) sobre los mismos 712 cuadros de la cámara web: ambos coinciden, salvo en 14 cuadros en que una sola mano recibió la etiqueta contraria. En la tableta, con la autora señando con la mano derecha, el detector etiquetó esa mano como derecha en 292 de 295 cuadros. Los cuadros que recibe el detector no están espejados: el espejado es solo de la vista previa en pantalla.
+
+\textbf{Decisión.} La sospecha se descartó con datos. El contrato fija la regla vigente (la mano etiquetada como izquierda ocupa la primera mitad del vector) y define qué hacer cuando las dos manos reciben la misma etiqueta. El espejado se aplica solo a la imagen y a los puntos que se muestran en pantalla.
+
+\section{Tamaño de la aplicación y exportación del modelo}
+
+\textbf{Problema.} La aplicación de depuración ocupaba 243,5\,MB, de los cuales 169,4\,MB (70\,\%) correspondían a una sola biblioteca: la que permite ejecutar operaciones de TensorFlow que no forman parte del núcleo de TensorFlow Lite (\emph{Flex}). El modelo las necesitaba por la forma en que se exportaban sus capas LSTM.
+
+\textbf{Alternativas.} Exportar la capa LSTM en su forma fusionada, nativa de TensorFlow Lite, evitaba la biblioteca, pero con TensorFlow~2.10 producía resultados incorrectos: la clase predicha coincidía con la del modelo original en solo el 51\,\% de los casos, incluso al ejecutarse en la computadora.
+
+\textbf{Solución.} Se desenrollaron las capas LSTM a lo largo de los 15 pasos de la secuencia, con los mismos pesos. El modelo resultante solo utiliza operaciones básicas y produce las mismas predicciones que el original.
+
+\textbf{Efecto.} La aplicación pasó de 243,5\,MB a 67,4\,MB ($-72$\,\%) y el modelo, con cuantización dinámica, ocupa 236\,KB.
+
+\section{Rendimiento en dispositivos de gama media}
+
+\textbf{Problema.} En el Galaxy A55 la aplicación procesaba alrededor de 6 cuadros por segundo. Con tan pocos cuadros, cada seña se representa con menos información y los intentos de captura que se interrumpen por pérdida de la mano son más frecuentes, en particular en condiciones adversas (Tabla~\ref{tab:cortes}).
+
+\textbf{Causa.} La instrumentación de la aplicación mostró dónde se iba el tiempo de cada cuadro: unos 140\,ms en la detección de manos con MediaPipe y unos 16\,ms en preparar la imagen. La preparación incluía comprimir cada cuadro a JPEG y volver a decodificarlo, y luego rotarlo creando una imagen nueva. La inferencia del modelo, en cambio, tarda menos de 2\,ms.
+
+\textbf{Soluciones.} Se adoptaron dos cambios, ambos verificados sobre los mismos cuadros antes de incorporarlos (Sección~\ref{sec:res-rendimiento}):
+
+\begin{itemize}
+    \item La cámara entrega la imagen directamente en formato RGBA y la rotación se realiza durante la copia, en una sola pasada, sin compresión y sin imágenes intermedias.
+    \item MediaPipe se ejecuta en la unidad de procesamiento gráfico, con retorno automático al procesador central si el dispositivo no la soporta.
+\end{itemize}
+
+Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sobre una imagen reutilizada, resultó más lento que la versión original (12\,ms frente a 7\,ms) y se reemplazó por la rotación durante la copia. También se evaluaron y descartaron el modo de video de MediaPipe y la delegación de la rotación al detector.
+
+\textbf{Efecto.} El Galaxy A55 pasó de 6,3 a 9,6 cuadros por segundo, el OnePlus de 7,5 a 17,5 y la tableta de 16,7 a 24,9, con diferencias en los landmarks inferiores al 0,3\,\% del ancho de la imagen en la mediana.
+
+\section{Orientación del dispositivo}
+
+\textbf{Problema.} Las coordenadas de los landmarks dependen de la geometría de la imagen. Si el dispositivo puede usarse en vertical y en horizontal, la corrección a lienzo cuadrado comprime un eje distinto en cada caso, y el modelo recibe la misma seña con dos representaciones diferentes.
+
+\textbf{Decisión.} La pantalla de cámara queda fija en orientación vertical, que es la forma habitual de sostener un teléfono para una videollamada. Al salir de esa pantalla, la aplicación recupera la orientación que tenía. Todas las tomas de las sesiones de captura se grabaron en vertical.
+
+En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. La imagen, en cambio, sigue la orientación física del dispositivo: la Galaxy Tab S7 la entregó en formato apaisado (640$\times$480) y, en otras sesiones, cuadrado (1088$\times$1088). La corrección a lienzo cuadrado divide las coordenadas por el lado mayor de la imagen, por lo que la mano conserva su escala en todos esos formatos y solo cambia su posición. En la prueba, las tomas de «V» y de «hola» en horizontal y en formato cuadrado se reconocieron con confianzas de entre 0,87 y 1,0. Se evaluó recortar el centro de la imagen apaisada a formato vertical, y se descartó porque cambia el lado mayor y, con él, la escala de la mano.
+
+\section{Dependencia del encuadre}
+\label{sec:encuadre}
+
+\textbf{Problema.} En la Galaxy Tab S7, un dispositivo rápido (12 cuadros por segundo), la mayoría de las señas de la primera prueba se clasificó como «nada» o como otra seña; en particular, la «V» se confundía con la «E». En los teléfonos, con las mismas señas, el reconocimiento era correcto.
+
+\textbf{Diagnóstico.} Para descartar un error de la aplicación, se grabaron tomas en el modo entrenamiento, que conserva los landmarks crudos y la geometría de la imagen, y se clasificaron en la computadora con el mismo modelo. El resultado coincidió con el de la tableta, de modo que la aplicación procesaba bien la imagen. La diferencia estaba en la posición de la mano: en la tableta, la muñeca aparecía al 42\,\% de la altura de la imagen, a la altura de la cara, mientras que en las tomas de los teléfonos aparecía entre el 63 y el 77\,\%, a la altura del pecho.
+
+\textbf{Causa.} El modelo recibe las coordenadas de los puntos referidas a la imagen y no a la propia mano. Como todas las tomas de entrenamiento con dispositivos tenían un encuadre parecido, el modelo aprendió también en qué zona de la imagen y con qué tamaño aparece cada seña.
+
+\textbf{Verificación.} Con la persona más alejada y las manos en la mitad inferior de la imagen, las mismas señas se reconocieron correctamente en las dos orientaciones (Tabla~\ref{tab:encuadre}).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lll}
+        \toprule
+        Toma & Mano a la altura de la cara & Mano a la altura del pecho \\
+        \midrule
+        «V», vertical & «E» (0,79 y 0,72) & «V» (0,96 y 0,90) \\
+        «V», horizontal & --- & «V» (0,95 y 0,95) \\
+        «hola», horizontal & --- & «hola» (1,00 y 1,00) \\
+        \bottomrule
+    \end{tabular}
+    \caption{Clase predicha y confianza para dos tomas de cada seña en la Galaxy Tab S7, según el encuadre.}
+    \label{tab:encuadre}
+\end{table}
+
+\textbf{Alternativa descartada.} Se probó un aviso en pantalla que pedía alejarse cuando la muñeca quedaba, de forma sostenida, en la mitad superior de la imagen. En la prueba se activó al hacer la «I», que se realiza junto a la cara. Contrastado con las tomas de entrenamiento, el criterio no era viable: varias señas se hacen a esa altura (la muñeca aparece al 35\,\% de la altura de la imagen en la «N», al 43\,\% en la «E» y al 49\,\% en «adiós»), por lo que el aviso se habría activado en el 23\,\% de las tomas correctas. Además, la «V» mal encuadrada de la tableta (42\,\%) tenía la misma altura que una «E» normal: sin conocer la seña, ningún umbral fijo separa ambos casos. El aviso se retiró.
+
+\textbf{Decisión.} La solución es expresar los puntos de forma relativa, por ejemplo respecto de la muñeca y del tamaño de la mano, en una nueva versión del contrato de características, y reentrenar el modelo; queda planteada como trabajo futuro. Mientras tanto, la recomendación de uso es ubicar el dispositivo de modo que la persona quede encuadrada del pecho hacia arriba, como en las sesiones de captura.
+
+\section{Captura de la seña y experiencia de uso}
+
+Las sesiones de captura, seguidas en vivo a través de los registros de la aplicación, revelaron varios problemas de experiencia de uso:
+
+\begin{itemize}
+    \item \textbf{Ventana de captura variable.} La aplicación captura una cantidad fija de cuadros que depende de los cuadros por segundo (10, 15 o 20). En consecuencia, una toma dura unos 0,9\,s en la tableta y unos 1,6\,s en el Galaxy A55: en un equipo rápido, una seña larga puede no entrar completa. Es el argumento para capturar por tiempo en lugar de por cantidad de cuadros, una mejora que queda planteada.
+    \item \textbf{Espera entre señas.} Tras cada seña, la aplicación esperaba diez cuadros seguidos sin manos para habilitar la siguiente, lo que en un teléfono lento significaba casi dos segundos, y una detección espuria reiniciaba la cuenta. Se reemplazó por una espera de 600\,ms que solo se reinicia si la mano aparece en dos cuadros consecutivos, y la pantalla indica cuándo se puede hacer la siguiente seña.
+    \item \textbf{Capturas falsas a distancia.} A 120\,cm, las manos en reposo quedaban dentro del cuadro y la aplicación las tomaba como una seña. La indicación de esa condición pasó a pedir que las manos se lleven detrás de la espalda entre seña y seña.
+    \item \textbf{Controles fuera de alcance.} A 120\,cm nadie alcanzaba el botón para continuar después de un cambio de condición. El aviso de cambio de condición incorpora una cuenta regresiva de 20\,s, tras la cual la sesión continúa sola.
+    \item \textbf{Silencio ante una seña no reconocida.} Cuando el modelo clasificaba una seña como «nada» o con baja confianza, la aplicación no mostraba nada y mantenía el rótulo «traduciendo», lo que parecía un procesamiento en curso. La pantalla ahora indica que la seña no se reconoció y sugiere repetirla, y pide bajar las manos si permanecen levantadas.
+\end{itemize}
+
+\section{Limpieza del texto en el modo voz a texto}
+
+\textbf{Problema.} El servicio de reconocimiento de voz entrega texto corrido, sin mayúscula inicial ni signos de puntuación. Para una persona que lee en tiempo real una conversación, varios enunciados seguidos se convierten en un bloque difícil de seguir.
+
+\textbf{Solución.} Se incorporó una etapa de limpieza entre el reconocimiento y la visualización, con un criterio explícito: se corrige la forma y nunca el contenido. Se agregan la mayúscula inicial, los signos de apertura y el punto final, y se quita una lista corta de muletillas. No se eliminan repeticiones de palabras, porque en castellano pueden ser significativas («no, no», «muy muy bien»): un reconocedor que repite resulta menos dañino que uno que borra lo que la persona dijo.
+
+\section{Aprendizaje federado con dispositivos reales}
+
+El piloto con dispositivos reales reveló problemas que la simulación no mostraba:
+
+\begin{itemize}
+    \item \textbf{Plazo de la ronda.} El plazo para cerrar una ronda se contaba desde su apertura. Una ronda que había quedado abierta varias horas se cerró con la primera actualización recibida. El plazo pasó a contarse desde la primera actualización.
+    \item \textbf{Identificación de los paquetes.} La aplicación reconocía un modelo nuevo solo por su número de versión, por lo que un servidor distinto que repartía otro «v1» no se descargaba. Se compara ahora el resumen SHA-256 de su contenido.
+    \item \textbf{Datos de prueba en las rondas.} En las primeras pruebas, los dispositivos entrenaban con todas sus tomas, incluidas las que el servidor utilizaba para evaluar, lo que inflaba la mejora medida. El servidor publica los identificadores de esas tomas y los dispositivos las excluyen.
+\end{itemize}
