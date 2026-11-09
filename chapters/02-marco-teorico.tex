@@ -14,7 +14,7 @@ Además, las lenguas de señas difieren entre países e incluso entre regiones. 
 
 Dentro del procesamiento automático de lenguas de señas se distinguen tareas de complejidad creciente. El \emph{reconocimiento de señas aisladas} consiste en clasificar un fragmento de video que contiene una única seña dentro de un vocabulario predefinido. El \emph{reconocimiento continuo} busca identificar la secuencia de señas presente en un enunciado completo. Finalmente, la \emph{traducción} apunta a producir un texto en una lengua oral a partir de un enunciado en lengua de señas~\cite{ronchetti2016lsa64, liang2023survey}.
 
-En la traducción suele emplearse una representación intermedia denominada \emph{glosa}, que transcribe cada seña mediante una palabra de la lengua oral. Liang et al.~\cite{liang2023survey} organizan los enfoques de traducción en cuatro subtareas según el uso que hacen de esta representación: de la seña a la glosa y luego al texto, de la seña directamente al texto, de la seña a la glosa y al texto en forma conjunta, y de la glosa al texto.
+En la traducción suele emplearse una representación intermedia denominada \glos{glosa}{\emph{glosa}}, que transcribe cada seña mediante una palabra de la lengua oral. Liang et al.~\cite{liang2023survey} organizan los enfoques de traducción en cuatro subtareas según el uso que hacen de esta representación: de la seña a la glosa y luego al texto, de la seña directamente al texto, de la seña a la glosa y al texto en forma conjunta, y de la glosa al texto.
 
 El presente trabajo se ubica en la primera de las tareas: el reconocimiento de señas aisladas pertenecientes a un vocabulario acotado.
 
@@ -32,7 +32,7 @@ La representación basada en pose reduce de manera considerable la dimensión de
 
 \section{Estimación de landmarks de manos con MediaPipe}
 
-MediaPipe es un \emph{framework} de código abierto desarrollado por Google para construir \emph{pipelines} de percepción. En MediaPipe, un \emph{pipeline} se define como un grafo de componentes modulares que incluyen la inferencia de modelos, algoritmos de procesamiento de imágenes y transformaciones de datos~\cite{lugaresi2019mediapipe}.
+MediaPipe es un \emph{framework} de código abierto desarrollado por Google para construir \emph{pipelines} de percepción. En MediaPipe, un \emph{pipeline} se define como un grafo de componentes modulares que incluyen la \glos{inferencia}{inferencia} de modelos, algoritmos de procesamiento de imágenes y transformaciones de datos~\cite{lugaresi2019mediapipe}.
 
 Sobre este \emph{framework}, Zhang et al.~\cite{zhang2020mediapipehands} presentaron MediaPipe Hands, una solución de seguimiento de manos en tiempo real que opera sobre la imagen de una única cámara RGB y se ejecuta en el propio dispositivo. La solución se compone de dos modelos:
 
@@ -43,7 +43,7 @@ Sobre este \emph{framework}, Zhang et al.~\cite{zhang2020mediapipehands} present
 
 Una optimización relevante para el uso en tiempo real es que el detector de palmas no se ejecuta en cada cuadro. En un flujo de video, la región de la mano en el cuadro actual se deriva de los landmarks estimados en el cuadro anterior, y el detector solo vuelve a aplicarse cuando el modelo indica que la mano se perdió~\cite{zhang2020mediapipehands}.
 
-El modelo de landmarks produce, además, una salida que indica si la mano detectada es la izquierda o la derecha, atributo denominado \emph{handedness} o lateralidad~\cite{zhang2020mediapipehands}. Este dato tiene particular importancia en el reconocimiento de señas, ya que el papel de cada mano dentro de una seña no es intercambiable. Su interpretación depende, a su vez, de si la imagen de entrada está espejada, cuestión que se analiza en el Capítulo~\ref{cap:desafios}.
+El modelo de landmarks produce, además, una salida que indica si la mano detectada es la izquierda o la derecha, atributo denominado \glos{handedness}{\emph{handedness}} o lateralidad~\cite{zhang2020mediapipehands}. Este dato tiene particular importancia en el reconocimiento de señas, ya que el papel de cada mano dentro de una seña no es intercambiable. Su interpretación depende, a su vez, de si la imagen de entrada está espejada, cuestión que se analiza en el Capítulo~\ref{cap:desafios}.
 
 La versión actual de esta solución se distribuye como la tarea \emph{Hand Landmarker} de MediaPipe, que entrega los landmarks en coordenadas de imagen y en coordenadas del mundo, junto con la lateralidad de cada mano detectada~\cite{mediapipeHands}.
 
@@ -75,7 +75,7 @@ TensorFlow Lite es el entorno de ejecución de Google para modelos de aprendizaj
 
 \subsection{Cuantización}
 
-Una de las técnicas más utilizadas para adaptar un modelo a un dispositivo móvil es la cuantización, que consiste en representar los pesos y, eventualmente, las activaciones de la red con menor precisión numérica, por ejemplo con enteros de 8 bits en lugar de números de punto flotante de 32 bits. Jacob et al.~\cite{jacob2018quantization} propusieron un esquema de cuantización que permite realizar la inferencia utilizando únicamente aritmética entera, más eficiente en el hardware disponible en los dispositivos móviles, junto con un procedimiento de entrenamiento que preserva la precisión del modelo luego de la cuantización. La cuantización reduce el tamaño del modelo y puede disminuir el tiempo de inferencia, aunque su efecto sobre la precisión debe verificarse en cada caso.
+Una de las técnicas más utilizadas para adaptar un modelo a un dispositivo móvil es la \glos{cuantizacion}{cuantización}, que consiste en representar los pesos y, eventualmente, las activaciones de la red con menor precisión numérica, por ejemplo con enteros de 8 bits en lugar de números de punto flotante de 32 bits. Jacob et al.~\cite{jacob2018quantization} propusieron un esquema de cuantización que permite realizar la inferencia utilizando únicamente aritmética entera, más eficiente en el hardware disponible en los dispositivos móviles, junto con un procedimiento de entrenamiento que preserva la precisión del modelo luego de la cuantización. La cuantización reduce el tamaño del modelo y puede disminuir el tiempo de inferencia, aunque su efecto sobre la precisión debe verificarse en cada caso.
 
 \section{Aprendizaje federado}
 

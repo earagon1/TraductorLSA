@@ -16,7 +16,7 @@ En este marco, el presente trabajo aborda el desarrollo de un prototipo de aplic
 
 A pesar del crecimiento de las tecnologías de asistencia, las soluciones de traducción automática de lengua de señas presentan limitaciones recurrentes. Muchas dependen de una conexión permanente a internet y procesan las imágenes en servidores externos, lo que compromete la privacidad de las personas usuarias y la disponibilidad del servicio. Además, la mayoría se desarrolla para lenguas de señas con amplia representación internacional, mientras que la LSA cuenta con escasos conjuntos de datos anotados.
 
-La escasez de datos plantea un problema adicional: mejorar un modelo de reconocimiento requiere incorporar muestras de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales. El aprendizaje federado ofrece una alternativa, ya que permite entrenar un modelo de forma colaborativa a partir de actualizaciones calculadas en cada dispositivo, sin transferir los datos crudos.
+La escasez de datos plantea un problema adicional: mejorar un modelo de reconocimiento requiere incorporar muestras de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales. El \glos{federado}{aprendizaje federado} ofrece una alternativa, ya que permite entrenar un modelo de forma colaborativa a partir de actualizaciones calculadas en cada dispositivo, sin transferir los datos crudos.
 
 Frente a esta situación, el problema que orienta esta tesina puede expresarse mediante la siguiente pregunta: ¿es factible desarrollar una aplicación móvil que traduzca en tiempo real un conjunto acotado de señas de LSA a texto y voz, ejecutando el reconocimiento localmente en dispositivos Android, con un desempeño aceptable en condiciones realistas de uso y con la posibilidad de mejorar el modelo de forma colaborativa sin centralizar los datos?
 
@@ -27,9 +27,9 @@ Desarrollar y evaluar un prototipo de aplicación móvil para Android que facili
 \section{Objetivos específicos}
 
 \begin{enumerate}
-    \item Construir un conjunto de datos propio de señas de LSA, compuesto por secuencias de puntos de referencia (\emph{landmarks}) de las manos capturadas en condiciones controladas.
+    \item Construir un conjunto de datos propio de señas de LSA, compuesto por secuencias de puntos de referencia (\glos{landmark}{\emph{landmarks}}) de las manos capturadas en condiciones controladas.
     \item Diseñar y entrenar un modelo liviano de clasificación de secuencias temporales, apto para ejecutarse en dispositivos móviles mediante TensorFlow Lite.
-    \item Implementar en Android el pipeline de reconocimiento en tiempo real: captura de imagen, detección de landmarks, construcción de características, clasificación y salida en texto y voz.
+    \item Implementar en Android el \glos{pipeline}{pipeline} de reconocimiento en tiempo real: captura de imagen, detección de landmarks, construcción de características, clasificación y salida en texto y voz.
     \item Implementar un modo de transcripción de voz a texto, de manera que la misma aplicación, ejecutada en dos dispositivos, cubra las dos perspectivas de la conversación: la de la persona que se expresa en LSA y la de la persona oyente.
     \item Incorporar a la aplicación la captura de muestras etiquetadas y el entrenamiento local del modelo en el propio dispositivo.
     \item Diseñar e implementar un esquema experimental de aprendizaje federado que combine las actualizaciones locales de distintos dispositivos sin centralizar los datos crudos.
@@ -38,7 +38,7 @@ Desarrollar y evaluar un prototipo de aplicación móvil para Android que facili
 
 \section{Alcance y limitaciones}
 
-El trabajo se focaliza en el desarrollo de un prototipo funcional orientado a validar la factibilidad técnica de la propuesta. No se busca resolver la traducción completa de la LSA ni abarcar su riqueza lingüística, sino reconocer un conjunto limitado de señas aisladas previamente definidas. Quedan fuera del alcance el reconocimiento de oraciones completas, la interpretación de estructuras gramaticales y la traducción de texto o voz a LSA.
+El trabajo se focaliza en el desarrollo de un prototipo funcional orientado a validar la factibilidad técnica de la propuesta. No se busca resolver la traducción completa de la LSA ni abarcar su riqueza lingüística, sino reconocer un conjunto limitado de \glos{aislada}{señas aisladas} previamente definidas. Quedan fuera del alcance el reconocimiento de oraciones completas, la interpretación de estructuras gramaticales y la traducción de texto o voz a LSA.
 
 La ejecución local se aplica al flujo principal de reconocimiento de señas: captura de imagen, detección de landmarks, clasificación y síntesis de voz. La transcripción de voz a texto utiliza el servicio de reconocimiento de voz provisto por el sistema operativo, que funciona sin conexión una vez descargado el paquete del idioma.
 
@@ -51,11 +51,11 @@ Por último, no se realiza una comparación directa con aplicaciones comerciales
 Los principales aportes del trabajo son:
 
 \begin{itemize}
-    \item Un conjunto de datos propio de secuencias de landmarks de manos para un vocabulario acotado de LSA, grabado con un protocolo explícito y con los datos crudos de cada toma.
+    \item Un conjunto de datos propio de secuencias de landmarks de manos para un vocabulario acotado de LSA, grabado con un protocolo explícito y con los datos crudos de cada \glos{toma}{toma}.
     \item Un prototipo de aplicación Android que integra reconocimiento de señas, síntesis de voz y transcripción de voz a texto, todo ejecutado localmente.
-    \item Un contrato de características compartido entre el entrenamiento y la aplicación, verificado con casos de prueba en ambas implementaciones.
+    \item Un \glos{contrato}{contrato de características} compartido entre el entrenamiento y la aplicación, verificado con casos de prueba en ambas implementaciones.
     \item Un esquema de entrenamiento local y aprendizaje federado aplicado al reconocimiento de LSA, probado con dispositivos reales.
-    \item Una evaluación con validación por persona, condiciones adversas y seis dispositivos de distintas gamas, que permite identificar los requisitos de hardware para su uso en tiempo real.
+    \item Una evaluación con \glos{lopo}{validación por persona}, condiciones adversas y seis dispositivos de distintas gamas, que permite identificar los requisitos de hardware para su uso en tiempo real.
     \item Un registro de los desafíos técnicos encontrados durante el desarrollo y de las decisiones de diseño adoptadas para resolverlos.
 \end{itemize}
 
@@ -70,7 +70,7 @@ El resto del documento se organiza de la siguiente manera:
     \item El \textbf{Capítulo 5} presenta el diseño y la implementación de la aplicación: arquitectura, flujo de procesamiento, modos de uso e interfaz.
     \item El \textbf{Capítulo 6} describe el esquema de aprendizaje federado: entrenamiento en el dispositivo, protocolo, protección de las actualizaciones y personalización.
     \item El \textbf{Capítulo 7} reúne los problemas técnicos encontrados durante el desarrollo, sus causas y las decisiones adoptadas, incluidas las alternativas descartadas.
-    \item El \textbf{Capítulo 8} presenta los resultados: desempeño según el esquema de validación, calibración, consistencia, robustez, aprendizaje federado, rendimiento en seis dispositivos y funcionamiento sin conexión.
+    \item El \textbf{Capítulo 8} presenta los resultados: desempeño según el esquema de validación, \glos{calibracion}{calibración}, consistencia, robustez, aprendizaje federado, rendimiento en seis dispositivos y funcionamiento sin conexión.
     \item El \textbf{Capítulo 9} discute los resultados, los requisitos de hardware, la relación con trabajos previos y las limitaciones.
     \item El \textbf{Capítulo 10} expone las conclusiones, los aportes y el trabajo futuro.
 \end{itemize}

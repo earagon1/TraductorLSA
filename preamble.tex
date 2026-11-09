@@ -59,4 +59,9 @@
 
 % Marca para decisiones abiertas: el contenido ya está escrito, pero la autora
 % quiere volver a decidir si se queda. Antes de la entrega final no debe quedar ninguna.
+% Primera aparición de un término del glosario: enlaza a su definición y lleva una
+% marca, para que también se reconozca en una copia impresa.
+\newcommand{\glos}[2]{\hyperlink{glo:#1}{#2}\textsuperscript{\textdagger}}
+% Entrada del glosario, destino de los enlaces de \glos.
+\newcommand{\termino}[2]{\item[\hypertarget{glo:#1}{#2}]}
 \newcommand{\revisar}[2]{\textcolor{orange}{\textbf{[A DECIDIR:} #1\textbf{]}} {\color{orange}#2}}
