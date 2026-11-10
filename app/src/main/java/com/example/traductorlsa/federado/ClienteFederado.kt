@@ -1,5 +1,6 @@
 package com.example.traductorlsa.federado
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import com.example.traductorlsa.dataset.DatasetV2
@@ -8,8 +9,11 @@ import com.example.traductorlsa.features.ContratoV2
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
 import kotlin.random.Random
 
 /**
@@ -25,10 +29,14 @@ import kotlin.random.Random
  *   - [aportar]: sube las tomas propias (solo landmarks) para que el servidor reentrene
  *     el modelo completo y pueda sumar señas nuevas. Es opcional y aparte.
  *
+ * Siempre por HTTPS, con la clave del servidor fijada por su [huella] (ver Seguridad.kt).
+ * Los POST llevan el [codigo] de participación: el servidor deduce de él quién es.
+ *
  * Bloqueante: se llama desde una corrutina en Dispatchers.IO.
  */
-class ClienteFederado(direccion: String) {
+class ClienteFederado(direccion: String, private val huella: ByteArray, private val codigo: String?) {
     val base: String = normalizarDireccion(direccion)
+    private val fabrica = fabricaDeSockets(VerificadorDeHuella(huella))
 
     class ErrorServidor(val codigo: Int, mensaje: String) : IOException(mensaje)
 
@@ -39,12 +47,14 @@ class ClienteFederado(direccion: String) {
     fun enviar(ruta: String, cuerpo: JSONObject): JSONObject = JSONObject(String(pedir("POST", ruta, cuerpo.toString().toByteArray())))
 
     private fun pedir(metodo: String, ruta: String, cuerpo: ByteArray? = null, timeoutMs: Int = 60_000): ByteArray {
-        val c = URL(base + ruta).openConnection() as HttpURLConnection
+        val c = abrir(base + ruta, fabrica)
         try {
             c.requestMethod = metodo
             c.connectTimeout = 8_000
             c.readTimeout = timeoutMs
             if (cuerpo != null) {
+                if (codigo.isNullOrBlank()) throw IOException("falta tu código de participación")
+                c.setRequestProperty("Authorization", "Bearer ${Seguridad.normalizarCodigo(codigo)}")
                 c.doOutput = true
                 c.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 c.setFixedLengthStreamingMode(cuerpo.size)
@@ -63,11 +73,47 @@ class ClienteFederado(direccion: String) {
     }
 
     companion object {
-        /** "192.168.0.10:8765" -> "http://192.168.0.10:8765" (sin barra final). */
+        /**
+         * "192.168.0.10:8765" -> "https://192.168.0.10:8765" (sin barra final). "http://" se
+         * rechaza: el código de participación viajaría en claro.
+         */
         fun normalizarDireccion(d: String): String {
             val t = d.trim().trimEnd('/')
-            return if (t.startsWith("http://") || t.startsWith("https://")) t else "http://$t"
+            require(!t.startsWith("http://")) { "el servidor va por https: escribí la dirección sin «http://»" }
+            return if (t.startsWith("https://")) t else "https://$t"
         }
+
+        /**
+         * La huella del servidor, sin confirmar todavía: abre solo el handshake TLS, lo corta
+         * al ver el certificado y no manda ningún pedido. La pantalla la muestra para que la
+         * persona la compare con la que imprime la PC.
+         */
+        fun sondearHuella(direccion: String): ByteArray {
+            val verificador = VerificadorDeHuella(null)
+            val c = abrir(normalizarDireccion(direccion) + "/estado", fabricaDeSockets(verificador))
+            try {
+                c.connectTimeout = 8_000
+                c.readTimeout = 8_000
+                runCatching { c.connect() }
+            } finally {
+                c.disconnect()
+            }
+            return verificador.vista ?: throw IOException("no se pudo hablar con el servidor por https")
+        }
+
+        private fun fabricaDeSockets(verificador: VerificadorDeHuella): SSLSocketFactory =
+            SSLContext.getInstance("TLS").apply { init(null, arrayOf(verificador), null) }.socketFactory
+
+        // El nombre no se verifica a propósito: la confianza está en la clave (la huella), que
+        // es más fuerte que el nombre, y la IP de la PC cambia con cada Wi-Fi.
+        @SuppressLint("BadHostnameVerifier")
+        private val SIN_NOMBRE = HostnameVerifier { _, _ -> true }
+
+        private fun abrir(url: String, fabrica: SSLSocketFactory): HttpsURLConnection =
+            (URL(url).openConnection() as HttpsURLConnection).apply {
+                sslSocketFactory = fabrica
+                hostnameVerifier = SIN_NOMBRE
+            }
     }
 }
 

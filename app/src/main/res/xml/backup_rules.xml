@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   Backup automático en Android 11 o menos (en 12+ manda data_extraction_rules.xml).
+   El código de participación del federado (shared_prefs/federado.xml) no se respalda:
+   es una credencial, y con él cualquiera puede mandar ajustes a nombre de la persona.
+   Queda pendiente decidir qué más excluir (auditoría, TL-C2).
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="sharedpref" path="federado.xml" />
 </full-backup-content>

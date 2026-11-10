@@ -79,7 +79,11 @@ class ModeloInstaladoTest {
 
     @Test
     fun `la direccion del servidor se completa`() {
-        assertEquals("http://192.168.0.10:8765", ClienteFederado.normalizarDireccion(" 192.168.0.10:8765/ "))
+        assertEquals("https://192.168.0.10:8765", ClienteFederado.normalizarDireccion(" 192.168.0.10:8765/ "))
         assertEquals("https://x.org", ClienteFederado.normalizarDireccion("https://x.org"))
+        // Por http el código de participación viajaría en claro: no se acepta.
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            ClienteFederado.normalizarDireccion("http://192.168.0.10:8765")
+        }
     }
 }
