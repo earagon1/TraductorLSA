@@ -139,7 +139,7 @@ El detector se configura para hasta dos manos, en modo de imagen (cada cuadro se
 
 Por cada cuadro con manos se arma un vector de 126 valores: las coordenadas de los 21 puntos de la mano izquierda seguidas de las de la mano derecha, con ceros en la mano que no se detecta y la corrección de las coordenadas a un lienzo cuadrado (Sección~\ref{sec:representacion}). Los vectores se acumulan durante la captura y, al completarla, la secuencia se lleva a 15 cuadros.
 
-El contrato de características está implementado en Kotlin y verificado con los mismos casos de prueba que la implementación de Python. Lo usan el entrenamiento en el dispositivo y el esquema federado; la traducción en vivo, en cambio, todavía arma la secuencia con el procedimiento anterior, lo que constituye una de las limitaciones del trabajo (Capítulo~\ref{cap:discusion}).
+El contrato de características está implementado en Kotlin y verificado con los mismos casos de prueba que la implementación de Python. Lo usan la traducción en vivo, el entrenamiento en el dispositivo y el esquema federado: la aplicación conserva los landmarks crudos de cada captura y arma la secuencia con el contrato al terminarla. Hasta la versión final, la traducción en vivo utilizaba un procedimiento anterior que difería del contrato en dos casos, con capturas de veinte cuadros y con dos manos de la misma etiqueta (Capítulo~\ref{cap:discusion}); ese procedimiento se eliminó, para que no existan dos implementaciones de la misma cuenta.
 
 \subsection{Clasificación con TensorFlow Lite}
 

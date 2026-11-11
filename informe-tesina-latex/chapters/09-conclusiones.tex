@@ -10,7 +10,7 @@ El objetivo general del trabajo fue desarrollar y evaluar un prototipo de aplica
 
     \item \textbf{Modelo liviano para TensorFlow Lite.} Se cumplió. El modelo recurrente de 160\,973 parámetros ocupa 236\,KB con cuantización dinámica, coincide con el modelo de Keras en el 99,9\,\% de las predicciones y su inferencia tarda menos de 2\,ms en la tableta y unos 8\,ms en los teléfonos de gama baja. Exportarlo sin operaciones adicionales redujo la aplicación de 243,5 a 67,4\,MB.
 
-    \item \textbf{Pipeline de reconocimiento en tiempo real.} Se cumplió. La aplicación procesa entre 6,6 y 24,9 cuadros por segundo en los seis dispositivos medidos, y adapta la cantidad de cuadros por captura a la velocidad de cada uno. La traducción en vivo todavía no utiliza la implementación del contrato de características, aunque ya está disponible y verificada en la aplicación.
+    \item \textbf{Pipeline de reconocimiento en tiempo real.} Se cumplió. La aplicación procesa entre 6,6 y 24,9 cuadros por segundo en los seis dispositivos medidos, y adapta la cantidad de cuadros por captura a la velocidad de cada uno. La traducción en vivo arma la secuencia con la misma implementación del contrato de características que el resto de la aplicación, verificada contra la del entrenamiento.
 
     \item \textbf{Transcripción de voz a texto y escenario con dos dispositivos.} Se cumplió. El modo voz a texto transcribe con resultados parciales, pide al sistema el reconocimiento en el dispositivo y limpia la forma del texto sin alterar su contenido. La prueba en modo avión confirmó que funciona sin conexión, después de adaptar la aplicación a los paquetes de voz que ofrece el sistema, que no incluyen la variante argentina (Sección~\ref{sec:res-sin-conexion}).
 
@@ -45,7 +45,6 @@ Más allá del cumplimiento de los objetivos, el trabajo deja tres conclusiones.
 \begin{itemize}
     \item \textbf{Más personas, y personas sordas.} Es la mejora con mayor efecto esperado sobre el reconocimiento de personas nuevas, y la condición para que los resultados describan el uso real de la LSA.
     \item \textbf{Coordenadas relativas a la mano.} Una nueva versión del contrato de características que exprese los puntos respecto de la muñeca y del tamaño de la mano, combinada con una posición aproximada en la imagen para no perder la información que distingue señas como la «I» o la «N», reduciría la dependencia del encuadre.
-    \item \textbf{Contrato de características en la traducción en vivo.} Conectar la implementación ya verificada a la cámara en tiempo real.
     \item \textbf{Captura por tiempo.} Capturar una duración fija en lugar de una cantidad de cuadros, para que una seña larga entre completa en un dispositivo rápido.
     \item \textbf{Detección de dos manos.} Ajustar la captura para tolerar la pérdida momentánea de una mano en las señas de dos manos, que son las más afectadas en los dispositivos lentos.
     \item \textbf{Uso de $\sigma$ como señal de rechazo.} Como no requiere etiquetas, podría complementar el umbral de confianza para decidir cuándo no mostrar una predicción.
