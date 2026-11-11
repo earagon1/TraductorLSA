@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.clerk.api.Clerk
+import com.example.traductorlsa.Cuenta
 import com.example.traductorlsa.settings.CalidadAnalisis
 import com.example.traductorlsa.settings.VarianteEspanol
 import com.example.traductorlsa.settings.ajustesSenar
@@ -160,6 +161,7 @@ fun SettingsScreen(navController: NavHostController) {
                         scope.launch {
                             try {
                                 Clerk.signOut()
+                                Cuenta.desactivar(context)
                                 navController.navigate(AppDestination.AuthEntry.route) {
                                     popUpTo(AppDestination.Home.route) { inclusive = true }
                                 }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Backup automático en Android 11 o menos (en 12+ manda data_extraction_rules.xml).
-   El código de participación del federado (shared_prefs/federado.xml) no se respalda:
-   es una credencial, y con él cualquiera puede mandar ajustes a nombre de la persona.
-   Queda pendiente decidir qué más excluir (auditoría, TL-C2).
+   Android 11 o menos. Con allowBackup="false" en el manifest no hay backup en la nube;
+   igual se excluye el código del federado (shared_prefs/federado.xml) por si algún día
+   se vuelve a activar: es una credencial, y con él cualquiera manda ajustes a nombre de
+   la persona.
 -->
 <full-backup-content>
     <exclude domain="sharedpref" path="federado.xml" />

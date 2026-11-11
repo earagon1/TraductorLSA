@@ -111,19 +111,36 @@ private val POLITICA = listOf(
     ),
     SeccionDePolitica(
         titulo = "Tu cuenta",
-        cuerpo = "Sincronizar con Google es opcional. Si lo hacés, se guardan tu nombre, tu foto y " +
-            "tu correo a través de Clerk, que es quien maneja el inicio de sesión.",
+        cuerpo = "Iniciar sesión es opcional y solo hace falta para el modo entrenamiento. Si lo " +
+            "hacés, tu nombre, tu foto y tu correo quedan en Clerk, un servicio externo que maneja " +
+            "el inicio de sesión. Mientras no inicies sesión, la app no se conecta a Clerk.",
     ),
     SeccionDePolitica(
         titulo = "Las muestras de entrenamiento",
         cuerpo = "Si grabás señas en el modo entrenamiento, quedan en un archivo dentro de tu " +
-            "teléfono, junto al identificador de tu cuenta. No se envían a ningún lado: salen solo " +
-            "si vos tocás «Exportar».",
+            "teléfono con un código seudónimo derivado de tu cuenta, no con tu nombre ni tu correo. " +
+            "Es un seudónimo y no un anonimato: quien conozca tu cuenta puede recalcularlo. Salen " +
+            "del teléfono solo si vos tocás «Exportar» o «Aportar mis tomas».",
+    ),
+    SeccionDePolitica(
+        titulo = "El aprendizaje federado",
+        cuerpo = "Es opcional y está en Ajustes. Si participás, la app se conecta a un servidor cuya " +
+            "dirección escribís vos, por una conexión cifrada. Al entrenar envía solo un ajuste del " +
+            "modelo calculado con tus tomas, no las tomas. Si tocás «Aportar mis tomas», envía los " +
+            "puntos de tus manos, nunca imágenes, con tu código seudónimo.",
+        destacada = true,
+    ),
+    SeccionDePolitica(
+        titulo = "Copias de seguridad",
+        cuerpo = "La app no se incluye en las copias de seguridad de Google: tus tomas no se suben " +
+            "a la nube. Si pasás tus datos a un teléfono nuevo, viajan directo entre los dos, salvo " +
+            "el código de participación del federado.",
     ),
     SeccionDePolitica(
         titulo = "Lo que la app no hace",
-        cuerpo = "No publica nada, no muestra publicidad, no comparte tus datos con terceros y no " +
-            "te rastrea entre aplicaciones.",
+        cuerpo = "No publica nada, no muestra publicidad, no vende tus datos y no te rastrea entre " +
+            "aplicaciones. Los únicos servicios externos son Clerk, si iniciás sesión, y el de " +
+            "reconocimiento de voz de tu teléfono.",
     ),
 )
 

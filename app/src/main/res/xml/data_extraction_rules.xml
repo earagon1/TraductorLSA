@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Backup y transferencia en Android 12+ (en 11 o menos manda backup_rules.xml).
-   El código de participación del federado (shared_prefs/federado.xml) no sale del
-   teléfono: es una credencial, y con él cualquiera puede mandar ajustes a nombre de la
-   persona. Queda pendiente decidir qué más excluir (auditoría, TL-C2).
+   Android 12+. allowBackup="false" apaga el backup en la nube, pero no la transferencia
+   directa entre dispositivos al cambiar de teléfono: esa se deja (es la misma persona y
+   sus propias tomas), salvo el código del federado (shared_prefs/federado.xml), que es
+   una credencial. La regla de cloud-backup queda por si algún día se vuelve a activar.
 -->
 <data-extraction-rules>
     <cloud-backup>

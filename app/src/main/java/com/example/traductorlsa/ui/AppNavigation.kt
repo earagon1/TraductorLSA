@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.traductorlsa.Cuenta
 import com.example.traductorlsa.ui.screens.AboutScreen
 import com.example.traductorlsa.ui.screens.FederadoScreen
 import com.example.traductorlsa.ui.screens.AuthEntryScreen
@@ -148,9 +149,12 @@ fun AppNavHost(navController: NavHostController) {
 
             LaunchedEffect(terminoLaPresentacion, clerkListo, usuaria, seAgotoLaEspera) {
                 if (!terminoLaPresentacion) return@LaunchedEffect
-                if (!clerkListo && !seAgotoLaEspera) return@LaunchedEffect
+                // Sin cuenta, Clerk no se inicializa (Cuenta.kt): no hay a quién esperar.
+                val esperaClerk = Cuenta.usaCuenta(context) != false
+                if (esperaClerk && !clerkListo && !seAgotoLaEspera) return@LaunchedEffect
 
                 val haySesion = usuaria != null
+                if (clerkListo) Cuenta.recordarSiHaceFalta(context, haySesion)
 
                 // Quien ya tiene sesion abierta paso por la presentacion antes de
                 // que existiera esta marca: al actualizar la app no corresponde
@@ -306,6 +310,9 @@ fun AuthClerkScreen(navController: NavHostController) {
 
     val context = LocalContext.current
     val estadoDeEntrada = remember(context) { EstadoDeEntrada.de(context) }
+
+    // Llegar acá es elegir la cuenta: recién ahora se inicializa Clerk (Cuenta.kt).
+    LaunchedEffect(Unit) { Cuenta.activar(context) }
 
     // Cuando Clerk está listo y hay usuaria, sale del flujo de acceso: al inicio
     // si ya vio el tutorial, y si no, al tutorial primero.
