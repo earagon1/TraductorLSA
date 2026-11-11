@@ -119,7 +119,7 @@ La ejecución local permite reducir la dependencia de conectividad, mejorar la d
 La traducción de señas y la transcripción de voz no usan la red. La aplicación tiene, sin embargo, dos funciones que sí se comunican, ambas opcionales y fuera del uso de traducción:
 
 \begin{itemize}
-    \item \textbf{Cuenta de usuario.} El modo de entrenamiento requiere iniciar sesión, mediante el servicio de autenticación Clerk, para asociar las tomas a un seudónimo estable de la persona. La traducción y el diccionario se pueden usar sin cuenta.
+    \item \textbf{Cuenta de usuario.} El modo de entrenamiento requiere iniciar sesión, mediante el servicio de autenticación Clerk, para asociar las tomas a un seudónimo estable de la persona. La traducción y el diccionario se pueden usar sin cuenta. El servicio de autenticación solo se inicializa si la persona eligió usar una cuenta, de modo que en el modo invitado la aplicación no se conecta a ningún servidor. La aplicación tampoco se incluye en las copias de seguridad en la nube del sistema, para que las tomas y la sesión no salgan del dispositivo sin una acción explícita de la persona.
     \item \textbf{Aprendizaje federado.} La pantalla correspondiente se comunica con un servidor de la red local, y solo cuando la persona lo solicita explícitamente (Capítulo~\ref{cap:federado}).
 \end{itemize}
 
