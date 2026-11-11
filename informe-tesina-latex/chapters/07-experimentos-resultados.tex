@@ -51,7 +51,7 @@ La Tabla~\ref{tab:por-persona} detalla el acierto por persona y la Tabla~\ref{ta
         P3 & 24,0 & 68,9 \\
         \bottomrule
     \end{tabular}
-    \caption{Acierto por persona: modelo original frente a validación con persona no vista.}
+    \caption{Acierto por persona: modelo original frente a validación con persona no vista. El modelo original se entrenó con la cámara web de P1, por lo que su 39,6\,\% con P1 no corresponde a una persona nueva; con P2 y P3, que nunca vio, acierta el 21,9 y el 24,0\,\%. En la persona no vista, al excluir a P1 también se excluyen las 1091 tomas de cámara web: su pliegue entrena con 212 tomas, frente a unas 1300 en los otros dos, y su 60,0\,\% mezcla el efecto de la persona con el del tamaño del entrenamiento.}
     \label{tab:por-persona}
 \end{table}
 
@@ -227,6 +227,8 @@ La simulación entrena de forma federada solo la cabeza del modelo (la parte fin
     \caption{Aprendizaje federado simulado con una persona excluida (cinco semillas; el $\pm$ es sobre los quince pares de persona y semilla).}
     \label{tab:federado-simulado}
 \end{table}
+
+El modelo del servidor, del que parten todas las configuraciones, se entrenó solo con la cámara web, es decir, con tomas de P1. Por eso, sin federar, acierta el 60,9\,\% con P1 y el 42,8 y 36,6\,\% con P2 y P3: en esa fila, y en el punto de partida de las demás, P1 no es una persona nueva. Las configuraciones federadas quedan entre 66,8 y 67,7\,\% para cada una de las tres personas, por lo que la ventaja inicial de P1 no se traslada al resultado final.
 
 FedAvg queda a 0,4 puntos del entrenamiento centralizado y alcanza el 95\,\% de ese techo en unas 10 rondas. Cuantizar las actualizaciones a 8 bits reduce la subida total de 4,24\,MB a 1,06\,MB sin pérdida de acierto. La personalización de un usuario nuevo con su primera tanda de tomas mejora 4,1 puntos en promedio, y mejora a las tres personas (7,2, 1,4 y 3,8 puntos); la de un miembro ya representado, 0,9 puntos (3,4, $-1{,}7$ y 1,0). Con solo tres personas, ninguna de las dos diferencias es estadísticamente significativa: la prueba $t$ pareada sobre la media de cada persona da $p = 0{,}14$ y $p = 0{,}60$. Las semillas no se tratan como observaciones independientes, porque repiten a las mismas personas.
 

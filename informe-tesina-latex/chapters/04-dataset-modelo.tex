@@ -15,7 +15,7 @@ El conjunto de datos reúne dos fuentes:
 
 \begin{itemize}
     \item \textbf{Cámara web}: 1200 tomas grabadas por la autora con la cámara web de una computadora, cien por seña. Se conservan las imágenes de cada cuadro, lo que permitió volver a extraer los landmarks con el mismo extractor que utiliza la aplicación. De ellas, 109 tomas quedaron con menos de cinco cuadros con manos detectadas y se excluyeron, por lo que se utilizan 1091.
-    \item \textbf{Sesiones de captura con dispositivos móviles}: 449 tomas de tres personas, grabadas con la propia aplicación en dos sesiones: 318 en la sesión~1 (condición estándar) y 131 en la sesión~2 (condiciones adversas).
+    \item \textbf{Sesiones de captura con dispositivos móviles}: 449 tomas de tres personas, grabadas con la propia aplicación en dos sesiones: 318 en la sesión~1 (condición estándar) y 131 en la sesión~2 (condiciones adversas). En adelante se las identifica como P1, P2 y P3. P1 es la autora, la misma persona que grabó las tomas de cámara web; por eso, en las evaluaciones con modelos entrenados con la cámara web, P1 no es una persona nueva.
 \end{itemize}
 
 Las tomas de la cámara web son de una sola persona y se grabaron en secuencia, cien repeticiones de cada seña seguidas. Por eso resultan muy parecidas entre sí, y esa similitud es la que explica que el esquema de validación estratificado sobreestime el desempeño (Sección~\ref{sec:res-escenarios}).
