@@ -76,7 +76,6 @@ import com.example.traductorlsa.detection.trackerDesdeConfig
 import com.example.traductorlsa.settings.ajustesSenar
 import com.example.traductorlsa.settings.repositorioAjustes
 import com.example.traductorlsa.features.FeatureBuilderImpl
-import com.example.traductorlsa.features.SequenceBufferImpl
 import com.example.traductorlsa.ml.CLASE_NADA
 import com.example.traductorlsa.ml.GestureEngine
 import com.example.traductorlsa.ml.LabelProviderImpl
@@ -335,7 +334,6 @@ fun CameraScreen(
         TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, config) }
     }
     val featureBuilder = remember { FeatureBuilderImpl() }
-    val sequenceBuffer = remember { SequenceBufferImpl() }
     val labelProvider = remember { LabelProviderImpl(context) }
     val classifier = remember { TFLiteClassifier(context, labelProvider) }
     val speechManager = remember { SpeechManager(context) }
@@ -344,7 +342,6 @@ fun CameraScreen(
         GestureEngine(
             handTracker = handTracker,
             featureBuilder = featureBuilder,
-            sequenceBuffer = sequenceBuffer,
             classifier = classifier,
             labelProvider = labelProvider
         )

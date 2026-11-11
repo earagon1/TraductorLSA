@@ -1,58 +1,29 @@
 # Directorio `features/`
 
-Este paquete contiene las clases responsables de **procesar y estructurar los landmarks** detectados por MediaPipe, para que el modelo de TensorFlow Lite pueda clasificarlos correctamente.
+De los landmarks de MediaPipe a la entrada del modelo, y los puntos para dibujar.
 
----
+## Archivos
 
-## **Archivos**
+### `ContratoV2.kt`: la entrada del modelo
+El contrato de features v2 (`contract/features_v2.md`), la misma cuenta que
+`modelo_LSA/lsa/contrato.py`, verificada por `ContratoV2Test` contra los casos de
+`contract/fixtures/paridad_features_v2.json`. Lo usan **todos** los caminos que arman
+una secuencia: la traducción en vivo (`ml/GestureEngine`), el federado y la
+personalización. Así lo que clasifica la app es exactamente lo que vio el entrenamiento.
 
-### **1. `FeatureBuilder.kt`**
-Convierte los resultados crudos de MediaPipe en datos útiles para:
-- Dibujar las manos en pantalla.
-- Alimentar el modelo de clasificación.
+- `frameAVector(manos, ancho, alto)`: el vector de 126 de un frame (lateralidad con
+  desempate por score, corrección a lienzo cuadrado, ceros en la mano que falta).
+- `remuestrear(secuencia)`: n frames a 15 (interpolación si n < 15, `floor(i·n/15)` si n > 15).
+- `secuenciaDesdeFrames(frames, ancho, alto)`: el camino completo desde los crudos.
 
-**Funciones principales:**
-- **`toOverlayPoints(res, rotationDeg)`**  
-  - Devuelve una lista de puntos normalizados (`NormPoint`) para cada mano.
-  - Se usa en la UI para dibujar los landmarks sobre el preview de la cámara.
-- **`toVector126(res, isFrontCamera, rotationDeg)`**  
-  - Devuelve un vector de **126 valores** (`FloatArray`):  
-    - 63 valores para la mano izquierda (21 puntos × 3 coordenadas x,y,z).
-    - 63 valores para la mano derecha.
-  - Ajusta los datos según la orientación de la cámara (frontal o trasera) para mantener consistencia.
+### `FeatureBuilder.kt`: el overlay
+`toOverlayPoints(res, rotationDeg)` devuelve los puntos de cada mano para dibujarlos
+sobre el preview.
 
----
-
-### **2. `SequenceBuffer.kt`**
-Administra la **secuencia temporal de frames** de landmarks, preparando la entrada del modelo para la inferencia.
-
-**Funciones principales:**
-- **`push(frame)`**  
-  - Agrega un frame (vector de 126 valores) al buffer.
-  - Mantiene un máximo de 30 frames en memoria.
-- **`recent(n)`**  
-  - Devuelve los últimos `n` frames capturados.
-- **`clear()`**  
-  - Limpia el buffer.
-- **`normalizeTo(seq, targetT, D)`**  
-  - Ajusta cualquier secuencia a un tamaño fijo (`targetT`, normalmente 15 frames).  
-  - Si hay menos frames:
-    - Interpola suavemente para rellenar.
-  - Si hay más frames:
-    - Salta frames proporcionalmente para reducir la secuencia.
-  - Garantiza que el vector final tenga la forma `[targetT, D]`.
-
----
-
-## **Relación con otros módulos**
-- `FeatureBuilder` es llamado desde `GestureEngine` (paquete `ml/`) para preparar:
-  - El overlay de la interfaz.
-  - El vector de 126 valores usado en la predicción.
-- `SequenceBuffer` mantiene y normaliza las secuencias temporales que luego usa el clasificador (`TFLiteClassifier`).
-
----
-
-## **Notas técnicas**
-- El vector de 126 valores es el formato de entrada requerido por el modelo entrenado.
-- El buffer temporal asegura que las secuencias sean consistentes en longitud y orden temporal, algo crítico para modelos LSTM.
-- El log de depuración (`FeatureBuilder`) ayuda a verificar la orientación de las manos y el correcto ordenamiento de datos.
+## Por qué no hay otro camino
+Hasta el 2026-11-10, la traducción en vivo armaba la secuencia con su propio código
+(`FeatureBuilder.toVector126` + `SequenceBuffer.normalizeTo`). Ese código difería del
+contrato en dos casos: con 20 frames, el remuestreo acumulaba el paso en double y tomaba
+otro frame, y con dos manos de la misma etiqueta pisaba una y dejaba la otra mano en
+ceros. Ninguna precisión medida en vivo con ese camino es comparable con el entrenamiento
+(auditoría, X1). Se borró: no tiene que volver a existir una segunda implementación.

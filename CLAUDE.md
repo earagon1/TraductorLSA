@@ -18,8 +18,8 @@ cualquier cambio que agregue red, nube, cuentas o telemetría remota necesita su
 ```
 CameraX (ImageAnalysis) → YuvToRgbConverter (YUV→JPEG→Bitmap) → GestureEngine.process
   → rotación 90/270 a Bitmap "arriba" → HandTracker (MediaPipe HandLandmarker, IMAGE, hand_landmarker.task)
-  → FeatureBuilder.toVector126 (lh[63] ‖ rh[63], corrección a lienzo cuadrado)
-  → SequenceBuffer (captura de 10/15/20 frames según los FPS → normalizeTo 15)
+  → captura de 10/15/20 frames crudos según los FPS (solo frames con mano)
+  → ContratoV2.secuenciaDesdeFrames (lh[63] ‖ rh[63], lienzo cuadrado, remuestreo a 15): la misma cuenta que el entrenamiento
   → TFLiteClassifier (actions_15_opt.tflite sin ops Flex, 15×126 → C) + LabelProvider (words.json)
   → top-3 → UI (CameraScreen) + SpeechManager (TTS)
 ```

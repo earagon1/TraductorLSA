@@ -9,18 +9,24 @@ import com.example.traductorlsa.dataset.ManoCruda
 import com.example.traductorlsa.detection.ComparacionLandmarks
 import com.example.traductorlsa.detection.HandTracker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
+import com.example.traductorlsa.features.ContratoV2
 import com.example.traductorlsa.features.FeatureBuilder
-import com.example.traductorlsa.features.SequenceBuffer
 import com.example.traductorlsa.model.NormPoint
 import com.example.traductorlsa.model.PredictionResult
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import android.os.Trace
 
 
+/**
+ * La secuencia que se clasifica se arma con [ContratoV2] desde los landmarks crudos de la
+ * captura: la misma cuenta, verificada contra Python, que usó el entrenamiento y que usan
+ * el federado y la personalización. Antes la traducción en vivo usaba su propio camino
+ * (FeatureBuilder.toVector126 + SequenceBuffer.normalizeTo), que difería del contrato con
+ * 20 frames (remuestreo) y con dos manos de la misma etiqueta (perdía una): auditoría X1.
+ */
 class GestureEngine(
     private val handTracker: HandTracker,
     private val featureBuilder: FeatureBuilder,
-    private val sequenceBuffer: SequenceBuffer,
     private val classifier: TFLiteClassifier,
     private val labelProvider: LabelProvider
 ) {
@@ -58,6 +64,7 @@ class GestureEngine(
 
     private var captureStartTime: Long = 0
 
+    @Volatile
     private var isFrontCamera = true
 
     private val acumulador = AcumuladorCaptura()
@@ -89,6 +96,15 @@ class GestureEngine(
      * es igual la rotación original de la cámara, que se guarda en la muestra v2.
      */
     fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long, convNanos: Long = 0L, yaDerecho: Boolean = false) {
+        if (reiniciarCaptura) {
+            // Pedido desde otro hilo (setCameraFacing): se aplica acá, en el de la cámara,
+            // que es el único que toca framesCrudos.
+            reiniciarCaptura = false
+            framesCrudos.clear()
+            state = CaptureState.IDLE
+            handFrames = 0
+            noHandFrames = 0
+        }
         // ============================================================
         // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
         val t0 = System.nanoTime()
@@ -166,7 +182,6 @@ class GestureEngine(
                     noHandFrames = 0
                     if (ts - waitStartTime >= 500) {
                         captureStartTime = ts
-                        sequenceBuffer.clear()
                         acumulador.limpiar()
                         framesCrudos.clear()
                         rotacionCaptura = rotationDeg
@@ -180,19 +195,14 @@ class GestureEngine(
             CaptureState.CAPTURING -> {
                 if (hasHands) {
                     Trace.beginSection("senar:feat")
-                    // isFrontCamera=false es intencional: el frame llega sin espejar y
-                    // la etiqueta de HandLandmarker ya corresponde a la mano del sujeto.
-                    // Medido el 2026-10-05/07 en la PC y en la tablet: coincide con el
-                    // entrenamiento (contract/features_v2.md, regla 3).
-                    val vec = featureBuilder.toVector126(
-                        res,
-                        false,
-                        0,
-                        correctedBitmap.width,
-                        correctedBitmap.height
-                    )
-                    sequenceBuffer.push(vec)
-                    framesCrudos.add(FrameCrudo(ts - captureStartTime, manosCrudas(res)))
+                    // El frame llega sin espejar y la etiqueta de HandLandmarker ya es la
+                    // mano del sujeto ("Left" → lh), aunque la cámara sea la frontal. Medido
+                    // el 2026-10-05/07 en la PC y en la tablet (contract/features_v2.md,
+                    // regla 3). El vector de este frame solo se usa para las métricas: la
+                    // secuencia se arma al final, desde los crudos.
+                    val manos = manosCrudas(res)
+                    framesCrudos.add(FrameCrudo(ts - captureStartTime, manos))
+                    val vec = ContratoV2.frameAVector(manos, correctedBitmap.width, correctedBitmap.height)
                     Trace.endSection()
                     val t3 = System.nanoTime()
 
@@ -203,7 +213,7 @@ class GestureEngine(
                         )
                     }
 
-                    val size = sequenceBuffer.recent(targetFrames).size
+                    val size = framesCrudos.size
                     onCaptureProgress?.invoke(size, targetFrames)
 
                     if (size >= targetFrames) {
@@ -220,7 +230,7 @@ class GestureEngine(
                         Log.d("GestureEngine", "✅ Captura: ${captureDuration}ms, FPS=%.1f, nuevo target=$newTarget".format(fps))
                         onCaptureStats?.invoke(captureDuration, 0, fps, newTarget)
 
-                        ultimaCaptura = CapturaCruda(
+                        val captura = CapturaCruda(
                             frames = framesCrudos.takeLast(targetUsado),
                             anchoImg = correctedBitmap.width,
                             altoImg = correctedBitmap.height,
@@ -229,14 +239,13 @@ class GestureEngine(
                             fps = fps,
                             duracionMs = captureDuration,
                         )
+                        ultimaCaptura = captura
 
-                        // Se clasifican los frames capturados con el target de ESTA
-                        // captura. Antes se pedía recent(targetFrames) después de
-                        // actualizarlo: si el target bajaba de 15 a 10 se clasificaban
-                        // solo los últimos 10 frames de los 15 capturados.
-                        val (top3, inferNanos) = autoPredict(targetUsado)
+                        // Se clasifica exactamente lo que se guarda como muestra: los
+                        // frames de ESTA captura, con su target (antes se pedía el target
+                        // ya actualizado, y si bajaba de 15 a 10 se perdían 5 frames).
+                        val (top3, inferNanos) = autoPredict(captura)
                         emitirMetricas("captura", captureDuration, fps, targetUsado, size, inferNanos, top3)
-                        sequenceBuffer.clear()
                         onCaptureProgress?.invoke(0, targetFrames)
                         esperaSinManos.reiniciar(ts)
                         state = CaptureState.DONE
@@ -245,11 +254,11 @@ class GestureEngine(
                     Log.d("GestureEngine", "⏹️ Manos perdidas en CAPTURING → volver a IDLE")
                     // Las capturas abortadas también se reportan: en la tablet fueron
                     // el 35 % y son parte de la experiencia de uso.
-                    val parcial = sequenceBuffer.recent(targetFrames).size
+                    val parcial = framesCrudos.size
                     val duracion = ts - captureStartTime
                     val fpsParcial = if (duracion > 0) parcial * 1000f / duracion else 0f
                     emitirMetricas("abortada", duracion, fpsParcial, targetFrames, parcial, null, emptyList())
-                    sequenceBuffer.clear()
+                    framesCrudos.clear()
                     onCaptureProgress?.invoke(0, 15)
                     state = CaptureState.IDLE
                 }
@@ -270,16 +279,15 @@ class GestureEngine(
     }
 
     /**
-     * Clasifica los últimos [nFrames] frames capturados. Devuelve el top-3 (etiqueta,
-     * probabilidad) y los nanosegundos de inferencia, para las métricas.
+     * Clasifica la captura. Devuelve el top-3 (etiqueta, probabilidad) y los nanosegundos
+     * de inferencia, para las métricas.
      */
-    private fun autoPredict(nFrames: Int): Pair<List<Pair<String, Float>>, Long?> {
-        val T = classifier.T
-        val D = classifier.D
-        val recent = sequenceBuffer.recent(nFrames)
-        if (recent.isEmpty()) return emptyList<Pair<String, Float>>() to null
-
-        val seqT = sequenceBuffer.normalizeTo(recent, T, D)
+    private fun autoPredict(captura: CapturaCruda): Pair<List<Pair<String, Float>>, Long?> {
+        check(classifier.T == ContratoV2.T && classifier.D == ContratoV2.D) {
+            "el modelo espera (${classifier.T}, ${classifier.D}) y el contrato arma (${ContratoV2.T}, ${ContratoV2.D})"
+        }
+        val seqT = ContratoV2.secuenciaDesdeFrames(captura.frames.map { it.manos }, captura.anchoImg, captura.altoImg)
+            ?: return emptyList<Pair<String, Float>>() to null
 
         Trace.beginSection("senar:infer")
         val startInfer = System.nanoTime()
@@ -348,49 +356,12 @@ class GestureEngine(
     }
 
 
-    /*fun forcePrediction() {
-        val T = classifier.T
-        val D = classifier.D
-        val recent = sequenceBuffer.recent(15)
-        if (recent.isEmpty()) {
-            onPrediction?.invoke(PredictionResult("Sin datos", 0f, "Unknown"))
-            return
-        }
+    @Volatile
+    private var reiniciarCaptura = false
 
-        val handsUsed = mutableSetOf<String>()
-        recent.forEach { frame ->
-            val lh = frame.slice(0..62).count { it != 0f }
-            val rh = frame.slice(63..125).count { it != 0f }
-            if (lh > 0) handsUsed.add("Left")
-            if (rh > 0) handsUsed.add("Right")
-        }
-        val handedness = when {
-            handsUsed.containsAll(setOf("Left","Right")) -> "Both"
-            handsUsed.contains("Right") -> "Right"
-            handsUsed.contains("Left") -> "Left"
-            else -> "Unknown"
-        }
-
-        val seqT = sequenceBuffer.normalizeTo(recent, T, D)
-      //  val (idx, prob) = classifier.infer(seqT, labelProvider.labels)
-        val (idx, prob, probs) = classifier.inferTop(seqT, labelProvider.labels)
-
-
-
-        val gesture = labelProvider.labels.getOrNull(idx) ?: "Unknown"
-        onPrediction?.invoke(PredictionResult(gesture, prob, handedness))
-    }*/
-
+    /** Se llama desde la UI: la captura en curso se descarta en el próximo frame. */
     fun setCameraFacing(isFront: Boolean) {
         isFrontCamera = isFront
-        sequenceBuffer.clear()
+        reiniciarCaptura = true
     }
-
-    /*fun release() {
-        handTracker.close()
-        classifier.close()
-        sequenceBuffer.clear()
-        onHands = null
-        onPrediction = null
-    }*/
 }
