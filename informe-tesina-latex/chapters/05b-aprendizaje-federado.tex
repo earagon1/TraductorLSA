@@ -1,7 +1,7 @@
 \chapter{Aprendizaje federado}
 \label{cap:federado}
 
-Este capítulo describe el esquema de aprendizaje federado incorporado al prototipo: su arquitectura, el protocolo de comunicación, el entrenamiento en el dispositivo y las medidas de protección de las actualizaciones. Los resultados se presentan en la Sección~\ref{sec:res-federado}.
+Este capítulo describe el esquema de aprendizaje federado incorporado al prototipo: su arquitectura, el protocolo de comunicación, el entrenamiento en el dispositivo, las medidas de protección de las actualizaciones y la seguridad de la comunicación. Los resultados se presentan en la Sección~\ref{sec:res-federado}.
 
 \section{Motivación y alcance}
 
@@ -36,7 +36,7 @@ La Figura~\ref{fig:arquitectura-federado} resume la arquitectura y lo que circul
     % Servidor (columna izquierda) y dispositivo (columna derecha), con posiciones fijas
     % para que las flechas queden horizontales.
     \node[caja, text width=3.7cm] (cabeza) at (0,0) {Cabeza global $w_r$};
-    \node[caja, text width=3.7cm] (agregacion) at (0,-1.35) {Límite a la norma\\ y FedAvg};
+    \node[caja, text width=3.7cm] (agregacion) at (0,-1.35) {Límite, tope\\ y agregación};
     \node[caja, text width=3.7cm] (control) at (0,-2.7) {Control de calidad\\ (prueba fija)};
     \node[caja, text width=3.7cm] (paquetes) at (0,-4.05) {Reentrenamiento y\\ paquetes versionados};
     \begin{scope}[on background layer]
@@ -59,7 +59,7 @@ La Figura~\ref{fig:arquitectura-federado} resume la arquitectura y lo que circul
     \draw[flecha, dashed] (disp.west |- 0,-3.0) -- node[etiqueta, above=1pt] {Opcional: puntos de las manos} (servidor.east |- 0,-3.0);
     \draw[flecha] (servidor.east |- 0,-4.05) -- node[etiqueta, above=1pt] {Paquete nuevo del modelo} (disp.west |- 0,-4.05);
 \end{tikzpicture}
-\caption{Arquitectura del esquema federado. Las flechas continuas son el ciclo de una ronda y la distribución de modelos; la discontinua, el aporte opcional de tomas para el reentrenamiento completo. Las imágenes nunca salen del dispositivo.}
+\caption{Arquitectura del esquema federado. Las flechas continuas son el ciclo de una ronda y la distribución de modelos; la discontinua, el aporte opcional de tomas para el reentrenamiento completo. Toda la comunicación viaja cifrada, y los envíos al servidor llevan el código de participación de la persona (Sección~\ref{sec:seguridad-federado}). Las imágenes nunca salen del dispositivo.}
 \label{fig:arquitectura-federado}
 \end{figure}
 
@@ -71,10 +71,11 @@ Cada ronda $r$ sigue estos pasos:
     \item Cada dispositivo descarga la cabeza vigente $w_r$ y verifica su integridad mediante un resumen SHA-256.
     \item Entrena la cabeza durante dos épocas con sus propias tomas y calcula la actualización $\Delta_k = w_k - w_r$.
     \item Cuantiza $\Delta_k$ a 8 bits y la envía al servidor junto con la cantidad de tomas $n_k$ utilizadas. Las tomas no salen del dispositivo.
-    \item Cuando se reúne la cantidad mínima de participantes, o vence el plazo de la ronda, el servidor combina las actualizaciones mediante el promedio ponderado de FedAvg:
+    \item Cuando se reúne la cantidad mínima de participantes, o vence el plazo de la ronda, el servidor combina las actualizaciones. Por defecto utiliza el promedio ponderado de FedAvg:
     \begin{equation}
         w_{r+1} = w_r + \sum_{k} \frac{n_k}{n}\,\Delta_k, \qquad n = \sum_k n_k.
     \end{equation}
+    Como alternativas configurables, el servidor ofrece las combinaciones robustas y la privacidad diferencial descriptas en la Sección~\ref{sec:proteccion-federado}.
     \item El servidor evalúa $w_{r+1}$ sobre un conjunto de prueba fijo y la publica solo si su acierto no baja más de un punto respecto de $w_r$.
     \item Cada dispositivo descarga la nueva cabeza al buscar una actualización.
 \end{enumerate}
@@ -82,6 +83,7 @@ Cada ronda $r$ sigue estos pasos:
 El conjunto de prueba fijo está formado por el 15\,\% de las tomas de los dispositivos, estratificado por seña. Esas tomas no se utilizan para entrenar ni en el servidor ni en los dispositivos: el servidor publica sus identificadores y la aplicación las excluye.
 
 \section{Compresión y protección de las actualizaciones}
+\label{sec:proteccion-federado}
 
 \subsection{Cuantización a 8 bits}
 
@@ -96,6 +98,36 @@ La propuesta plantea limitar la magnitud de las actualizaciones para evitar que 
     \Delta_k \leftarrow \Delta_k \cdot \min\left(1, \frac{L}{\lVert \Delta_k \rVert_2}\right).
 \end{equation}
 Se adoptó $L = 2{,}0$, tres veces la mediana de las actualizaciones honestas medidas con las tres personas.
+
+\subsection{Tope al peso de cada dispositivo}
+
+El límite acota cuánto se mueve una actualización, pero no cuánto pesa en el promedio. En FedAvg el peso es la cantidad de tomas $n_k$, y ese valor lo declara el propio dispositivo: uno que declare un millón de tomas se queda con casi todo el promedio. El servidor rechaza los valores que no son enteros positivos y recorta el peso a un máximo de 2000 tomas, registrando lo declarado. El tope solo frena el caso extremo: con 2000, un dispositivo atacante frente a dos honestos de unas cien tomas sigue pesando el 90\,\% del promedio (Sección~\ref{sec:res-ataques}).
+
+\subsection{Agregación robusta}
+
+Como alternativa a FedAvg, el servidor puede combinar las actualizaciones con estrategias que toleran participantes maliciosos. Ninguna de ellas utiliza $n_k$, precisamente porque es un valor declarado:
+
+\begin{itemize}
+    \item \textbf{Mediana por coordenada}~\cite{yin2018byzantine}: cada valor de la actualización combinada es la mediana de los valores de los dispositivos. Con tres dispositivos y un atacante, siempre resulta un valor honesto; con dos, coincide con la media y no ofrece protección.
+    \item \textbf{Media recortada}~\cite{yin2018byzantine}: por coordenada, se descarta una fracción $\beta$ de los valores más altos y de los más bajos, y se promedia el resto.
+    \item \textbf{Krum y Multi-Krum}~\cite{blanchard2017krum}: se elige la actualización completa más cercana a sus vecinas, o el promedio de las $m$ más cercanas. Tolera $f$ atacantes solo si participan al menos $2f + 3$ dispositivos, por lo que no puede utilizarse en un piloto de dos o tres dispositivos; el servidor no la acepta con un quórum insuficiente.
+\end{itemize}
+
+Las tres estrategias se aplican después del límite a la norma, en el mismo orden que el servidor procesa cada actualización. La estrategia por defecto sigue siendo FedAvg, porque las robustas tratan igual a un dispositivo con pocas tomas que a uno con muchas.
+
+\subsection{Privacidad diferencial central}
+
+La privacidad diferencial acota cuánto puede revelar el modelo publicado sobre la participación de una persona. Siguiendo el esquema DP-FedAvg~\cite{mcmahan2018dp}, el servidor puede recortar cada actualización a una norma $C$, promediarlas sin ponderar y sumar al promedio ruido gaussiano:
+\begin{equation}
+    w_{r+1} = w_r + \frac{1}{K}\sum_{k=1}^{K} \Delta_k \cdot \min\left(1, \frac{C}{\lVert \Delta_k \rVert_2}\right) + \mathcal{N}\!\left(0, \left(\frac{z\,C}{K}\right)^{2} I\right),
+\end{equation}
+donde $K$ es la cantidad de dispositivos de la ronda y $z$ el multiplicador de ruido. El promedio no se pondera por $n_k$: si lo hiciera, la sensibilidad dependería de un valor que declara el dispositivo y la garantía dejaría de valer.
+
+El gasto de privacidad se calcula a nivel de persona, considerando que todas participan en cada ronda, mediante la privacidad diferencial concentrada (zCDP)~\cite{bun2016zcdp}. Cada ronda es $\rho_1 = 1/(2z^2)$-zCDP, las rondas se suman, y $R$ rondas equivalen a $(\varepsilon, \delta)$-privacidad diferencial con
+\begin{equation}
+    \varepsilon = \rho + 2\sqrt{\rho \ln(1/\delta)}, \qquad \rho = \frac{R}{2z^2},
+\end{equation}
+con $\delta = 10^{-5}$. El servidor contabiliza cada ronda agregada, se publique o no, y conserva el total entre reinicios. La cota es simple: con un muestreo de dispositivos por ronda se obtendrían valores de $\varepsilon$ menores, pero en este esquema no hay muestreo.
 
 \subsection{Rotación aleatoria}
 
@@ -117,8 +149,30 @@ FedAvg produce un modelo para el conjunto de los participantes. Para adaptarlo a
 
 En las rondas solo sale del dispositivo la actualización cuantizada de la cabeza y la cantidad de tomas utilizadas. El aporte de tomas para el reentrenamiento completo es una opción separada que requiere consentimiento explícito y envía solo las coordenadas de los puntos de las manos. La traducción de señas no utiliza la red en ningún caso.
 
-En la versión de depuración utilizada para el piloto, la comunicación con el servidor se realiza por HTTP sin cifrar dentro de la red local; la versión de distribución bloquea ese tráfico. La comunicación cifrada, la agregación segura y la privacidad diferencial quedan como trabajo futuro.
+Una actualización no contiene las tomas, pero puede revelar información sobre ellas. La privacidad diferencial central acota esa filtración, aunque con pocos dispositivos el ruido necesario impide obtener un modelo útil (Sección~\ref{sec:res-privacidad}). La agregación segura, en la que el servidor solo ve la suma de las actualizaciones, queda como trabajo futuro.
+
+\section{Seguridad de la comunicación}
+\label{sec:seguridad-federado}
+
+\subsection{Cifrado con huella de la clave}
+
+La comunicación entre la aplicación y el servidor viaja cifrada con TLS. Como el servidor funciona en una red local, no dispone de un nombre de dominio para obtener un certificado firmado por una autoridad, y su dirección cambia con cada red. Por eso utiliza un certificado autofirmado, y la aplicación no confía en autoridades sino en la huella de la clave pública del servidor: el resumen SHA-256 de su información de clave pública.
+
+La primera vez que la aplicación se conecta a una dirección, solo establece el saludo inicial de TLS, obtiene la huella y la muestra en pantalla, sin enviar ningún pedido. La persona la compara con la que el servidor imprime al arrancar y, si coinciden, la confirma. A partir de ese momento, la aplicación rechaza cualquier servidor con otra clave, aunque la dirección sea la misma. La huella no depende de la dirección, por lo que se mantiene cuando cambia la red. Como el código de participación viajaría en claro, la aplicación ya no admite conexiones sin cifrar en ninguna versión.
+
+\subsection{Códigos de participación}
+
+Para que un dispositivo no pueda enviar actualizaciones o tomas a nombre de otra persona, cada participante recibe un código de dieciséis caracteres, que se genera en el servidor a partir del identificador seudónimo que muestra la aplicación. El servidor guarda solo el resumen del código, y la aplicación lo envía en cada envío. El servidor deduce del código quién envía: si falta o no es válido, rechaza el envío, y si el identificador declarado en el contenido no coincide con el del código, también. Las descargas del modelo no requieren código, porque el modelo no es información reservada.
+
+La verificación del código está separada del resto del servidor. En un despliegue en la nube, podría reemplazarse por la verificación de la sesión de la cuenta de la persona sin modificar el resto del protocolo. El código se guarda en el almacenamiento privado de la aplicación y se excluye de las copias de seguridad en la nube.
+
+Además, el servidor valida la estructura completa de las tomas aportadas antes de guardarlas: las dimensiones de la imagen, la cantidad de manos por cuadro, la lateralidad, la confianza de la detección y que los 63 valores de cada mano sean números finitos.
 
 \section{Decisiones de implementación}
 
-La propuesta mencionaba TensorFlow Federated y Flower como marcos posibles. Se optó por una implementación propia, de unas pocas centenas de líneas, por dos motivos: TensorFlow Federated no ofrece versiones para Windows y es incompatible con la versión de TensorFlow utilizada, y el cliente de Flower para Android impone su propio formato de modelo, que no se ajusta al entrenamiento de la cabeza en Kotlin. La implementación propia se verificó contra una simulación de FedAvg en Python.
+La propuesta mencionaba TensorFlow Federated y Flower como marcos que permitirían ensayar la estrategia en Android. Se optó por una implementación propia, verificada contra una simulación de FedAvg en Python, por los siguientes motivos:
+
+\begin{itemize}
+    \item \textbf{TensorFlow Federated} es un entorno de simulación: no ofrece un componente que se ejecute en dispositivos Android, por lo que no permitía ensayar el esquema en teléfonos reales. Además, no ofrece versiones para Windows y es incompatible con la versión de TensorFlow utilizada.
+    \item \textbf{Flower} sí puede ejecutarse con dispositivos reales. Se comparó lo que aportaría frente a la implementación propia: combinaciones robustas, privacidad diferencial, comunicación cifrada y autenticación de participantes. A la escala del piloto, esas funciones se incorporaron a la implementación propia (Secciones~\ref{sec:proteccion-federado} y~\ref{sec:seguridad-federado}), con un esfuerzo menor que el de migrar el protocolo, el servidor y el cliente de la aplicación, y repetir los experimentos. Su ventaja aparece en un despliegue abierto en la nube, con muchos participantes desconocidos, que queda como trabajo futuro.
+\end{itemize}

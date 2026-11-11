@@ -16,7 +16,7 @@ El objetivo general del trabajo fue desarrollar y evaluar un prototipo de aplica
 
     \item \textbf{Captura de muestras y entrenamiento local.} Se cumplió. El modo de entrenamiento y la sesión guiada permitieron grabar todo el conjunto de datos de los dispositivos; solo una toma debió descartarse por no corresponder a la seña indicada. La cabeza de clasificación se entrena en el teléfono con una implementación propia, verificada contra TensorFlow, que se usa tanto en las rondas federadas como en la personalización.
 
-    \item \textbf{Esquema experimental de aprendizaje federado.} Se cumplió. El esquema promedia las actualizaciones de la cabeza con FedAvg, las cuantiza a 8 bits, limita su norma y solo distribuye un modelo nuevo si no empeora sobre un conjunto de prueba fijo. Cada actualización ocupa unos 13\,KB y se entrena en alrededor de una décima de segundo. El piloto con dos dispositivos reales mostró que el modelo compartido mejora para todas las personas, pero que la mejora propia de una persona nueva es pequeña; la personalización local la recupera en buena medida.
+    \item \textbf{Esquema experimental de aprendizaje federado.} Se cumplió. El esquema promedia las actualizaciones de la cabeza con FedAvg, las cuantiza a 8 bits, limita su norma y solo distribuye un modelo nuevo si no empeora sobre un conjunto de prueba fijo. Cada actualización ocupa unos 13\,KB y se entrena en alrededor de una décima de segundo. El piloto con dos dispositivos reales mostró que el modelo compartido mejora para todas las personas, pero que la mejora propia de una persona nueva es pequeña; la personalización local la recupera en buena medida. En condiciones no IID, colaborar elevó el acierto de un cliente aislado en 22 puntos. La comunicación viaja cifrada, cada participante se identifica con un código propio y el servidor ofrece agregación robusta y privacidad diferencial. La implementación es propia y no utiliza TensorFlow Federated ni Flower, por los motivos expuestos en el Capítulo~\ref{cap:federado}.
 
     \item \textbf{Evaluación.} Se cumplió. El modelo se evaluó con cinco esquemas de validación y cinco semillas, con la métrica de consistencia $\sigma$ planteada en la propuesta, en cuatro condiciones adversas y en seis dispositivos.
 \end{enumerate}
@@ -35,7 +35,7 @@ Más allá del cumplimiento de los objetivos, el trabajo deja tres conclusiones.
     \item Un prototipo funcional de traducción de LSA a texto y voz y de voz a texto, que procesa las señas y la voz en el dispositivo.
     \item Un conjunto de datos de landmarks de manos para doce señas de LSA, grabado con un protocolo explícito, con datos crudos y metadatos de sesión, condición y dispositivo.
     \item Un contrato de características compartido entre el entrenamiento y la aplicación, con casos de prueba que ambas implementaciones deben reproducir.
-    \item Un esquema de aprendizaje federado completo, con entrenamiento en el dispositivo, protección de las actualizaciones, control de calidad del modelo distribuido y personalización local, probado con dispositivos reales.
+    \item Un esquema de aprendizaje federado completo, con entrenamiento en el dispositivo, protección de las actualizaciones, comunicación cifrada con participantes identificados, control de calidad del modelo distribuido y personalización local, probado con dispositivos reales, y una evaluación de su robustez frente a participantes maliciosos y del costo de la privacidad diferencial.
     \item Una evaluación con validación por persona, métrica de consistencia, condiciones adversas y seis dispositivos, que permite ubicar el piso de hardware en un teléfono de gama baja de alrededor de 2019.
     \item Un registro de los problemas técnicos encontrados, incluidas las alternativas que se probaron y descartaron.
 \end{itemize}
@@ -50,6 +50,6 @@ Más allá del cumplimiento de los objetivos, el trabajo deja tres conclusiones.
     \item \textbf{Detección de dos manos.} Ajustar la captura para tolerar la pérdida momentánea de una mano en las señas de dos manos, que son las más afectadas en los dispositivos lentos.
     \item \textbf{Uso de $\sigma$ como señal de rechazo.} Como no requiere etiquetas, podría complementar el umbral de confianza para decidir cuándo no mostrar una predicción.
     \item \textbf{Vocabulario y reconocimiento continuo.} Ampliar el vocabulario, lo que el sistema admite sin cambios en la aplicación, y avanzar hacia el reconocimiento de frases.
-    \item \textbf{Aprendizaje federado a mayor escala.} Comunicación cifrada, agregación segura y evaluación con más dispositivos y rondas.
+    \item \textbf{Aprendizaje federado a mayor escala.} Un despliegue en la nube, con participantes que se identifiquen con su cuenta, agregación segura y evaluación con más dispositivos y rondas. A esa escala, la privacidad diferencial central se vuelve aplicable y conviene evaluar la migración a un marco como Flower, que reúne estas funciones para despliegues abiertos.
     \item \textbf{Interfaz para tabletas.} Una pantalla de cámara utilizable en orientación horizontal.
 \end{itemize}

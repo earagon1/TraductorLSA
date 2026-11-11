@@ -160,6 +160,15 @@ Carpetas auxiliares:
 - Compilación local (bash): `PATH=/c/Users/Evelin/AppData/Local/Programs/MiKTeX/miktex/bin/x64:$PATH`; `pdflatex main; bibtex main; pdflatex main; pdflatex main`.
 - Orden acordado con la autora: capítulo 8 (resultados, hecho), luego 4 (datos y modelo), 5 (diseño e implementación), 3 (metodología), 9 y 10 (discusión y conclusiones), y al final ajustar 1 y 2.
 
+## Sesión 2026-11-10 (Claude): robustez, privacidad y seguridad del federado
+
+- Fuente: `Tesis/plan/federado_robustez.md` (R1-R10) y `Tesis/plan/progreso.md`. Las cifras salen de `modelo_LSA/resultados_federado_robusto/2026-11-09/`, `resultados_federado_privacidad/2026-11-09/` y `federated/resultados_3clientes_2026-11-09/`.
+- Capitulo 5b: tope al peso $n_k$, agregacion robusta (mediana, media recortada, Krum), privacidad diferencial central (DP-FedAvg + zCDP), seccion nueva `sec:seguridad-federado` (TLS con huella de la clave + codigos de participacion) y decisiones de implementacion reescritas (TFF no corre en Android; Flower se evaluo y lo util a esta escala se implemento).
+- Capitulo 7 (resultados): `tab:federado-niid` (reparto IID y no IID con el piso correcto), ronda real por HTTPS, `sec:res-ataques` / `tab:ataques`, `sec:res-privacidad` / `tab:privacidad`.
+- Nuevas referencias: `yin2018byzantine`, `blanchard2017krum`, `mcmahan2018dp`, `bun2016zcdp`.
+- Discusion, conclusiones (objetivo 6, aportes, trabajo futuro), introduccion (descripcion del cap. 6) y metodologia actualizadas.
+- Sigue pendiente de la auditoria (fuera de esta sesion): la "fuga de 27 puntos" de los cap. 7-9 compara poblaciones distintas (en la misma poblacion son unos 14).
+
 ## Flujo de trabajo con Overleaf
 
 La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mantener sincronizacion automatica por Git.
@@ -296,10 +305,7 @@ Requisito de dos dispositivos/modos:
 
 Requisito de aprendizaje federado:
 
-- Aprendizaje federado es obligatorio y esta pendiente.
-- Debe definirse la arquitectura concreta: simulacion controlada, backend agregador, Flower, TensorFlow Federated u otra alternativa.
-- El modo entrenamiento y el archivo `lsa_samples.json` pueden servir como fuente de datos local, pero esto debe confirmarse tecnicamente.
-- Hasta implementarlo, no afirmar resultados de federado ni mejoras de precision.
+- Implementado y medido (ver las sesiones 2026-10-22 y 2026-11-10). Implementacion propia (servidor Python + cliente Kotlin), sin TensorFlow Federated ni Flower: la justificacion esta en el capitulo 5b, seccion "Decisiones de implementacion".
 
 Nota importante para redaccion:
 
@@ -309,7 +315,7 @@ Nota importante para redaccion:
 - El modo entrenamiento actual no reentrena el modelo en el telefono; recolecta muestras etiquetadas y permite exportarlas para trabajo posterior.
 - La propuesta original planteaba dos dispositivos Android complementarios, offline total, modelo LSTM, aprendizaje federado y metricas como accuracy, F1-score, matrices de confusion y consistencia estadistica. En el informe final, esos puntos deben validarse contra el codigo y las pruebas actuales.
 - Voz a texto debe presentarse como el segundo modo requerido para la perspectiva de la persona oyente.
-- Aprendizaje federado debe presentarse como requisito pendiente hasta que se implemente y valide.
+- Aprendizaje federado: implementado y validado con dispositivos reales (capitulo 5b y seccion de resultados).
 - Clerk, Lottie, onboarding, diccionario y otros agregados posteriores pueden mencionarse solo si aportan a explicar la app implementada. No deben desplazar el eje academico principal: accesibilidad, reconocimiento LSA, procesamiento local, dos modos y federado.
 
 Resultados preliminares mencionados en el README Android:
@@ -362,7 +368,6 @@ El commit inicial contiene:
 - Validar orientacion, mirroring y handedness antes de cerrar la descripcion tecnica.
 - Confirmar modelo final usado para demo y resultados.
 - Documentar condiciones de prueba antes de presentar metricas como resultados finales.
-- Definir e implementar aprendizaje federado.
 - Preparar diagrama del escenario con dos dispositivos usando la misma app en dos modos.
 - Preparar una tabla de trazabilidad entre propuesta aprobada, codigo actual, pendientes y agregados evolutivos.
 

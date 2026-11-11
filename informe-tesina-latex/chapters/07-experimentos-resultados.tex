@@ -225,6 +225,31 @@ La simulación entrena de forma federada solo la cabeza del modelo (la parte fin
 
 FedAvg queda a 0,4 puntos del entrenamiento centralizado y alcanza el 95\,\% de ese techo en unas 10 rondas. Cuantizar las actualizaciones a 8 bits reduce la subida total de 4,24\,MB a 1,06\,MB sin pérdida de acierto. La personalización de un usuario nuevo con su primera tanda de tomas mejora 4,1 puntos en promedio ($p = 0{,}08$); la de un miembro ya representado, 0,9 puntos ($p = 0{,}43$).
 
+\subsection{Reparto sintético IID y no IID}
+
+La propuesta plantea evaluar el esquema en condiciones no IID. Además de la simulación con las tres personas, se repartieron las 1200 tomas de cámara web entre tres clientes de dos formas: al azar (IID) y con un reparto de Dirichlet ($\alpha = 0{,}5$), en el que cada cliente recibe un subconjunto sesgado del vocabulario (no IID). Se entrenó el modelo completo con el mismo presupuesto de épocas en todos los casos y se evaluó sobre las mismas 240 tomas, con cinco semillas. Como todas las tomas son de una misma persona, el experimento aísla el efecto del reparto y no el de la diversidad de personas.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lr}
+        \toprule
+        Configuración & Acierto (\%) \\
+        \midrule
+        Centralizado (techo) & 93,7 $\pm$ 2,7 \\
+        Un cliente IID, sin colaborar & 86,5 $\pm$ 1,9 \\
+        Un cliente no IID, sin colaborar & 67,2 $\pm$ 2,3 \\
+        FedAvg IID & 93,3 $\pm$ 1,4 \\
+        FedAvg no IID & 89,6 $\pm$ 1,9 \\
+        \bottomrule
+    \end{tabular}
+    \caption{FedAvg con reparto IID y no IID entre tres clientes (cinco semillas). El cliente sin colaborar es el promedio de los tres clientes de cada reparto entrenados por separado.}
+    \label{tab:federado-niid}
+\end{table}
+
+Cada FedAvg se compara con un cliente sin colaborar de su mismo reparto (Tabla~\ref{tab:federado-niid}). Con el reparto no IID, colaborar eleva el acierto 22,4 puntos ($p < 0{,}001$, prueba $t$ pareada sobre las semillas): un cliente con un vocabulario sesgado es el que más gana al combinarse con otros. Con el reparto IID la mejora es de 6,8 puntos y FedAvg no se distingue del entrenamiento centralizado. La heterogeneidad cuesta 3,7 puntos frente al reparto IID ($p = 0{,}015$).
+
+Una versión anterior de este experimento comparaba el FedAvg no IID con un cliente del reparto IID y concluía que no se distinguía de un cliente aislado. Esa comparación mezclaba dos efectos, colaborar y tener datos sesgados, y se corrigió.
+
 \subsection{Costo del entrenamiento en el dispositivo}
 
 En la tableta de P1 se ejecutó el entrenamiento de la cabeza en el propio dispositivo, implementado en Kotlin. Con 48 tomas de entrenamiento, cada época tarda 20,5\,ms (mediana) y diez épocas, unos 0,26\,s; el cálculo de la representación de cada toma tarda 2,9\,ms y el proceso ocupa unos 6\,MB adicionales de memoria. La actualización ocupa 53\,KB en punto flotante de 32 bits y 13\,KB cuantizada a 8 bits. El acierto antes del entrenamiento coincide con el obtenido en Python (82,8\,\%), lo que verifica la equivalencia de punta a punta entre ambas implementaciones.
@@ -234,6 +259,8 @@ En la tableta de P1 se ejecutó el entrenamiento de la cabeza en el propio dispo
 El esquema completo se probó en una red local, con un servidor en una computadora personal y los dispositivos conectados por Wi-Fi, sin acceso a internet. En cada ronda, cada dispositivo descarga la cabeza vigente, la entrena con sus propias tomas, envía solo la actualización cuantizada (13\,285 bytes) y, al cerrarse la ronda, descarga la versión combinada.
 
 En la ronda con la tableta (93 tomas) y el teléfono de P2 (84 tomas), el entrenamiento local tardó 0,07\,s y 0,14\,s, respectivamente, más 0,23\,s y 0,28\,s para calcular la representación de las tomas. La cabeza que cada dispositivo descargó al final coincide, bit a bit, con la publicada por el servidor.
+
+Tras incorporar el cifrado y los códigos de participación (Sección~\ref{sec:seguridad-federado}), se repitió una ronda con la tableta: la aplicación mostró la huella del servidor, que coincidió con la impresa por la computadora, envió su actualización con el código de participación (93 tomas, 13\,285 bytes) y descargó la cabeza combinada. El entrenamiento y el cálculo de la representación tardaron 0,11\,s y 0,33\,s.
 
 Una ronda anterior se cerró con un solo participante por un error en el cálculo del plazo de la ronda, que contaba desde la apertura y no desde la primera actualización recibida; el error se corrigió. Otra ronda recibió una actualización no solicitada de la tableta, enviada por error durante la operación remota del piloto. Ambas rondas se conservan en el registro tal como ocurrieron.
 
@@ -284,6 +311,68 @@ El límite se fijó en una norma L2 de 2,0, tres veces la mediana de las actuali
 \end{table}
 
 La rotación aleatoria previa a la cuantización no redujo el error con estas actualizaciones: el error relativo de reconstrucción a 8 bits pasó de 1,0\,\% a 1,2\,\%, y el tamaño aumentó 243 bytes por el relleno hasta potencias de dos. Las actualizaciones de la cabeza no presentan valores extremos (el máximo es de dos a cuatro veces la raíz cuadrática media de cada tensor), que es la situación en la que la rotación resulta útil.
+
+\subsection{Ataques y agregación robusta}
+\label{sec:res-ataques}
+
+El efecto del límite se midió en una sola ronda. Para evaluar el resto de las defensas se simularon cinco rondas, como en el dispositivo: en cada una, cada persona entrena la cabeza durante dos épocas con sus tomas de la sesión~1 y envía su actualización, y un atacante que conoce las actualizaciones honestas de la ronda envía una de cuatro tipos:
+
+\begin{itemize}
+    \item \textbf{Grande:} ruido al azar con 50 veces la norma honesta.
+    \item \textbf{Invertida:} $-10$ veces la actualización honesta media, con una cantidad de tomas realista.
+    \item \textbf{Peso inflado:} la misma actualización invertida, declarando un millón de tomas.
+    \item \textbf{Ruido bajo el límite:} ruido con el doble de la norma honesta, que no alcanza el límite.
+\end{itemize}
+
+Las defensas se aplicaron en el mismo orden que en el servidor, y una prueba automática verifica que la cabeza resultante es la misma que publicaría el servidor. Se evaluó sobre las 131 tomas de la sesión~2, que no participan del esquema; sin federar, el acierto es de 77,1\,\%. La Tabla~\ref{tab:ataques} resume el escenario del piloto: las tres personas y un atacante.
+
+\begin{table}[h]
+    \centering
+    \small
+    \begin{tabular}{lrrrr}
+        \toprule
+        Estrategia & Sin ataque & Invertida & Peso inflado & Grande \\
+        \midrule
+        FedAvg sin defensas & 78,5 & 14,8 & 0,0 & 73,0 \\
+        FedAvg con límite & 78,5 & 73,7 & 13,0 & 78,6 \\
+        FedAvg con límite y tope de 2000 & 78,5 & 73,7 & 15,0 & 78,6 \\
+        FedAvg con límite y tope de 200 & 78,5 & 73,7 & 35,0 & 78,6 \\
+        Mediana o media recortada & 77,7 & 78,6 & 78,6 & 78,2 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Acierto (\%) tras cinco rondas con tres personas y un atacante (cinco semillas; desvío entre semillas de hasta 2 puntos, salvo en las celdas por debajo del 40\,\%, de hasta 6). El ataque de ruido bajo el límite no modificó el acierto en ninguna estrategia. Krum no puede utilizarse con cuatro participantes.}
+    \label{tab:ataques}
+\end{table}
+
+Con un peso inflado, FedAvg colapsa en dos o tres rondas aunque se apliquen el límite y el tope, porque con tres dispositivos honestos de unas cien tomas el atacante sigue dominando el promedio. La mediana y la media recortada mantienen el acierto frente a los cuatro ataques, y sin ataques cuestan 0,8 puntos.
+
+Se repitió el experimento con quince clientes, partiendo a cada persona en cinco, y con uno o tres atacantes (tres semillas). Con un atacante, solo el peso inflado afecta a FedAvg (entre 12 y 28\,\%). Con tres, la actualización invertida lo lleva a alrededor del 61\,\% y el peso inflado, a entre 12 y 21\,\%. La mediana, la media recortada y Krum, que en este escenario sí puede utilizarse, se mantienen entre 77,6 y 79,1\,\% en todos los casos.
+
+El acierto varía alrededor de 10 puntos entre personas en todas las configuraciones sin colapso, frente a menos de 2 puntos entre semillas. El desvío entre semillas, que es el que habitualmente se informa, subestima la variación que experimentaría una persona concreta.
+
+\subsection{Privacidad diferencial}
+\label{sec:res-privacidad}
+
+La privacidad diferencial central se evaluó con el mismo procedimiento de cinco rondas, sin atacantes, con un recorte $C = 0{,}7$ fijado de antemano a partir de la norma honesta mediana medida en la ronda anterior del piloto. Para observar el efecto de la cantidad de dispositivos, cada persona se partió en uno, cinco o diez clientes (Tabla~\ref{tab:privacidad}).
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{rrrrr}
+        \toprule
+        $z$ & $\varepsilon$ (5 rondas) & 3 clientes & 15 clientes & 30 clientes \\
+        \midrule
+        sin DP & --- & 79,1 & 78,9 & 77,1 \\
+        0,3 & 63,5 & 80,2 & 78,6 & 77,9 \\
+        1 & 13,2 & 12,2 & 77,6 & 78,1 \\
+        2 & 6,0 & 5,3 & 59,3 & 76,8 \\
+        4 & 2,8 & 3,3 & 8,7 & 53,4 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Acierto (\%) sobre la sesión~2 con privacidad diferencial central, según el multiplicador de ruido $z$ y la cantidad de clientes (tres semillas, $\delta = 10^{-5}$).}
+    \label{tab:privacidad}
+\end{table}
+
+Con las tres personas del piloto, ningún valor de $\varepsilon$ menor que 10 deja un modelo utilizable: con $z = 1$ el acierto cae al 12\,\%, y los valores de ruido que no lo afectan corresponden a $\varepsilon \geq 63$, que no ofrecen una protección significativa. Como el ruido se divide por la cantidad de dispositivos, con treinta clientes $\varepsilon = 6$ conserva el 76,8\,\%. Sin embargo, en ese escenario cada cliente tiene unas nueve tomas y el esquema sin ruido tampoco mejora el modelo inicial, por lo que el resultado indica que el ruido no lo degrada, no que el modelo siga aprendiendo. Una estimación a partir de la norma de las actualizaciones indica que se necesitarían del orden de miles de dispositivos para que el ruido correspondiente a $\varepsilon \approx 6$ represente el 10\,\% de la señal.
 
 \section{Rendimiento en los dispositivos}
 \label{sec:res-rendimiento}
