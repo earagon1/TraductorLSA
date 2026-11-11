@@ -24,14 +24,17 @@ La Tabla~\ref{tab:escenarios} compara el mismo problema bajo cinco esquemas de e
         Solo cámara web, características v2 & mismo entrenamiento, preprocesamiento corregido & 56,0 $\pm$ 5,4 & 53,3 $\pm$ 5,3 \\
         Persona no vista (LOPO) & entrena sin la persona evaluada & 67,3 $\pm$ 2,3 & 67,3 $\pm$ 2,3 \\
         Sesión no vista & agrupado por sesión de grabación & 78,0 $\pm$ 7,1 & 75,1 $\pm$ 7,9 \\
-        Esquema anterior (estratificado) & tomas mezcladas al azar & 94,3 $\pm$ 0,4 & 92,1 $\pm$ 0,5 \\
+        Esquema anterior (estratificado) & tomas mezcladas al azar; todas las tomas & 94,3 $\pm$ 0,4 & 92,1 $\pm$ 0,5 \\
+        \quad sobre las tomas de los dispositivos & las mismas 318 tomas que LOPO & 81,4 & 81,6 \\
         \bottomrule
     \end{tabular}
-    \caption{Desempeño del modelo según el esquema de validación (cinco semillas).}
+    \caption{Desempeño del modelo según el esquema de validación (cinco semillas; el $\pm$ es el desvío entre semillas). Salvo el estratificado sobre todas las tomas, que incluye las 1091 de la cámara web, todas las filas se evalúan sobre las tomas de los dispositivos. En una clasificación de una sola etiqueta, el F1 micro coincide con la accuracy.}
     \label{tab:escenarios}
 \end{table}
 
-El esquema estratificado, que mezcla al azar las tomas de una misma persona y sesión, informa 94,3\,\%. Cuando la persona evaluada no participa del entrenamiento, el acierto es 67,3\,\%. La diferencia de 27 puntos cuantifica cuánto sobreestimaba el esquema anterior la capacidad del modelo de generalizar a personas nuevas.
+El esquema estratificado, que mezcla al azar las tomas de una misma persona y sesión, informa 94,3\,\%, pero esa cifra se calcula sobre todas las tomas, en su mayoría de la cámara web, que el modelo reconoce casi sin error (98,0\,\%). Sobre las mismas 318 tomas de los dispositivos con las que se evalúa la persona no vista, el esquema estratificado acierta el 81,4\,\%, y LOPO, el 67,3\,\%. Esa diferencia de 14 puntos, medida sobre la misma población, es la que cuantifica cuánto sobreestimaba el esquema anterior la capacidad del modelo de generalizar a personas nuevas.
+
+El desvío del 2,3 de LOPO es entre semillas. Entre personas, el acierto va de 60,0\,\% a 73,0\,\% (desvío de 6,6 puntos; Tabla~\ref{tab:por-persona}): la variación que experimentaría una persona concreta es mayor que la que sugiere el desvío entre semillas.
 
 El modelo con el que comenzó el trabajo, entrenado solo con la cámara web y con la representación de características original, acierta el 28,5\,\% de las tomas reales de los dispositivos. Al mismo tiempo, muestra en pantalla el 83\,\% de sus predicciones (confianza $\geq 0{,}7$) y acierta solo el 32\,\% de ellas.
 
@@ -109,7 +112,9 @@ La confianza que informa el modelo se ajustó mediante escalado de temperatura s
     \label{tab:umbral}
 \end{table}
 
-En la aplicación se adoptó el umbral 0,75: se muestra el 59,6\,\% de las predicciones y se acierta el 83,0\,\% de lo mostrado, frente al 83\,\% mostrado con 32\,\% de acierto del modelo original.
+En la aplicación se adoptó el umbral 0,75, algo menor que el 0,85 que sugería el criterio de lograr un 85\,\% de acierto, para mostrar más predicciones: se muestra el 59,6\,\% y se acierta el 83,0\,\% de lo mostrado, frente al 83\,\% mostrado con 32\,\% de acierto del modelo original.
+
+Las cifras de la Tabla~\ref{tab:umbral} son optimistas: el umbral se eligió observando las mismas predicciones sobre las que se informa su acierto. Para medirlo sin ese sesgo se repitió el procedimiento completo, guardando las predicciones, y se evaluó cada persona con un umbral elegido solo a partir de las otras dos. Con el criterio del 85\,\%, el acierto de lo mostrado en la persona excluida fue de 83,5\,\% en promedio, entre 75,9\,\% y 93,1\,\% según la persona, mostrando el 46\,\% de las predicciones. Con el umbral fijo de la aplicación, fue de 72,7\,\%, 81,0\,\% y 86,9\,\% para P1, P2 y P3 (80,2\,$\pm$\,7,1 entre personas). La repetición también mostró la variabilidad del propio procedimiento: el entrenamiento en GPU no es determinista y la temperatura resultó 1,29 en lugar de 1,20. La aplicación conserva la temperatura y el umbral originales, y el acierto que cabe esperar de lo que muestra es de alrededor del 80\,\%, con una variación importante entre personas.
 
 \section{Consistencia estadística}
 \label{sec:res-consistencia}
@@ -138,7 +143,7 @@ La Tabla~\ref{tab:sigma} muestra que $\sigma$ crece en las condiciones adversas:
 
 Las tomas que el modelo clasifica mal tienen un $\sigma_i$ entre tres y cuatro veces mayor que las que clasifica bien: 0,028 frente a 0,007 en la sesión~1 y 0,052 frente a 0,019 con poca luz.
 
-Con modelos que no vieron a la persona evaluada, $\sigma$ es de dos a cuatro veces mayor (0,022 en la sesión~1, con 67,2\,\% de acierto). La métrica depende del umbral elegido: en la sesión~1, $\sigma$ pasa de 0,008 con $\varepsilon = 0{,}72$ a 0,127 con $\varepsilon = 2{,}19$, valor para el cual solo el 30,5\,\% de los vecinos corresponde a la misma seña.
+Con modelos que no vieron a la persona evaluada, $\sigma$ es de dos a cuatro veces mayor (0,022 en la sesión~1, con 67,2\,\% de acierto; es el mismo esquema LOPO de la Tabla~\ref{tab:escenarios}, con tres semillas en lugar de cinco). La métrica depende del umbral elegido: en la sesión~1, $\sigma$ pasa de 0,008 con $\varepsilon = 0{,}72$ a 0,127 con $\varepsilon = 2{,}19$, valor para el cual solo el 30,5\,\% de los vecinos corresponde a la misma seña.
 
 \section{Robustez ante condiciones de captura}
 \label{sec:res-robustez}
@@ -163,7 +168,7 @@ Cada condición se compara con su referencia estándar usando el mismo modelo, e
         Girado 30° & 42,6 & $-$27,2 & 53,9 & $-$30,7 \\
         \bottomrule
     \end{tabular}
-    \caption{Acierto por condición de captura y caída respecto de la referencia estándar (cinco semillas).}
+    \caption{Acierto por condición de captura y caída respecto de la referencia estándar (cinco semillas). La referencia de persona no vista (69,8\,\%) se mide sobre las 288 tomas de la sesión~1 sin la clase «nada», que no tiene condiciones adversas; por eso difiere del 67,3\,\% de la Tabla~\ref{tab:escenarios}, que incluye esa clase.}
     \label{tab:robustez}
 \end{table}
 
@@ -219,11 +224,11 @@ La simulación entrena de forma federada solo la cabeza del modelo (la parte fin
         Entrenamiento centralizado (techo) & 67,4 $\pm$ 5,0 \\
         \bottomrule
     \end{tabular}
-    \caption{Aprendizaje federado simulado con una persona excluida (cinco semillas).}
+    \caption{Aprendizaje federado simulado con una persona excluida (cinco semillas; el $\pm$ es sobre los quince pares de persona y semilla).}
     \label{tab:federado-simulado}
 \end{table}
 
-FedAvg queda a 0,4 puntos del entrenamiento centralizado y alcanza el 95\,\% de ese techo en unas 10 rondas. Cuantizar las actualizaciones a 8 bits reduce la subida total de 4,24\,MB a 1,06\,MB sin pérdida de acierto. La personalización de un usuario nuevo con su primera tanda de tomas mejora 4,1 puntos en promedio ($p = 0{,}08$); la de un miembro ya representado, 0,9 puntos ($p = 0{,}43$).
+FedAvg queda a 0,4 puntos del entrenamiento centralizado y alcanza el 95\,\% de ese techo en unas 10 rondas. Cuantizar las actualizaciones a 8 bits reduce la subida total de 4,24\,MB a 1,06\,MB sin pérdida de acierto. La personalización de un usuario nuevo con su primera tanda de tomas mejora 4,1 puntos en promedio, y mejora a las tres personas (7,2, 1,4 y 3,8 puntos); la de un miembro ya representado, 0,9 puntos (3,4, $-1{,}7$ y 1,0). Con solo tres personas, ninguna de las dos diferencias es estadísticamente significativa: la prueba $t$ pareada sobre la media de cada persona da $p = 0{,}14$ y $p = 0{,}60$. Las semillas no se tratan como observaciones independientes, porque repiten a las mismas personas.
 
 \subsection{Reparto sintético IID y no IID}
 

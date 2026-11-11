@@ -23,7 +23,7 @@ El objetivo general del trabajo fue desarrollar y evaluar un prototipo de aplica
 
 Más allá del cumplimiento de los objetivos, el trabajo deja tres conclusiones.
 
-\textbf{La forma de evaluar determina la cifra.} Con tomas mezcladas al azar, el modelo acierta el 94,3\,\%; con una persona que no vio, el 67,3\,\%. La segunda cifra es la que describe el uso real de la aplicación, y la diferencia de 27 puntos muestra que la cantidad de repeticiones de una misma persona no reemplaza la diversidad de personas.
+\textbf{La forma de evaluar determina la cifra.} Sobre las mismas tomas de los dispositivos, con tomas mezcladas al azar el modelo acierta el 81,4\,\%, y con una persona que no vio, el 67,3\,\%, con un rango de 60,0 a 73,0\,\% entre personas. La segunda cifra es la que describe el uso real de la aplicación, y la diferencia de 14 puntos muestra que la cantidad de repeticiones de una misma persona no reemplaza la diversidad de personas.
 
 \textbf{En el dispositivo, la etapa crítica es la detección de las manos.} El tiempo de procesamiento está dominado por MediaPipe y no por el clasificador, y los fallos con el cuerpo girado, en los dispositivos más lentos y en las señas de dos manos se explican porque el detector pierde una mano. Mejorar la preparación de la imagen y ejecutar el detector en la GPU tuvo más efecto que cualquier cambio en el modelo.
 

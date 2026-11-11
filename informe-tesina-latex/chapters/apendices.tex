@@ -16,7 +16,7 @@ Esta ficha resume, en un formato inspirado en las fichas de modelo propuestas en
         \textbf{Formato} & TensorFlow Lite sin operaciones adicionales, con las capas LSTM desenrolladas y cuantización dinámica; 236\,KB. \\
         \textbf{Entrenamiento} & 1409 tomas de la cámara web y de la sesión~1 de tres personas; Adam, lotes de 32, hasta 300 épocas con parada temprana y pesos por clase. \\
         \textbf{Calibración} & Temperatura $T = 1{,}20$ y umbral de confianza 0,75, publicados junto con el modelo en \texttt{calibracion.json}. \\
-        \textbf{Desempeño} & 67,3\,\% $\pm$ 2,3 de exactitud con personas no vistas en el entrenamiento; con el umbral adoptado se muestra el 59,6\,\% de las predicciones y se acierta el 83,0\,\% de lo mostrado (Capítulo~\ref{cap:resultados}). \\
+        \textbf{Desempeño} & 67,3\,\% de exactitud con personas no vistas en el entrenamiento (entre 60,0 y 73,0\,\% según la persona); con el umbral adoptado se acierta alrededor del 80\,\% de lo que se muestra (entre 73 y 87\,\% según la persona; Capítulo~\ref{cap:resultados}). \\
         \textbf{Uso previsto} & Prototipo de investigación para facilitar intercambios breves entre personas sordas y oyentes, con un vocabulario acotado. \\
         \textbf{Usos no previstos} & Reemplazar a un intérprete de LSA; situaciones en las que un error de traducción tenga consecuencias (salud, trámites legales). \\
         \textbf{Limitaciones} & Tres personas en el entrenamiento, ninguna señante de LSA; doce señas aisladas; sensibilidad al encuadre y a la pérdida de una mano en las señas de dos manos; caída significativa con el cuerpo girado 30° (Capítulo~\ref{cap:discusion}). \\

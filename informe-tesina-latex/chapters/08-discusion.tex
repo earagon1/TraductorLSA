@@ -5,7 +5,7 @@
 
 \subsection{Generalización a personas nuevas}
 
-El resultado central del trabajo es la diferencia entre medir el desempeño con tomas mezcladas al azar (94,3\,\%) y medirlo con una persona que el modelo no vio (67,3\,\%). Los 27 puntos de diferencia no reflejan un error del modelo, sino de la forma de evaluarlo: cuando las tomas de una misma persona y sesión quedan a ambos lados de la partición, el modelo se evalúa sobre ejemplos casi idénticos a los que ya vio. La cifra que describe el uso real de la aplicación, una persona nueva frente a la cámara, es la segunda.
+El resultado central del trabajo es la diferencia entre medir el desempeño con tomas mezcladas al azar y medirlo con una persona que el modelo no vio. Sobre las mismas tomas de los dispositivos, la primera forma informa 81,4\,\% y la segunda, 67,3\,\%. Los 14 puntos de diferencia no reflejan un error del modelo, sino de la forma de evaluarlo: cuando las tomas de una misma persona y sesión quedan a ambos lados de la partición, el modelo se evalúa sobre ejemplos casi idénticos a los que ya vio. La cifra que describe el uso real de la aplicación, una persona nueva frente a la cámara, es la segunda.
 
 Los resultados por persona refuerzan que la diversidad de personas pesa más que la cantidad de repeticiones. Las cien repeticiones por seña de la cámara web, todas de la misma persona, no alcanzaron para reconocer a otras personas: el modelo original acertaba el 28,5\,\% de las tomas de los dispositivos. Con la evaluación por persona, P1 obtiene el acierto más bajo (60,0\,\%), lo que es coherente con que, al excluirla, el modelo pierde también todas las tomas de la cámara web y entrena solo con las 212 tomas de P2 y P3.
 
@@ -17,7 +17,7 @@ Las demás condiciones muestran caídas de entre 6 y 16 puntos que no alcanzan s
 
 \subsection{Consistencia y confianza}
 
-La métrica $\sigma$ de la propuesta se comporta como se esperaba: crece en las condiciones adversas y es entre tres y cuatro veces mayor en las tomas que el modelo clasifica mal. Este último resultado sugiere un uso práctico que no estaba previsto en la propuesta: como $\sigma$ no requiere etiquetas, podría utilizarse en la aplicación como una señal adicional para decidir cuándo no mostrar una predicción. La calibración aporta en el mismo sentido: con la temperatura y el umbral adoptados, de lo que la aplicación muestra acierta el 83\,\%, frente al 32\,\% del modelo original, que mostraba casi todas sus predicciones con una confianza que no se correspondía con su acierto.
+La métrica $\sigma$ de la propuesta se comporta como se esperaba: crece en las condiciones adversas y es entre tres y cuatro veces mayor en las tomas que el modelo clasifica mal. Este último resultado sugiere un uso práctico que no estaba previsto en la propuesta: como $\sigma$ no requiere etiquetas, podría utilizarse en la aplicación como una señal adicional para decidir cuándo no mostrar una predicción. La calibración aporta en el mismo sentido: con la temperatura y el umbral adoptados, de lo que la aplicación muestra acierta alrededor del 80\,\% cuando el umbral se evalúa sin mirar a la persona (entre 73 y 87\,\% según quién), frente al 32\,\% del modelo original, que mostraba casi todas sus predicciones con una confianza que no se correspondía con su acierto.
 
 \subsection{Aprendizaje federado}
 
@@ -47,7 +47,7 @@ La prueba con la Galaxy Tab S7 mostró una limitación que las sesiones de captu
 
 Una comparación directa de cifras con los antecedentes sobre LSA no es posible en condiciones equivalentes. LSA64 reúne 64 señas realizadas por diez personas con guantes de colores, en condiciones controladas~\cite{ronchetti2016lsa64}; este trabajo utiliza un vocabulario de doce señas, tres personas sin elementos auxiliares y la cámara de un teléfono, y ejecuta el reconocimiento en el propio dispositivo. LSA-T, por su parte, aborda el reconocimiento continuo y la traducción~\cite{dalbianco2022lsat}, una tarea de otra naturaleza.
 
-El resultado sobre los esquemas de validación tiene, sin embargo, una consecuencia para la lectura de la literatura: cuando un trabajo informa el acierto con particiones aleatorias de las tomas, la cifra puede sobreestimar en decenas de puntos el desempeño con personas nuevas. En este trabajo la diferencia fue de 27 puntos.
+El resultado sobre los esquemas de validación tiene, sin embargo, una consecuencia para la lectura de la literatura: cuando un trabajo informa el acierto con particiones aleatorias de las tomas, la cifra puede sobreestimar en decenas de puntos el desempeño con personas nuevas. En este trabajo la diferencia fue de 14 puntos sobre las mismas tomas, y de 27 si la cifra aleatoria se calcula, como es habitual, sobre todo el conjunto de datos, que incluye tomas de condiciones más fáciles.
 
 En cuanto al aprendizaje federado, las experiencias de referencia, como el teclado Gboard~\cite{hard2018gboard}, operan a una escala de dispositivos varios órdenes de magnitud mayor. El piloto de este trabajo, con dos dispositivos reales, no busca compararse en escala, sino verificar que el ciclo completo es viable en el contexto de la LSA y con un modelo de reconocimiento de señas.
 
