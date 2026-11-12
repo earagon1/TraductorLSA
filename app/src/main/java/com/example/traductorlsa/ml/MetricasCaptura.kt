@@ -1,6 +1,7 @@
 package com.example.traductorlsa.ml
 
 import java.io.File
+import java.util.concurrent.Executors
 import java.util.Locale
 import kotlin.math.ceil
 
@@ -42,12 +43,23 @@ object Metricas {
 
     /** Agrega una línea al archivo; un error de disco nunca debe cortar la captura. */
     fun guardar(linea: String) {
-        val destino = archivo ?: return
-        try {
-            destino.parentFile?.mkdirs()
-            destino.appendText(linea + "\n")
-        } catch (_: Exception) {
-            // Se pierde esta línea y nada más: sigue estando en logcat.
+        agregarLinea(archivo ?: return, linea)
+    }
+
+    // Un hilo propio para escribir: guardar() se llama desde el hilo de la cámara y antes
+    // escribía ahí mismo, demorando el frame siguiente (auditoría, TL-A5). Uno solo, así
+    // las líneas quedan en el orden en que se emitieron.
+    private val escritor = Executors.newSingleThreadExecutor { r -> Thread(r, "senar-metricas").apply { isDaemon = true } }
+
+    /** Agrega [linea] a [destino] en el hilo escritor, fuera del de la cámara. */
+    fun agregarLinea(destino: File, linea: String) {
+        escritor.execute {
+            try {
+                destino.parentFile?.mkdirs()
+                destino.appendText(linea + "\n")
+            } catch (_: Exception) {
+                // Se pierde esta línea y nada más: sigue estando en logcat.
+            }
         }
     }
 }

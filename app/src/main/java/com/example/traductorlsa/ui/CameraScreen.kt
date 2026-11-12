@@ -364,8 +364,8 @@ fun CameraScreen(
             engine.comparador = TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, comparar) }
             val principal = banco.getString("principal", null) ?: CONFIG_MEDIAPIPE
             engine.onComparacion = { fila ->
-                archivo.appendText(fila.put("principal", principal).put("comparado", comparar)
-                    .put("entrada", banco.getString("entrada", null) ?: "igual").toString() + "\n")
+                com.example.traductorlsa.ml.Metricas.agregarLinea(archivo, fila.put("principal", principal)
+                    .put("comparado", comparar).put("entrada", banco.getString("entrada", null) ?: "igual").toString())
             }
         }
         onDispose {
