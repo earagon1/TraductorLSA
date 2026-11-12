@@ -41,7 +41,7 @@ python tools/chequeo_imports.py && python tools/chequeo_orden.py && python tools
 - **Métricas del pipeline:** `adb shell run-as com.example.traductorlsa cat files/metricas/senar_metrics.jsonl` → `tools/logcat_metrics.py` / `tools/linea_base.py`.
 - `adb` no está en el PATH: `"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"`.
 - Logs del pipeline en el dispositivo: `adb logcat -s GestureEngine GestureDebug TFLiteClassifier`.
-- `MainActivity` sube el volumen al máximo en cada arranque (H-A23): ojo al probar.
+- El volumen ya no se sube al arrancar: `SpeechManager` lo lleva al máximo la primera vez que habla en cada pantalla, solo si está por debajo de la mitad (`speech/VolumenDeVoz.kt`, TL-A6).
 
 ## Reglas que no se negocian
 - **Assets del modelo:** `app/src/main/assets/{actions_15_opt.tflite, words.json, calibracion.json, modelo.json}` son el contrato con el modelo y **solo los escribe** `modelo_LSA/scripts/publicar_modelo.py` (`--verificar` revisa lo publicado). El orden de `words.json` *es* el índice de salida del modelo. La app valida `modelo.json` al cargar y, si no coincide, la cámara muestra un aviso en vez de traducir. Cada publicación se anota en `plan/progreso.md`.

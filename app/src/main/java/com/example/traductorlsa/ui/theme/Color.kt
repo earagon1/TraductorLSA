@@ -27,7 +27,9 @@ val SenarAzul050 = Color(0xFFEDF3FC) // superficies tenues
 val SenarGrafito900 = Color(0xFF1E2230) // texto principal
 val SenarGrafito700 = Color(0xFF3F4553) // burbuja de voz
 val SenarGrafito500 = Color(0xFF5C6474) // texto secundario — 5,5:1 sobre Papel
-val SenarGrafito300 = Color(0xFF8B93A5) // texto terciario y microcopy
+// Era 0xFF8B93A5 (2,9:1 sobre Papel, por debajo del 4,5:1 que pide WCAG AA para texto
+// chico). Mismo tono, más oscuro: 4,8:1 sobre Papel y 5,2:1 sobre blanco (auditoría, TL-A6).
+val SenarGrafito300 = Color(0xFF646D81) // texto terciario y microcopy
 
 // Neutros
 val SenarPapel = Color(0xFFF5F7FB)      // fondo de la app

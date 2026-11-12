@@ -277,6 +277,7 @@ private fun ColumnScope.DetalleDeSena(
             assetPath = entrada.imageAssetPath,
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize(),
+            descripcion = "Ilustración de cómo se hace la seña ${entrada.display}",
         )
     }
 
@@ -499,6 +500,9 @@ internal fun DictionaryAssetImage(
     assetPath: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
+    // Null en las tarjetas de la grilla, donde el nombre de la seña ya está escrito al lado
+    // y TalkBack lo leería dos veces; en el detalle, la imagen es el contenido (TL-A6).
+    descripcion: String? = null,
 ) {
     val context = LocalContext.current
 
@@ -518,7 +522,7 @@ internal fun DictionaryAssetImage(
     if (mapa != null) {
         Image(
             bitmap = mapa.asImageBitmap(),
-            contentDescription = null,
+            contentDescription = descripcion,
             contentScale = contentScale,
             modifier = modifier,
         )

@@ -1,6 +1,5 @@
 package com.example.traductorlsa
 
-import android.media.AudioManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,10 +16,8 @@ class MainActivity : ComponentActivity() {
         // pantalla se encarga de respetar las barras con windowInsetsPadding.
         enableEdgeToEdge()
 
-        // Sube el volumen de música al máximo (para TextToSpeech)
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0)
+        // El volumen ya no se sube acá: lo hace SpeechManager, solo cuando la app va a
+        // hablar y si está demasiado bajo (auditoría, TL-A6; ver volumenParaHablar).
 
         setContent {
             // Entry point de toda la UI Compose

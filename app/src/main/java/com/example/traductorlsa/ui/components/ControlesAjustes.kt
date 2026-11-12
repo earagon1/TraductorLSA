@@ -186,7 +186,7 @@ fun SelectorSegmentado(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(40.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(11.dp))
                     .background(if (activa) SenarBlanco else SenarPapelHundido)
                     .clickable { onSeleccion(indice) },

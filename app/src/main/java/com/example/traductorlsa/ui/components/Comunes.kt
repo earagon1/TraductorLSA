@@ -82,7 +82,8 @@ fun TituloDePagina(
     ) {
         Surface(
             onClick = onVolver,
-            modifier = Modifier.size(44.dp),
+            // 48 dp: el mínimo de un destino táctil en Android (auditoría, TL-A6).
+            modifier = Modifier.size(48.dp),
             shape = MaterialTheme.shapes.small,
             color = SenarBlanco,
             border = BorderStroke(1.dp, SenarBorde),

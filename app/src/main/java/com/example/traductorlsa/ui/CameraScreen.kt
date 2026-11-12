@@ -42,6 +42,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -1327,7 +1331,8 @@ private fun PieDeTraduccion(
                 text = ayuda,
                 fontSize = 12.5.sp,
                 color = Color.White.copy(alpha = 0.58f),
-                modifier = Modifier.padding(top = 6.dp),
+                // También se anuncia: es el aviso de que una seña no se reconoció (TL-A6).
+                modifier = Modifier.padding(top = 6.dp).semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
 
@@ -1373,7 +1378,15 @@ private fun PieDeTraduccion(
                     lineHeight = 28.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    // TalkBack anuncia cada seña nueva sin que haya que tocar el texto: sin
+                    // esto, quien usa lector de pantalla no se enteraba de la traducción si
+                    // tenía la voz de la app apagada (auditoría, TL-A6).
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics {
+                            liveRegion = LiveRegionMode.Polite
+                            contentDescription = "Traducción: " + frase.joinToString(", ") { nombreParaMostrar(it) }
+                        },
                 )
 
                 if (frase.isNotEmpty()) {

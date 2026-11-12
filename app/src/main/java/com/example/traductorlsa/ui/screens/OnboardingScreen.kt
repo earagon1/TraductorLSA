@@ -216,7 +216,7 @@ private fun BarraSuperior(
             } else {
                 Surface(
                     onClick = onAtras,
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(48.dp),
                     shape = MaterialTheme.shapes.small,
                     color = SenarBlanco,
                     border = BorderStroke(1.dp, SenarBorde),

@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -195,21 +198,29 @@ fun HojaDePrivacidad(
                 color = SenarGrafito900,
                 modifier = Modifier.weight(1f),
             )
+            // Se ve de 34 dp pero se toca en 48 (auditoría, TL-A6).
             Box(
                 Modifier
-                    .size(34.dp)
+                    .size(48.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .background(SenarBlanco)
-                    .border(1.dp, SenarBorde, RoundedCornerShape(999.dp))
                     .clickable(onClick = onCerrar),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Cerrar",
-                    tint = SenarGrafito500,
-                    modifier = Modifier.size(17.dp),
-                )
+                Box(
+                    Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(SenarBlanco)
+                        .border(1.dp, SenarBorde, RoundedCornerShape(999.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = "Cerrar",
+                        tint = SenarGrafito500,
+                        modifier = Modifier.size(17.dp),
+                    )
+                }
             }
         }
 
@@ -271,29 +282,43 @@ fun HojaDePrivacidad(
                 .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 26.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CasillaDePolitica(
-                    marcada = marcada,
-                    habilitada = llegoAlFinal,
-                    onClick = { marcada = !marcada },
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = "Leí y acepto la política de privacidad",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (llegoAlFinal) SenarGrafito900 else SenarGrafito300,
-                    modifier = Modifier.weight(1f),
-                )
+                // La casilla y su texto son un solo destino táctil, y TalkBack lo anuncia
+                // como casilla marcada o no. Antes solo se podía tocar el cuadradito de
+                // 23 dp (auditoría, TL-A6).
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .toggleable(
+                            value = marcada,
+                            enabled = llegoAlFinal,
+                            role = Role.Checkbox,
+                            onValueChange = { marcada = it },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CasillaDePolitica(marcada = marcada, habilitada = llegoAlFinal)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = "Leí y acepto la política de privacidad",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (llegoAlFinal) SenarGrafito900 else SenarGrafito300,
+                    )
+                }
                 if (!llegoAlFinal) {
                     Spacer(Modifier.width(10.dp))
                     Row(
                         modifier = Modifier
+                            .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(999.dp))
-                            .background(SenarBlanco)
-                            .border(1.dp, SenarBorde, RoundedCornerShape(999.dp))
                             .clickable {
                                 alcance.launch { scroll.animateScrollTo(scroll.maxValue) }
                             }
+                            .padding(vertical = 6.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(SenarBlanco)
+                            .border(1.dp, SenarBorde, RoundedCornerShape(999.dp))
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -381,7 +406,6 @@ private fun SalidaDeLaHoja(texto: String, onCerrar: () -> Unit) {
 private fun CasillaDePolitica(
     marcada: Boolean,
     habilitada: Boolean,
-    onClick: () -> Unit,
 ) {
     val forma = RoundedCornerShape(7.dp)
     Box(
@@ -391,8 +415,7 @@ private fun CasillaDePolitica(
             .then(
                 if (marcada) Modifier.background(SenarAzul600)
                 else Modifier.border(2.dp, if (habilitada) SenarGrafito300 else SenarPista, forma)
-            )
-            .clickable(enabled = habilitada, onClick = onClick),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (marcada) {

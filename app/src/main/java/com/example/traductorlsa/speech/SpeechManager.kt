@@ -1,12 +1,13 @@
 package com.example.traductorlsa.speech
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import java.util.Locale
 
-class SpeechManager(context: Context) {
+class SpeechManager(private val context: Context) {
 
     private var tts: TextToSpeech? = null
     private var ready = false
@@ -54,9 +55,24 @@ class SpeechManager(context: Context) {
             Log.d("SpeechManager", "No se pronuncia: $text")
             return
         }
+        asegurarVolumen()
         val params = Bundle()
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "prediction_id")
+    }
+
+    private var volumenRevisado = false
+
+    /** Una vez por pantalla: si el volumen está tan bajo que no se oiría, lo sube (TL-A6). */
+    private fun asegurarVolumen() {
+        if (volumenRevisado) return
+        volumenRevisado = true
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+        val maximo = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        volumenParaHablar(audio.getStreamVolume(AudioManager.STREAM_MUSIC), maximo)?.let {
+            // FLAG_SHOW_UI: la persona ve que se cambió y puede bajarlo.
+            audio.setStreamVolume(AudioManager.STREAM_MUSIC, it, AudioManager.FLAG_SHOW_UI)
+        }
     }
 
     fun release() {
