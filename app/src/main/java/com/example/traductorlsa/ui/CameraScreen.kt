@@ -117,6 +117,7 @@ import java.text.Normalizer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 // ---------- modelos/estado simples ----------
 data class OverlayData(
@@ -308,6 +309,9 @@ fun CameraScreen(
     val camController = remember { LifecycleCameraController(context) }
     val cameraManager = remember { CameraManager(context, camController) }
     val executor = remember { Executors.newSingleThreadExecutor() }
+    // Se pone al salir de la pantalla: el analizador deja pasar los frames que CameraX
+    // ya tenía en camino sin procesarlos (ver el cierre más abajo).
+    val pantallaCerrada = remember { AtomicBoolean(false) }
 
     // La sensibilidad se toma al entrar a la pantalla y no en vivo: recrear el
     // detector recarga los 8 MB del modelo, y el deslizador de Ajustes dispara
@@ -365,8 +369,13 @@ fun CameraScreen(
             }
         }
         onDispose {
-            engine.comparador?.close()
+            // Se cierra en el hilo de la cámara, que es donde lo usa y donde lo creó (GPU).
+            // Si ese hilo ya se apagó (salida de la pantalla), ya no hay frames: va directo.
+            val comparador = engine.comparador
             engine.comparador = null
+            if (comparador != null) {
+                runCatching { executor.execute { comparador.close() } }.onFailure { comparador.close() }
+            }
             engine.entradaComparador = null
             engine.onComparacion = null
         }
@@ -615,10 +624,23 @@ fun CameraScreen(
     // volvia a lanzarlo, cerrando el HandLandmarker mientras la camara le seguia
     // mandando cuadros. La siguiente deteccion contra el objeto nativo ya cerrado
     // tiraba la app abajo. Por eso el cierre va en su propio efecto sin claves.
+    //
+    // Al salir (auditoría, TL-A1/A2): primero se corta el flujo de frames y después se
+    // libera todo en el hilo de la cámara. Como ese hilo es uno solo, el cierre corre
+    // después del frame que estuviera procesando, no en paralelo con él; antes el
+    // HandLandmarker se cerraba desde la UI con un frame a mitad de camino. Al final se
+    // apaga el executor, que antes quedaba vivo (un hilo por cada vez que se abría la cámara).
     DisposableEffect(Unit) {
         onDispose {
+            pantallaCerrada.set(true)
+            camController.clearImageAnalysisAnalyzer()
+            camController.unbind()
             speechManager.release()
-            handTracker.close()
+            executor.execute {
+                handTracker.close()
+                classifier.close()
+            }
+            executor.shutdown()
         }
     }
 
@@ -653,7 +675,7 @@ fun CameraScreen(
             engine.process(bitmap, rotationDeg, ts, convNanos, yaDerecho)
         }
         camController.setImageAnalysisAnalyzer(executor) { imageProxy ->
-            analyzer.analyze(imageProxy)
+            if (pantallaCerrada.get()) imageProxy.close() else analyzer.analyze(imageProxy)
         }
     }
 

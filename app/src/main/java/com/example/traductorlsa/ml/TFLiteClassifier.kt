@@ -124,15 +124,26 @@ class TFLiteClassifier(
         return Triple(best, p, probs)
     }
 
-    fun close() = interpreter.close()
+    private var cerrado = false
+
+    /** Libera el intérprete nativo. Se puede llamar más de una vez (auditoría, TL-A2). */
+    fun close() {
+        if (cerrado) return
+        cerrado = true
+        interpreter.close()
+    }
 
     private fun assetExists(name: String): Boolean = try {
         context.assets.open(name).close(); true
     } catch (_: Throwable) { false }
 
-    private fun loadModelFile(name: String): MappedByteBuffer {
-        val afd = context.assets.openFd(name)
-        val fis = FileInputStream(afd.fileDescriptor)
-        return fis.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
-    }
+    // El AssetFileDescriptor y el stream se cierran apenas se mapea: el MappedByteBuffer
+    // sigue siendo válido sin ellos, y antes quedaban abiertos un descriptor por cada
+    // vez que se entraba a la cámara (auditoría, TL-A2).
+    private fun loadModelFile(name: String): MappedByteBuffer =
+        context.assets.openFd(name).use { afd ->
+            FileInputStream(afd.fileDescriptor).use { fis ->
+                fis.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
+            }
+        }
 }

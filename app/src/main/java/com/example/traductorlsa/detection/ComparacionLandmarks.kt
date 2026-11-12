@@ -11,12 +11,24 @@ import kotlin.math.sqrt
  */
 class TrackerPerezoso(private val crear: () -> HandTracker) : HandTracker {
     private var tracker: HandTracker? = null
+    private var cerrado = false
 
-    override fun detect(mpImage: MPImage, rotationDeg: Int, tsMs: Long): HandLandmarkerResult? =
-        (tracker ?: crear().also { tracker = it }).detect(mpImage, rotationDeg, tsMs)
+    // Detectar y cerrar comparten el candado: un close() que llega a mitad de una detección
+    // espera a que termine, y una detección después del close() no toca el objeto nativo
+    // ya liberado (ni crea uno nuevo que nadie cerraría). Antes eso tiraba la app al salir
+    // de la cámara (auditoría, TL-A1).
+    @Synchronized
+    override fun detect(mpImage: MPImage, rotationDeg: Int, tsMs: Long): HandLandmarkerResult? {
+        if (cerrado) return null
+        return (tracker ?: crear().also { tracker = it }).detect(mpImage, rotationDeg, tsMs)
+    }
 
+    @Synchronized
     override fun close() {
+        if (cerrado) return
+        cerrado = true
         tracker?.close()
+        tracker = null
     }
 }
 

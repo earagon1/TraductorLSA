@@ -22,8 +22,8 @@ class Backbone private constructor(buffer: MappedByteBuffer) : Closeable {
     val dimEmbedding: Int
 
     /** El de assets (el de la demo de entrenamiento local). */
-    constructor(context: Context, asset: String = ASSET) : this(context.assets.openFd(asset).let { afd ->
-        FileInputStream(afd.fileDescriptor).channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
+    constructor(context: Context, asset: String = ASSET) : this(context.assets.openFd(asset).use { afd ->
+        FileInputStream(afd.fileDescriptor).use { it.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength) }
     })
 
     /** El de un paquete bajado del servidor del federado ([ModeloInstalado]). */
