@@ -3,20 +3,22 @@ package com.example.traductorlsa.ui.camera
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.core.content.FileProvider
 import com.clerk.api.Clerk
+import com.example.traductorlsa.dataset.CapturaCruda
 import com.example.traductorlsa.dataset.DatasetV1
 import com.example.traductorlsa.dataset.DatasetV2
+import com.example.traductorlsa.dataset.MetaSesion
 import com.example.traductorlsa.dataset.Participante
-import java.util.*
+import com.example.traductorlsa.dataset.SesionGuiada
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /*
  * Lo que la cámara y la pantalla del dataset necesitan del dataset del teléfono:
- * seudónimo, compartir y conteo por seña. Salió de ui/CameraScreen.kt (T-A20).
+ * seudónimo, compartir, conteo por seña y el almacén de tomas del CameraViewModel.
+ * Salió de ui/CameraScreen.kt (T-A20).
  */
 
 /**
@@ -57,3 +59,33 @@ fun shareDatasetJsonFile(context: Context): Boolean {
 fun loadDatasetCountsByLabel(context: Context): Map<String, Int> =
     DatasetV1.conteoPorEtiqueta(DatasetV1.archivo(context))
         .toList().sortedBy { displayTrainingLabel(it.first) }.toMap()
+
+/**
+ * El [AlmacenDeTomas] de verdad: el dataset v1 y v2 del teléfono, el progreso de la
+ * sesión guiada en preferencias y las imágenes de assets. Cada toma se escribe en los dos
+ * datasets; si el v2 falla, se avisa (el v1 ya quedó guardado).
+ */
+class AlmacenDelTelefono(context: Context) : AlmacenDeTomas {
+    private val context = context.applicationContext
+
+    override fun guardar(etiqueta: String, frames: List<List<Float>>, captura: CapturaCruda?, sesion: MetaSesion?): String? {
+        // Se lee al guardar y no antes: si la persona cambió de cuenta, vale la de ahora.
+        val participante = participanteActual()
+        DatasetV1.agregar(DatasetV1.archivo(context), etiqueta, frames, participante,
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()))
+        if (captura != null && !DatasetV2.guardarMuestra(context, etiqueta, participante, captura, sesion)) {
+            return "la toma se guardó en el dataset v1 pero no en el v2 (landmarks crudos)"
+        }
+        return null
+    }
+
+    override fun quitarUltima(): String? =
+        DatasetV1.quitarUltima(DatasetV1.archivo(context)).also { if (it != null) DatasetV2.quitarUltima(context) }
+
+    override fun conteoPorSena(): Map<String, Int> = loadDatasetCountsByLabel(context)
+    override fun senasOficiales(): List<TrainingWordOption> = loadTrainingWordOptions(context)
+    override fun imagenDe(etiqueta: String): String? = findTrainingWordImageInAssets(context, etiqueta)
+    override fun guardarProgreso(sesion: SesionGuiada) = ProgresoSesion.guardar(context, sesion)
+    override fun indiceGuardado(codigo: String): Int = ProgresoSesion.indice(context, codigo)
+    override fun tomasDeCodigo(codigo: String): Int = DatasetV2.contarDeCodigo(context, codigo)
+}
