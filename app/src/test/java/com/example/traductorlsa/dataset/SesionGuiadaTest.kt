@@ -10,7 +10,7 @@ import java.io.File
 class SesionGuiadaTest {
 
     private val csv = """
-        |${'﻿'}participante,orden,dispositivo,bloque,tanda,condicion,clase,indicacion,estado,nota
+        |${Char(0xFEFF)}participante,orden,dispositivo,bloque,tanda,condicion,clase,indicacion,estado,nota
         |P1,1,tablet,A,1,luz=interior;angulo=0;distancia=media,hola,,,
         |P1,2,tablet,A,1,luz=interior;angulo=0;distancia=media,v,,,
         |P1,3,tablet,A,2,luz=interior;angulo=0;distancia=media,hola,,,

@@ -19,7 +19,7 @@ data class TomaPlanificada(
  * se descarta en vez de cortar la sesión.
  */
 fun leerPlanilla(csv: String): List<TomaPlanificada> {
-    val lineas = csv.removePrefix("﻿").lines().filter { it.isNotBlank() }
+    val lineas = csv.removePrefix(Char(0xFEFF).toString()).lines().filter { it.isNotBlank() }
     if (lineas.isEmpty()) return emptyList()
     val encabezado = lineas.first().split(",").map { it.trim() }
     fun col(nombre: String) = encabezado.indexOf(nombre)

@@ -1,4 +1,4 @@
-﻿package com.example.traductorlsa.ui
+package com.example.traductorlsa.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

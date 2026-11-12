@@ -104,7 +104,9 @@ class VoiceToText(
                         override fun onResults(results: Bundle?) {
                             val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                                 ?.firstOrNull().orEmpty()
-                            Log.d(TAG, "Resultado Final: $text")
+                            // Sin el texto: lo que dice la persona no va a logcat, que en release
+                            // puede leer cualquiera con adb (auditoría, TL-M1).
+                            Log.d(TAG, "Resultado final: ${text.length} caracteres")
                             onFinal(text)
                         }
 
@@ -112,7 +114,6 @@ class VoiceToText(
                             val text = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                                 ?.firstOrNull().orEmpty()
                             if (text.isNotBlank()) {
-                                Log.v(TAG, "Parcial: $text")
                                 onPartial(text)
                             }
                         }

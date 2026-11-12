@@ -1,4 +1,4 @@
-﻿package com.example.traductorlsa.ui
+package com.example.traductorlsa.ui
 
 import android.Manifest
 import android.content.Context
@@ -21,6 +21,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,12 +85,15 @@ import com.example.traductorlsa.features.FeatureBuilderImpl
 import com.example.traductorlsa.ml.CLASE_NADA
 import com.example.traductorlsa.ml.GestureEngine
 import com.example.traductorlsa.ml.LabelProviderImpl
+import com.example.traductorlsa.ml.Metricas
 import com.example.traductorlsa.ml.TFLiteClassifier
 import com.example.traductorlsa.model.NormPoint
 import com.example.traductorlsa.model.PredictionResult
 import com.example.traductorlsa.speech.SpeechManager
 import com.example.traductorlsa.ui.screens.DictionaryAssetImage
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
+import com.example.traductorlsa.ui.camera.AvisoModeloInvalido
+import com.example.traductorlsa.ui.overlay.HandLandmarksOverlay
 import com.example.traductorlsa.ui.theme.SenarAzul300
 import com.example.traductorlsa.ui.theme.SenarAzul600
 import com.example.traductorlsa.ui.theme.SenarBlanco
@@ -368,7 +372,7 @@ fun CameraScreen(
             engine.comparador = TrackerPerezoso { trackerDesdeConfig(context, ajustes.sensibilidadDeteccion, comparar) }
             val principal = banco.getString("principal", null) ?: CONFIG_MEDIAPIPE
             engine.onComparacion = { fila ->
-                com.example.traductorlsa.ml.Metricas.agregarLinea(archivo, fila.put("principal", principal)
+                Metricas.agregarLinea(archivo, fila.put("principal", principal)
                     .put("comparado", comparar).put("entrada", banco.getString("entrada", null) ?: "igual").toString())
             }
         }
@@ -685,7 +689,7 @@ fun CameraScreen(
 
     // Con un modelo que no corresponde no se abre la cámara: se dice por qué (X3).
     if (classifier.problemas.isNotEmpty()) {
-        com.example.traductorlsa.ui.camera.AvisoModeloInvalido(
+        AvisoModeloInvalido(
             problemas = classifier.problemas,
             esPaquete = classifier.modeloInstalado != null,
             onVolver = onBack,
@@ -713,7 +717,7 @@ fun CameraScreen(
         )
 
         if (ajustes.mostrarLandmarks) {
-            com.example.traductorlsa.ui.overlay.HandLandmarksOverlay(overlay = overlayState.value)
+            HandLandmarksOverlay(overlay = overlayState.value)
         }
 
         val senaElegida = selectedWord
@@ -879,10 +883,12 @@ fun CameraScreen(
             )
         }
 
-        if (trainingMode && showReference && selectedWord?.imageAssetPath != null) {
+        val referencia = selectedWord
+        val imagenDeReferencia = referencia?.imageAssetPath
+        if (trainingMode && showReference && referencia != null && imagenDeReferencia != null) {
             TrainingReferenceDialog(
-                label = selectedWord!!.label,
-                assetPath = selectedWord!!.imageAssetPath!!,
+                label = referencia.label,
+                assetPath = imagenDeReferencia,
                 onDismiss = { showReference = false }
             )
         }
@@ -1722,9 +1728,10 @@ private fun TrainingReferenceDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(nombreParaMostrar(label), style = MaterialTheme.typography.titleLarge)
-                if (bitmap != null) {
+                val imagen = bitmap
+                if (imagen != null) {
                     Image(
-                        bitmap = bitmap!!.asImageBitmap(),
+                        bitmap = imagen.asImageBitmap(),
                         contentDescription = nombreParaMostrar(label),
                         modifier = Modifier
                             .fillMaxWidth()

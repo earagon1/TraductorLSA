@@ -52,7 +52,7 @@ class SpeechManager(private val context: Context) {
 
     fun speak(text: String) {
         if (!ready || text.isBlank() || text == "-" || text == "Sin datos" || text == "Unknown") {
-            Log.d("SpeechManager", "No se pronuncia: $text")
+            Log.d("SpeechManager", "No se pronuncia (vacío o sin traducción)")
             return
         }
         asegurarVolumen()
