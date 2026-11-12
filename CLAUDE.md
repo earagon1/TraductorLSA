@@ -44,7 +44,7 @@ python tools/chequeo_imports.py && python tools/chequeo_orden.py && python tools
 - `MainActivity` sube el volumen al máximo en cada arranque (H-A23): ojo al probar.
 
 ## Reglas que no se negocian
-- **Assets del modelo:** `app/src/main/assets/{actions_15_opt.tflite, words.json}` son el contrato con el modelo y **se actualizan juntos**. El orden de `words.json` *es* el índice de salida del modelo. Cuando exista `publicar_modelo.py` (en modelo_LSA), solo ese script los escribe. Mientras tanto, si se copian a mano, se copian los dos y se anota en `plan/progreso.md`.
+- **Assets del modelo:** `app/src/main/assets/{actions_15_opt.tflite, words.json, calibracion.json, modelo.json}` son el contrato con el modelo y **solo los escribe** `modelo_LSA/scripts/publicar_modelo.py` (`--verificar` revisa lo publicado). El orden de `words.json` *es* el índice de salida del modelo. La app valida `modelo.json` al cargar y, si no coincide, la cámara muestra un aviso en vez de traducir. Cada publicación se anota en `plan/progreso.md`.
 - **Dataset del teléfono:** vive en `Android/data/com.example.traductorlsa/files/Documents/lsa_samples.json`. Desinstalar la app o cambiar el `applicationId` lo borra o lo deja huérfano: **exportarlo antes** (botón Exportar o `adb pull`).
 - **Nombres de clases:** minúsculas, sin tildes, con espacio (`como estas`, `mi nombre es`, `por favor`). Tienen que coincidir con `words.json`, con `NOMBRES_PARA_MOSTRAR` en `ui/screens/DictionaryScreen.kt` y con `assets/dictionary/<id con _>.jpg`. Detalle en `modelo_LSA/ejecucion.txt`.
 - **Git:** commits directo a `master`, sin ramas. **Sin `Co-Authored-By`:** el historial va a nombre de Evelin. Sin push salvo que lo pida. Mensajes en español, con el *por qué* en el cuerpo.
