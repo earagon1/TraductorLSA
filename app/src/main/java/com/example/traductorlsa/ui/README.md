@@ -31,6 +31,20 @@ La pantalla de cámara, que sirve a **dos modos** con el mismo pipeline:
 
 `CameraScreenMode` es lo que las distingue; todo lo demás se comparte.
 
+`CameraScreen.kt` tiene solo la pantalla: el pipeline, el estado y los efectos. Sus
+piezas viven en `camera/` (T-A20, primera etapa; la segunda es un `CameraViewModel`):
+
+| Archivo | Qué tiene |
+|---|---|
+| `camera/ControlesDeCamara.kt` | cabecera, insignia de progreso, interruptor de voz, velo, botón redondo, rótulo de estado, encuadre y referencia fija |
+| `camera/PiesDeCamara.kt` | el pie de captura (entrenamiento) y el de traducción |
+| `camera/SelectorDeSenas.kt` | la hoja para elegir qué seña entrenar |
+| `camera/DialogoDeReferencia.kt` | la imagen de referencia de la seña, en un diálogo |
+| `camera/SenasDeEntrenamiento.kt` | etiquetas, nombres e imágenes de las señas; `MUESTRAS_OBJETIVO`, `CONFIG_MEDIAPIPE` |
+| `camera/DatasetDeEntrenamiento.kt` | seudónimo de la cuenta, compartir el dataset y conteo por seña |
+| `camera/SesionGuiadaUi.kt`, `EstadoTraduccion.kt`, `AvisoModeloInvalido.kt` | la sesión guiada, el estado de la traducción y el aviso de modelo inválido |
+| `overlay/OverlayData.kt` | lo que dibuja el overlay de landmarks |
+
 #### **Piezas de la interfaz**
 - **`GuiaDeEncuadre`** — cuatro esquinas y nada más. Sin esto la cámara puede estar apuntando al techo y la muestra se guarda igual, con lo cual entra ruido al dataset. Van solo las esquinas para no tapar a la persona.
 - **`ReferenciaFija`** — miniatura del dibujo de la seña, fija en pantalla. Antes era un botón que abría un modal, y un modal no se puede mirar mientras se seña, que es justo cuando hace falta.

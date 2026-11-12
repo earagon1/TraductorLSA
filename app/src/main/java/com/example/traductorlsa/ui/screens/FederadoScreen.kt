@@ -40,7 +40,7 @@ import com.example.traductorlsa.ui.components.AyudaAjuste
 import com.example.traductorlsa.ui.components.PantallaSenar
 import com.example.traductorlsa.ui.components.SeccionAjustes
 import com.example.traductorlsa.ui.components.TituloDePagina
-import com.example.traductorlsa.ui.participanteActual
+import com.example.traductorlsa.ui.camera.participanteActual
 import com.example.traductorlsa.ui.theme.SenarGrafito500
 import com.example.traductorlsa.ui.theme.SenarGrafito900
 import kotlinx.coroutines.Dispatchers
