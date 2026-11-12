@@ -107,8 +107,15 @@ fun DatasetScreen(navController: NavHostController) {
     var cargando by remember { mutableStateOf(true) }
     var filtro by remember { mutableStateOf(FiltroDataset.FALTAN) }
 
+    // Si el dataset no se puede leer, se dice: mostrarlo vacío invitaría a grabar encima.
+    var errorDeLectura by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
-        senas = withContext(Dispatchers.IO) { leerSenasDelDataset(context) }
+        try {
+            senas = withContext(Dispatchers.IO) { leerSenasDelDataset(context) }
+        } catch (e: Exception) {
+            errorDeLectura = e.message ?: "No se pudo leer el dataset"
+        }
         cargando = false
     }
 
@@ -126,6 +133,10 @@ fun DatasetScreen(navController: NavHostController) {
         when {
             cargando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = SenarAzul600)
+            }
+
+            errorDeLectura != null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(errorDeLectura.orEmpty(), style = MaterialTheme.typography.bodyLarge, color = SenarGrafito900)
             }
 
             total == 0 -> DatasetVacio(

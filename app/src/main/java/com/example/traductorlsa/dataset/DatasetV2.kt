@@ -26,12 +26,12 @@ object DatasetV2 {
     }
 
     fun agregar(context: Context, linea: String) {
-        archivo(context).appendText(linea + "\n")
+        synchronized(AlmacenSeguro.candado) { archivo(context).appendText(linea + "\n") }
     }
 
     /**
-     * Guarda una muestra con sus frames crudos. Un error acá no debe perder la
-     * muestra v1, que ya se guardó: se registra y se sigue.
+     * Guarda una muestra con sus frames crudos. Devuelve false si no se pudo: quien llama
+     * no tiene que seguir como si se hubiera guardado (auditoría, TL-C5).
      */
     fun guardarMuestra(
         context: Context,
@@ -39,8 +39,8 @@ object DatasetV2 {
         participantId: String?,
         captura: CapturaCruda,
         sesion: MetaSesion?,
-    ) {
-        try {
+    ): Boolean {
+        return try {
             val versionApp = try {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
             } catch (_: Exception) { "?" }
@@ -58,8 +58,10 @@ object DatasetV2 {
                     versionApp = versionApp,
                 ),
             )
+            true
         } catch (e: Exception) {
             Log.e("DatasetV2", "No se pudo guardar la muestra v2: ${e.message}")
+            false
         }
     }
 
@@ -73,14 +75,18 @@ object DatasetV2 {
 
     /**
      * Saca la última muestra, para el botón Deshacer. Devuelve false si no había ninguna.
-     * Reescribe el archivo, pero solo al deshacer, que es raro.
+     * Reescribe el archivo, pero de forma atómica y dejando la versión anterior en `.bak`:
+     * antes un corte a mitad de `writeText` podía dejar el v2 vacío (auditoría, TL-C5).
      */
-    fun quitarUltima(context: Context): Boolean {
-        val f = archivo(context)
-        if (!f.exists()) return false
-        val lineas = f.readLines().filter { it.isNotBlank() }
-        if (lineas.isEmpty()) return false
-        f.writeText(lineas.dropLast(1).joinToString("") { it + "\n" })
-        return true
+    fun quitarUltima(context: Context): Boolean = quitarUltima(archivo(context))
+
+    fun quitarUltima(f: File): Boolean {
+        synchronized(AlmacenSeguro.candado) {
+            if (!f.exists()) return false
+            val lineas = f.readLines().filter { it.isNotBlank() }
+            if (lineas.isEmpty()) return false
+            AlmacenSeguro.reescribirLineas(f, lineas.dropLast(1))
+            return true
+        }
     }
 }

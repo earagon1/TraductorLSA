@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
-import android.os.Environment
+import android.util.Log
 import android.os.SystemClock
 import android.util.Size
 import android.widget.Toast
@@ -56,6 +56,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.traductorlsa.camera.CameraManager
 import com.example.traductorlsa.camera.FrameAnalyzer
+import com.example.traductorlsa.dataset.DatasetV1
 import com.example.traductorlsa.dataset.DatasetV2
 import com.example.traductorlsa.dataset.Participante
 import com.example.traductorlsa.dataset.SesionGuiada
@@ -126,19 +127,12 @@ data class OverlayData(
     val isFront: Boolean = true
 )
 
-data class TrainingSample(
-    val label: String,
-    val seq: List<List<Float>> // T x D
-)
-
 data class TrainingWordOption(
     val label: String,
     val imageAssetPath: String?,
     val isOfficial: Boolean
 )
 
-// Archivo Ãºnico y ruta
-const val DATASET_FILE_NAME = "lsa_samples.json"
 
 /**
  * Muestras que se busca juntar por sena antes de reentrenar.
@@ -410,7 +404,13 @@ fun CameraScreen(
 
     LaunchedEffect(trainingMode) {
         if (trainingMode) {
-            conteoPorSena = withContext(Dispatchers.IO) { loadDatasetCountsByLabel(context) }
+            conteoPorSena = try {
+                withContext(Dispatchers.IO) { loadDatasetCountsByLabel(context) }
+            } catch (e: Exception) {
+                // Con el dataset roto, avisar ya: cada captura va a fallar hasta resolverlo.
+                snack.showSnackbar(e.message ?: "No se pudo leer el dataset")
+                emptyMap()
+            }
         }
     }
 
@@ -437,8 +437,13 @@ fun CameraScreen(
 
     fun deshacerUltimaMuestra() {
         scope.launch {
-            val quitada = withContext(Dispatchers.IO) {
-                removeLastDatasetSample(context).also { if (it != null) DatasetV2.quitarUltima(context) }
+            val quitada = try {
+                withContext(Dispatchers.IO) {
+                    DatasetV1.quitarUltima(DatasetV1.archivo(context)).also { if (it != null) DatasetV2.quitarUltima(context) }
+                }
+            } catch (e: Exception) {
+                snack.showSnackbar("No se pudo deshacer: ${e.message ?: e.javaClass.simpleName}")
+                null
             }
             // En la sesión guiada, deshacer vuelve a la toma anterior para repetirla.
             if (quitada != null) sesion?.let { irA(it.retroceder()); mostrarPausa = false }
@@ -551,26 +556,40 @@ fun CameraScreen(
                     tUsed = savedFrames.size
                     dUsed = if (savedFrames.isNotEmpty()) savedFrames[0].size else 0
                     val participante = participanteActual()
-                    appendSamplesByDate(
-                        context = context,
-                        samples = listOf(TrainingSample(label = selected.label, seq = savedFrames)),
-                        T = tUsed,
-                        D = dUsed,
-                        participantId = participante
-                    )
-                    engine.ultimaCaptura?.let { captura ->
-                        DatasetV2.guardarMuestra(context, selected.label, participante, captura, sesionActual?.meta())
+                    // Se toma ya: la captura siguiente la reemplaza.
+                    val captura = engine.ultimaCaptura
+                    // El disco, fuera del hilo de la cámara (TL-A5). Y si no se pudo guardar,
+                    // la sesión no avanza ni se cuenta la muestra: antes avanzaba igual y la
+                    // toma se perdía sin que nadie se enterara (TL-C5).
+                    scope.launch {
+                        val error = withContext(Dispatchers.IO) {
+                            try {
+                                DatasetV1.agregar(DatasetV1.archivo(context), selected.label, savedFrames, participante,
+                                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()))
+                                if (captura != null && !DatasetV2.guardarMuestra(context, selected.label, participante,
+                                        captura, sesionActual?.meta())) {
+                                    "la toma se guardó en el dataset v1 pero no en el v2 (landmarks crudos)"
+                                } else null
+                            } catch (e: Exception) {
+                                Log.e("Dataset", "No se pudo guardar la muestra", e)
+                                e.message ?: e.javaClass.simpleName
+                            }
+                        }
+                        if (error != null) {
+                            snack.showSnackbar("No se pudo guardar la toma: $error")
+                            return@launch
+                        }
+                        if (sesionActual != null) irA(sesionActual.avanzar())
+                        sessionSavedCount += 1
+                        conteoPorSena = conteoPorSena.toMutableMap().apply {
+                            this[selected.label] = (this[selected.label] ?: 0) + 1
+                        }
+                        // La confirmacion la da el panel, que ademas queda en pantalla
+                        // hasta la captura siguiente. Un snackbar encima repetiria el
+                        // mismo mensaje y taparia el visor justo cuando hay que mirar.
+                        recienGuardada = true
+                        listoParaSiguiente = false
                     }
-                    if (sesionActual != null) scope.launch { irA(sesionActual.avanzar()) }
-                    sessionSavedCount += 1
-                    conteoPorSena = conteoPorSena.toMutableMap().apply {
-                        this[selected.label] = (this[selected.label] ?: 0) + 1
-                    }
-                    // La confirmacion la da el panel, que ademas queda en pantalla
-                    // hasta la captura siguiente. Un snackbar encima repetiria el
-                    // mismo mensaje y taparia el visor justo cuando hay que mirar.
-                    recienGuardada = true
-                    listoParaSiguiente = false
                 }
             }
         }
@@ -1677,56 +1696,6 @@ private fun TrainingReferenceDialog(
     }
 }
 
-fun datasetFile(context: Context): File {
-    val base = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
-    return File(base, DATASET_FILE_NAME)
-}
-
-fun loadOrInitDataset(context: Context, T: Int, D: Int): JSONObject {
-    val f = datasetFile(context)
-    if (!f.exists() || f.length() == 0L) return JSONObject().apply { put("t", T); put("d", D); put("by_date", JSONObject()) }
-    return try {
-        JSONObject(f.readText()).apply { if (!has("by_date")) put("by_date", JSONObject()) }
-    } catch (e: Exception) {
-        JSONObject().apply { put("t", T); put("d", D); put("by_date", JSONObject()) }
-    }
-}
-
-/**
- * Guarda muestras en el dataset local, agrupadas por fecha.
- *
- * Cada muestra lleva `participant_id`: el seudonimo de la cuenta que la grabo
- * (ver [Participante]). Sin ese campo no hay forma de saber de quien es cada
- * gesto, y el dataset no sirve para el aprendizaje federado ni para medir la
- * generalizacion a personas no vistas. Se omite la clave si no hay sesion, asi
- * las muestras sin atribucion quedan identificables en lugar de mezclarse con
- * las demas.
- */
-fun appendSamplesByDate(
-    context: Context,
-    samples: List<TrainingSample>,
-    T: Int,
-    D: Int,
-    participantId: String? = null,
-): File {
-    val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-    val root = loadOrInitDataset(context, T, D)
-    seudonimizarMuestrasViejas(root)
-    val byDate = root.getJSONObject("by_date")
-    val arr = if (byDate.has(today)) byDate.getJSONArray(today) else JSONArray()
-    samples.forEach { s ->
-        val seqJson = JSONArray()
-        s.seq.forEach { f -> val fArr = JSONArray(); f.forEach { v -> fArr.put(v) }; seqJson.put(fArr) }
-        val muestra = JSONObject().put("label", s.label).put("seq", seqJson)
-        if (!participantId.isNullOrBlank()) muestra.put("participant_id", participantId)
-        arr.put(muestra)
-    }
-    byDate.put(today, arr)
-    val out = datasetFile(context)
-    out.writeText(root.toString())
-    return out
-}
-
 /**
  * Seudonimo de la cuenta activa, o null si no hay sesion.
  *
@@ -1737,78 +1706,16 @@ fun appendSamplesByDate(
 fun participanteActual(): String? = Participante.idSeudonimo(Clerk.userFlow.value?.id)
 
 /**
- * Reemplaza el `client_id` crudo de las muestras grabadas antes del seudonimo
- * por su `participant_id`. Devuelve true si cambio algo.
- *
- * Esas muestras guardaban el id de la cuenta de Clerk tal cual. Se migran en el
- * lugar en vez de descartarlas, y con la misma derivacion, asi siguen agrupadas
- * con las muestras nuevas de la misma persona.
+ * Comparte el v1 y el v2 juntos: el v2 (landmarks crudos) es el que sirve para el
+ * contrato nuevo, y separado del v1 seria facil olvidarlo. Antes de que el v1 salga
+ * del telefono se le sacan los ids de cuenta crudos; si no se puede leer, no se comparte.
  */
-fun seudonimizarMuestrasViejas(root: JSONObject): Boolean {
-    val byDate = root.optJSONObject("by_date") ?: return false
-    var cambio = false
-    byDate.keys().forEach { fecha ->
-        val items = byDate.optJSONArray(fecha) ?: return@forEach
-        for (i in 0 until items.length()) {
-            val muestra = items.optJSONObject(i) ?: continue
-            if (!muestra.has("client_id")) continue
-            val crudo = muestra.optString("client_id")
-            if (!muestra.has("participant_id")) {
-                // Un client_id que ya es seudonimo no se vuelve a derivar.
-                val id = if (Participante.esSeudonimo(crudo)) crudo else Participante.idSeudonimo(crudo)
-                if (id != null) muestra.put("participant_id", id)
-            }
-            muestra.remove("client_id")
-            cambio = true
-        }
-    }
-    return cambio
-}
-
-fun removeLastDatasetSample(context: Context): String? {
-    val file = datasetFile(context)
-    if (!file.exists() || file.length() == 0L) return null
-
-    return try {
-        val root = JSONObject(file.readText())
-        val byDate = root.optJSONObject("by_date") ?: return null
-        val dates = mutableListOf<String>()
-        byDate.keys().forEach { dates += it }
-
-        val latestDate = dates.sortedDescending().firstOrNull { date ->
-            (byDate.optJSONArray(date)?.length() ?: 0) > 0
-        } ?: return null
-
-        val entries = byDate.optJSONArray(latestDate) ?: return null
-        if (entries.length() == 0) return null
-
-        val removedLabel = entries.optJSONObject(entries.length() - 1)?.optString("label")
-        entries.remove(entries.length() - 1)
-        if (entries.length() == 0) {
-            byDate.remove(latestDate)
-        } else {
-            byDate.put(latestDate, entries)
-        }
-
-        file.writeText(root.toString())
-        removedLabel
-    } catch (_: Exception) {
-        null
-    }
-}
-
 fun shareDatasetJsonFile(context: Context): Boolean {
     try {
-        val file = datasetFile(context)
-        if (!file.exists() || file.length() == 0L) return false
-        // Antes de que el archivo salga del telefono, ningun id de cuenta crudo.
-        // Si el JSON no se puede leer, no se comparte: no hay forma de garantizarlo.
-        val root = JSONObject(file.readText())
-        if (seudonimizarMuestrasViejas(root)) file.writeText(root.toString())
-        // Se comparten juntos el v1 y el v2 (landmarks crudos): el v2 es el que sirve
-        // para el contrato nuevo, y separado del v1 sería fácil olvidarlo. El v2 ya
-        // nace con participant_id seudónimo, así que no hay nada que migrar.
-        val archivos = listOf(file, DatasetV2.archivo(context)).filter { it.exists() && it.length() > 0L }
+        val v1 = DatasetV1.archivo(context)
+        DatasetV1.prepararParaCompartir(v1)
+        val archivos = listOf(v1, DatasetV2.archivo(context)).filter { it.exists() && it.length() > 0L }
+        if (archivos.isEmpty()) return false
         val uris = ArrayList(archivos.map { FileProvider.getUriForFile(context, "${context.packageName}.provider", it) })
         val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
             type = "*/*"
@@ -1817,32 +1724,13 @@ fun shareDatasetJsonFile(context: Context): Boolean {
         }
         context.startActivity(Intent.createChooser(intent, "Compartir dataset"))
         return true
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        Log.e("Dataset", "No se pudo compartir el dataset: ${e.message}")
         return false
     }
 }
 
-fun loadDatasetCountsByLabel(context: Context): Map<String, Int> {
-    val file = datasetFile(context)
-    if (!file.exists() || file.length() == 0L) return emptyMap()
-
-    return try {
-        val root = JSONObject(file.readText())
-        val byDate = root.optJSONObject("by_date") ?: return emptyMap()
-        val counts = linkedMapOf<String, Int>()
-
-        byDate.keys().forEach { date ->
-            val items = byDate.optJSONArray(date) ?: JSONArray()
-            for (i in 0 until items.length()) {
-                val label = items.optJSONObject(i)?.optString("label").orEmpty()
-                if (label.isNotBlank()) {
-                    counts[label] = (counts[label] ?: 0) + 1
-                }
-            }
-        }
-
-        counts.toList().sortedBy { displayTrainingLabel(it.first) }.toMap()
-    } catch (_: Exception) {
-        emptyMap()
-    }
-}
+/** Muestras por seña, ordenadas para mostrar. Con el dataset roto tira [DatasetIlegible]. */
+fun loadDatasetCountsByLabel(context: Context): Map<String, Int> =
+    DatasetV1.conteoPorEtiqueta(DatasetV1.archivo(context))
+        .toList().sortedBy { displayTrainingLabel(it.first) }.toMap()
