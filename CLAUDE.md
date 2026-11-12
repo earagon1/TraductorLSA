@@ -49,7 +49,7 @@ python tools/chequeo_imports.py && python tools/chequeo_orden.py && python tools
 - **Nombres de clases:** minúsculas, sin tildes, con espacio (`como estas`, `mi nombre es`, `por favor`). Tienen que coincidir con `words.json`, con `NOMBRES_PARA_MOSTRAR` en `ui/screens/DictionaryScreen.kt` y con `assets/dictionary/<id con _>.jpg`. Detalle en `modelo_LSA/ejecucion.txt`.
 - **Git:** commits directo a `master`, sin ramas. **Sin `Co-Authored-By`:** el historial va a nombre de Evelin. Sin push salvo que lo pida. Mensajes en español, con el *por qué* en el cuerpo.
 - **Estilo:** comentarios que explican el *por qué*, nombres en español donde el código ya los usa, funciones puras y testeables (el modelo a seguir es `voice/LimpiezaDeTexto.kt` + `LimpiezaDeTextoTest.kt`). Sin `!!`.
-- `ui/CameraScreen.kt` ya se partió en `ui/camera/` (T-A20, primera etapa; queda en ~810 líneas). La segunda etapa, un `CameraViewModel` con el estado y la lógica, va **antes** de cualquier otro cambio grande en la cámara.
+- La cámara está partida (T-A20): `ui/CameraScreen.kt` es solo la interfaz, el estado y la lógica van en `ui/camera/CameraViewModel.kt` (con tests en la JVM vía `AlmacenDeTomas`) y los recursos nativos en `ui/camera/PipelineDeCamara.kt`. Lógica nueva de la cámara va al ViewModel, con su test.
 
 ## Contrato de features
 El contrato v2, compartido con modelo_LSA, va en `contract/` (espejado en los dos repos, con un test de hash). Hasta que exista, la referencia es la tabla "Desajustes" de `plan/modelo_lsa.md` §1.4, más los hallazgos medidos en `plan/progreso.md`.

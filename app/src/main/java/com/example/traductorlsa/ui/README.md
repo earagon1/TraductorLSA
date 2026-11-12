@@ -31,8 +31,10 @@ La pantalla de cámara, que sirve a **dos modos** con el mismo pipeline:
 
 `CameraScreenMode` es lo que las distingue; todo lo demás se comparte.
 
-`CameraScreen.kt` tiene solo la pantalla: el pipeline, el estado y los efectos. Sus
-piezas viven en `camera/` (T-A20, primera etapa; la segunda es un `CameraViewModel`):
+`CameraScreen.kt` tiene solo la interfaz y el cableado entre el motor y el estado (T-A20).
+El estado y la lógica están en `camera/CameraViewModel.kt`, que usa el dataset a través de
+`AlmacenDeTomas` para poder probarse en la JVM; los recursos nativos (CameraX, MediaPipe,
+TFLite, voz) y su cierre, en `camera/PipelineDeCamara.kt`. El resto de las piezas:
 
 | Archivo | Qué tiene |
 |---|---|
