@@ -1,0 +1,31 @@
+{
+  "modelo": "actions_15_opt.tflite",
+  "modelo_sha256": "276a79ea97659501544900191b96590b1462b204fb2284e204e7a7d2ac634857",
+  "features_version": "2",
+  "entrada": [
+    1,
+    15,
+    126
+  ],
+  "n_salidas": 13,
+  "clases": [
+    "hola",
+    "adios",
+    "bien",
+    "como estas",
+    "gracias",
+    "e",
+    "v",
+    "l",
+    "i",
+    "n",
+    "mi nombre es",
+    "por favor",
+    "nada"
+  ],
+  "words_sha256": "1c7bcfe179c6806e0b95081fbc9347f1d13b8934de39a32ed76057051dc4f308",
+  "calibracion_sha256": "6a68e3223ca9ea4013ba910d4b6ed6a1c307ada4b0d140904fe1ada6e3d56e7f",
+  "origen": "runs/2026-10-16_final",
+  "fecha": "2026-11-11",
+  "aviso": "Lo escribe scripts/publicar_modelo.py (modelo_LSA). No editar a mano: la app lo valida al cargar."
+}

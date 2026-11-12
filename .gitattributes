@@ -1,3 +1,7 @@
 # El contrato se compara por sha256 entre los dos repos: sin conversion de
 # finales de linea, o un checkout en Windows cambia los hashes.
 contract/** -text
+# Lo mismo con los assets del modelo: modelo.json guarda el sha256 de words.json y de
+# calibracion.json (scripts/publicar_modelo.py en modelo_LSA).
+app/src/main/assets/*.json -text
+app/src/androidTest/assets/*.json -text

@@ -16,7 +16,12 @@ import kotlin.math.ln
  *
  * Sin el archivo, T = 1 (no cambia nada) y se usa el umbral de Ajustes.
  */
-data class Calibracion(val temperatura: Float = 1f, val umbral: Float? = null) {
+data class Calibracion(
+    val temperatura: Float = 1f,
+    val umbral: Float? = null,
+    /** El sha del modelo con el que se calculó; la app no la usa con otro (auditoría, X3). */
+    val modeloSha: String? = null,
+) {
     companion object {
         const val ASSET = "calibracion.json"
 
@@ -36,6 +41,7 @@ data class Calibracion(val temperatura: Float = 1f, val umbral: Float? = null) {
         private fun desdeJson(json: JSONObject) = Calibracion(
             temperatura = json.optDouble("temperatura", 1.0).toFloat().takeIf { it > 0f } ?: 1f,
             umbral = if (json.has("umbral")) json.getDouble("umbral").toFloat() else null,
+            modeloSha = json.optString("modelo_sha256").ifEmpty { null },
         )
     }
 }

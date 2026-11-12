@@ -38,6 +38,8 @@ class CabezaDensa(
     private var pasos = 0
 
     val nParametros: Int get() = capas.sumOf { it.w.size + it.b.size }
+    val dimEntrada: Int get() = capas.first().entrada
+    val nSalidas: Int get() = capas.last().salida
 
     /** Pesos en el orden de `trainable_variables` de Keras: W1, b1, W2, b2, W3, b3. */
     fun pesos(): List<FloatArray> = capas.flatMap { listOf(it.w.copyOf(), it.b.copyOf()) }

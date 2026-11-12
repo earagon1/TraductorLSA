@@ -656,7 +656,7 @@ fun CameraScreen(
 
     val configuration = LocalConfiguration.current
     LaunchedEffect(hasPermission, lifecycleOwner, isFrontCamera, ajustes.calidad) {
-        if (!hasPermission) return@LaunchedEffect
+        if (!hasPermission || classifier.problemas.isNotEmpty()) return@LaunchedEffect
         val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         val corto = ajustes.calidad.ladoCorto
         val largo = ajustes.calidad.ladoLargo
@@ -677,6 +677,16 @@ fun CameraScreen(
         camController.setImageAnalysisAnalyzer(executor) { imageProxy ->
             if (pantallaCerrada.get()) imageProxy.close() else analyzer.analyze(imageProxy)
         }
+    }
+
+    // Con un modelo que no corresponde no se abre la cámara: se dice por qué (X3).
+    if (classifier.problemas.isNotEmpty()) {
+        com.example.traductorlsa.ui.camera.AvisoModeloInvalido(
+            problemas = classifier.problemas,
+            esPaquete = classifier.modeloInstalado != null,
+            onVolver = onBack,
+        )
+        return
     }
 
     Box(Modifier.fillMaxSize()) {

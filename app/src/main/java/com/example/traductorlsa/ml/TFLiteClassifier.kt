@@ -4,12 +4,14 @@ import android.content.Context
 import android.util.Log
 import com.example.traductorlsa.federado.CabezaDensa
 import com.example.traductorlsa.federado.ModeloInstalado
+import org.json.JSONObject
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.security.MessageDigest
 
 class TFLiteClassifier(
     private val context: Context,
@@ -34,6 +36,12 @@ class TFLiteClassifier(
     /** Temperatura y umbral del modelo con el que se traduce (el instalado o el de fábrica). */
     val calibracion: Calibracion = modeloInstalado?.let { Calibracion.leer(it.calibracion) } ?: Calibracion.leer(context)
 
+    /**
+     * Por qué este modelo no sirve para esta app; vacía si está todo bien. Con problemas
+     * la cámara no traduce y los muestra (auditoría, X3).
+     */
+    val problemas: List<String>
+
     init {
         // El cuantizado va primero a proposito.
         //
@@ -54,27 +62,54 @@ class TFLiteClassifier(
         //
         // La variante entera (int8) quedó descartada con Flex por lenta; sin
         // Flex vuelve a ser candidata, pendiente de medir (PY-X2).
-        val modelName = when {
-            assetExists("actions_15_opt.tflite") -> "actions_15_opt.tflite"
-            assetExists("modelo.tflite")        -> "modelo.tflite"
-            else                                -> "model.tflite"
-        }
-        interpreter = if (modeloInstalado != null && cabeza != null) {
+        //
+        // Un solo nombre: antes, si faltaba, se probaban "modelo.tflite" y "model.tflite"
+        // en silencio (auditoría, X3). El que se publica lo dice modelo.json.
+        //
+        // Con un paquete activo se carga su backbone aunque la cabeza no se pueda leer:
+        // antes, en ese caso, se traducía con el modelo de fábrica y las clases del
+        // paquete. Ahora es un problema que se muestra.
+        val sha: String?
+        interpreter = if (modeloInstalado != null) {
             Log.d("TFLiteClassifier", "Cargando el paquete v${modeloInstalado.paquete} del federado")
+            sha = modeloInstalado.backboneSha  // verificado contra el archivo al instalarlo
             Interpreter(FileInputStream(modeloInstalado.backbone).use {
                 it.channel.map(FileChannel.MapMode.READ_ONLY, 0, modeloInstalado.backbone.length())
             }, Interpreter.Options().apply { setNumThreads(4) })
         } else {
-            Log.d("TFLiteClassifier", "Cargando modelo: $modelName")
-            Interpreter(loadModelFile(modelName), Interpreter.Options().apply { setNumThreads(4) })
+            Log.d("TFLiteClassifier", "Cargando modelo: $MODELO")
+            val buffer = loadModelFile(MODELO)
+            sha = sha256(buffer)
+            Interpreter(buffer, Interpreter.Options().apply { setNumThreads(4) })
         }
         dimSalida = interpreter.getOutputTensor(0).shape().last()
 
-        interpreter.getInputTensor(0)?.shape()?.let { shape ->
-            if (shape.size >= 3) { T = shape[1]; D = shape[2] }
-            else if (shape.size == 2) { T = 1; D = shape[1] }
-        }
+        val entrada = interpreter.getInputTensor(0).shape().toList()
+        if (entrada.size >= 3) { T = entrada[1]; D = entrada[2] }
+
+        val cargado = ValidacionModelo.Cargado(
+            shaModelo = sha,
+            entrada = entrada,
+            nSalidas = if (modeloInstalado == null) dimSalida
+                else cabeza?.takeIf { it.dimEntrada == dimSalida }?.nSalidas,
+            etiquetas = labelsProvider.labels,
+            errorEtiquetas = labelsProvider.error,
+            shaDeLaCalibracion = calibracion.modeloSha,
+        )
+        problemas = if (modeloInstalado != null) ValidacionModelo.problemasDePaquete(modeloInstalado.manifiesto, cargado)
+            else ValidacionModelo.problemasDeFabrica(leerManifiesto(), cargado)
+        if (problemas.isNotEmpty()) Log.e("TFLiteClassifier", "Modelo inválido: ${problemas.joinToString("; ")}")
         Log.d("TFLiteClassifier", "Input: T=$T D=$D - labels=${labelsProvider.labels.size}")
+    }
+
+    private fun leerManifiesto(): JSONObject? = try {
+        JSONObject(context.assets.open(MANIFIESTO).bufferedReader().use { it.readText() })
+    } catch (_: Exception) { null }
+
+    private fun sha256(buffer: ByteBuffer): String {
+        val md = MessageDigest.getInstance("SHA-256")
+        md.update(buffer.duplicate())
+        return md.digest().joinToString("") { "%02x".format(it) }
     }
 
     /** 🔹 Método original: solo devuelve índice y probabilidad de la mejor clase */
@@ -87,6 +122,7 @@ class TFLiteClassifier(
 
     /** 🔹 Método nuevo: devuelve índice, probabilidad y vector completo */
     fun inferTop(seqT: List<FloatArray>, labels: List<String>): Triple<Int, Float, FloatArray> {
+        check(problemas.isEmpty()) { "modelo inválido: ${problemas.joinToString("; ")}" }
         val input = ByteBuffer.allocateDirect(4 * T * D).order(ByteOrder.nativeOrder())
         for (t in 0 until T) {
             val frame = if (t < seqT.size) seqT[t] else FloatArray(D) { 0f }
@@ -133,9 +169,10 @@ class TFLiteClassifier(
         interpreter.close()
     }
 
-    private fun assetExists(name: String): Boolean = try {
-        context.assets.open(name).close(); true
-    } catch (_: Throwable) { false }
+    companion object {
+        const val MODELO = "actions_15_opt.tflite"
+        const val MANIFIESTO = "modelo.json"
+    }
 
     // El AssetFileDescriptor y el stream se cierran apenas se mapea: el MappedByteBuffer
     // sigue siendo válido sin ellos, y antes quedaban abiertos un descriptor por cada

@@ -15,6 +15,8 @@ import kotlin.math.max
  * en vivo y para recalcular muestras guardadas en el dataset v2.
  */
 object ContratoV2 {
+    /** Regla 8: `features_version` del contrato. El modelo publicado la declara en `modelo.json`. */
+    const val VERSION = "2"
     const val T = 15
     const val D = 126
     private const val POR_MANO = 63
