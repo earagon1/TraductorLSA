@@ -23,7 +23,7 @@ CameraX (ImageAnalysis) → YuvToRgbConverter (YUV→JPEG→Bitmap) → GestureE
   → TFLiteClassifier (actions_15_opt.tflite sin ops Flex, 15×126 → C) + LabelProvider (words.json)
   → top-3 → UI (CameraScreen) + SpeechManager (TTS)
 ```
-- Máquina de estados de `ml/GestureEngine.kt`: IDLE → WAITING (500 ms con mano) → CAPTURING (solo frames con mano; si se pierde la mano, vuelve a IDLE) → DONE.
+- Máquina de estados en `ml/MaquinaDeCaptura.kt` (pura, con tests; `GestureEngine` hace la parte de Android): IDLE → WAITING (500 ms con mano) → CAPTURING (solo frames con mano; si se pierde la mano, vuelve a IDLE) → DONE.
 - Lateralidad: con `isFrontCamera=false`, la etiqueta "Left" de HandLandmarker va a `lh`. Medido en la PC: coincide con Holistic (el slot `lh` es la mano izquierda del sujeto). Falta confirmarlo en el dispositivo (ver `progreso.md`).
 - Voz a texto: `voice/VoiceToText.kt` (`EXTRA_PREFER_OFFLINE`) + `voice/LimpiezaDeTexto.kt`.
 - Cada paquete tiene su `README.md` con el *por qué* de las decisiones.

@@ -4,7 +4,6 @@ package com.example.traductorlsa.ml
 import android.graphics.Bitmap
 import android.util.Log
 import com.example.traductorlsa.dataset.CapturaCruda
-import com.example.traductorlsa.dataset.FrameCrudo
 import com.example.traductorlsa.dataset.ManoCruda
 import com.example.traductorlsa.detection.ComparacionLandmarks
 import com.example.traductorlsa.detection.HandTracker
@@ -51,27 +50,15 @@ class GestureEngine(
     var entradaComparador: ((Bitmap) -> Bitmap)? = null
     var onComparacion: ((org.json.JSONObject) -> Unit)? = null
 
-    private val esperaSinManos = EsperaSinManos()
+    // Cuándo empieza, termina o se aborta una captura; probada en MaquinaDeCapturaTest.
+    private val maquina = MaquinaDeCaptura()
 
-
-    private enum class CaptureState { IDLE, WAITING, CAPTURING, DONE }
-
-    var targetFrames: Int = 15
-        private set
-
-    private var state = CaptureState.IDLE
-    private var waitStartTime: Long = 0
-
-    private var captureStartTime: Long = 0
+    val targetFrames: Int get() = maquina.objetivo
 
     @Volatile
     private var isFrontCamera = true
 
     private val acumulador = AcumuladorCaptura()
-
-    // Landmarks tal como salen de MediaPipe, frame por frame, para el dataset v2.
-    private val framesCrudos = ArrayList<FrameCrudo>(32)
-    private var rotacionCaptura = 0
 
     /**
      * La última captura completa, en crudo. Se fija justo antes de [onTopPredictions],
@@ -80,12 +67,6 @@ class GestureEngine(
     @Volatile
     var ultimaCaptura: CapturaCruda? = null
         private set
-
-    private var noHandFrames = 0
-    private val maxNoHandFrames = 10 // tolera ~10 frames sin mano (~0.3s si tenés 30fps, ~1s si tenés 10fps)
-    private var handFrames = 0
-    private val minHandFrames = 5
-
 
     /**
      * @param convNanos lo que tardó la conversión YUV -> Bitmap en [FrameAnalyzer],
@@ -98,12 +79,9 @@ class GestureEngine(
     fun process(bitmap: Bitmap, rotationDeg: Int, ts: Long, convNanos: Long = 0L, yaDerecho: Boolean = false) {
         if (reiniciarCaptura) {
             // Pedido desde otro hilo (setCameraFacing): se aplica acá, en el de la cámara,
-            // que es el único que toca framesCrudos.
+            // que es el único que toca la máquina.
             reiniciarCaptura = false
-            framesCrudos.clear()
-            state = CaptureState.IDLE
-            handFrames = 0
-            noHandFrames = 0
+            maquina.reiniciar()
         }
         // ============================================================
         // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
@@ -134,7 +112,7 @@ class GestureEngine(
             val b = ComparacionLandmarks.puntos(res2)
             val d = ComparacionLandmarks.distanciaMedia(
                 a, b, correctedBitmap.width.toDouble() / correctedBitmap.height)
-            onComparacion?.invoke(org.json.JSONObject().put("ts", ts).put("estado", state.name)
+            onComparacion?.invoke(org.json.JSONObject().put("ts", ts).put("estado", maquina.estado.name)
                 .put("ms_principal", (t2 - t1) / 1e6).put("ms_comparado", (c1 - c0) / 1e6)
                 .put("manos_principal", a.size).put("manos_comparado", b.size)
                 .put("distancia", d ?: org.json.JSONObject.NULL))
@@ -158,122 +136,67 @@ class GestureEngine(
 
         val hasHands = res != null && res.landmarks().isNotEmpty()
 
-        when (state) {
-            CaptureState.IDLE -> {
-                if (hasHands) {
-                    handFrames++
-                    if (handFrames >= minHandFrames) {
-                        state = CaptureState.WAITING
-                        waitStartTime = ts
-                        handFrames = 0
-                    }
-                } else handFrames = 0
+        // El frame llega sin espejar y la etiqueta de HandLandmarker ya es la mano del
+        // sujeto ("Left" → lh), aunque la cámara sea la frontal. Medido el 2026-10-05/07
+        // en la PC y en la tablet (contract/features_v2.md, regla 3).
+        var manos: List<ManoCruda> = emptyList()
+        val evento = maquina.frame(ts, hasHands, rotationDeg) {
+            Trace.beginSection("senar:feat")
+            manosCrudas(res).also { manos = it; Trace.endSection() }
+        }
+
+        // El vector de cada frame solo se usa para las métricas: la secuencia que se
+        // clasifica se arma al final, desde los crudos.
+        if (Metricas.activas && (evento is MaquinaDeCaptura.Evento.Frame || evento is MaquinaDeCaptura.Evento.Completa)) {
+            val vec = ContratoV2.frameAVector(manos, correctedBitmap.width, correctedBitmap.height)
+            val t3 = System.nanoTime()
+            acumulador.registrarFrame(
+                mapOf(Etapa.CONV to convNanos, Etapa.ROT to t1 - t0, Etapa.MP to t2 - t1, Etapa.FEAT to t3 - t2),
+                vec
+            )
+        }
+
+        when (evento) {
+            null -> Unit
+            is MaquinaDeCaptura.Evento.Empezo -> {
+                acumulador.limpiar()
+                onCaptureProgress?.invoke(0, evento.objetivo)
+                Log.d("GestureEngine", "⏱️ Inicio de captura en $ts ms")
             }
+            is MaquinaDeCaptura.Evento.Frame -> onCaptureProgress?.invoke(evento.cuadros, evento.objetivo)
+            is MaquinaDeCaptura.Evento.Completa -> {
+                onCaptureProgress?.invoke(evento.frames.size, evento.objetivoUsado)
+                Log.d("GestureEngine", "✅ Captura: ${evento.duracionMs}ms, FPS=%.1f, nuevo target=${evento.objetivoNuevo}".format(evento.fps))
+                onCaptureStats?.invoke(evento.duracionMs, 0, evento.fps, evento.objetivoNuevo)
 
-            CaptureState.WAITING -> {
-                if (!hasHands) {
-                    noHandFrames++
-                    if (noHandFrames >= maxNoHandFrames) {
-                        Log.d("GestureEngine", "🙅 Mano realmente perdida en WAITING → IDLE")
-                        state = CaptureState.IDLE
-                        noHandFrames = 0
-                    }
-                } else {
-                    noHandFrames = 0
-                    if (ts - waitStartTime >= 500) {
-                        captureStartTime = ts
-                        acumulador.limpiar()
-                        framesCrudos.clear()
-                        rotacionCaptura = rotationDeg
-                        onCaptureProgress?.invoke(0, 15)
-                        state = CaptureState.CAPTURING
-                        Log.d("GestureEngine", "⏱️ Inicio de captura en $ts ms")
-                    }
-                }
+                val captura = CapturaCruda(
+                    frames = evento.frames,
+                    anchoImg = correctedBitmap.width,
+                    altoImg = correctedBitmap.height,
+                    rotacionDeg = evento.rotacionDeg,
+                    camaraFrontal = isFrontCamera,
+                    fps = evento.fps,
+                    duracionMs = evento.duracionMs,
+                )
+                ultimaCaptura = captura
+
+                // Se clasifica exactamente lo que se guarda como muestra: los frames de
+                // ESTA captura, con su objetivo (antes se pedía el ya actualizado, y si
+                // bajaba de 15 a 10 se perdían 5 frames).
+                val (top3, inferNanos) = autoPredict(captura)
+                emitirMetricas("captura", evento.duracionMs, evento.fps, evento.objetivoUsado, evento.frames.size, inferNanos, top3)
+                onCaptureProgress?.invoke(0, evento.objetivoNuevo)
             }
-
-            CaptureState.CAPTURING -> {
-                if (hasHands) {
-                    Trace.beginSection("senar:feat")
-                    // El frame llega sin espejar y la etiqueta de HandLandmarker ya es la
-                    // mano del sujeto ("Left" → lh), aunque la cámara sea la frontal. Medido
-                    // el 2026-10-05/07 en la PC y en la tablet (contract/features_v2.md,
-                    // regla 3). El vector de este frame solo se usa para las métricas: la
-                    // secuencia se arma al final, desde los crudos.
-                    val manos = manosCrudas(res)
-                    framesCrudos.add(FrameCrudo(ts - captureStartTime, manos))
-                    val vec = ContratoV2.frameAVector(manos, correctedBitmap.width, correctedBitmap.height)
-                    Trace.endSection()
-                    val t3 = System.nanoTime()
-
-                    if (Metricas.activas) {
-                        acumulador.registrarFrame(
-                            mapOf(Etapa.CONV to convNanos, Etapa.ROT to t1 - t0, Etapa.MP to t2 - t1, Etapa.FEAT to t3 - t2),
-                            vec
-                        )
-                    }
-
-                    val size = framesCrudos.size
-                    onCaptureProgress?.invoke(size, targetFrames)
-
-                    if (size >= targetFrames) {
-                        val targetUsado = targetFrames
-                        val captureDuration = ts - captureStartTime
-                        val fps = targetFrames.toFloat() / (captureDuration / 1000f)
-                        val newTarget = when {
-                            fps < 8f -> 10
-                            fps > 20f -> 20
-                            else -> 15
-                        }
-                        targetFrames = newTarget
-
-                        Log.d("GestureEngine", "✅ Captura: ${captureDuration}ms, FPS=%.1f, nuevo target=$newTarget".format(fps))
-                        onCaptureStats?.invoke(captureDuration, 0, fps, newTarget)
-
-                        val captura = CapturaCruda(
-                            frames = framesCrudos.takeLast(targetUsado),
-                            anchoImg = correctedBitmap.width,
-                            altoImg = correctedBitmap.height,
-                            rotacionDeg = rotacionCaptura,
-                            camaraFrontal = isFrontCamera,
-                            fps = fps,
-                            duracionMs = captureDuration,
-                        )
-                        ultimaCaptura = captura
-
-                        // Se clasifica exactamente lo que se guarda como muestra: los
-                        // frames de ESTA captura, con su target (antes se pedía el target
-                        // ya actualizado, y si bajaba de 15 a 10 se perdían 5 frames).
-                        val (top3, inferNanos) = autoPredict(captura)
-                        emitirMetricas("captura", captureDuration, fps, targetUsado, size, inferNanos, top3)
-                        onCaptureProgress?.invoke(0, targetFrames)
-                        esperaSinManos.reiniciar(ts)
-                        state = CaptureState.DONE
-                    }
-                } else {
-                    Log.d("GestureEngine", "⏹️ Manos perdidas en CAPTURING → volver a IDLE")
-                    // Las capturas abortadas también se reportan: en la tablet fueron
-                    // el 35 % y son parte de la experiencia de uso.
-                    val parcial = framesCrudos.size
-                    val duracion = ts - captureStartTime
-                    val fpsParcial = if (duracion > 0) parcial * 1000f / duracion else 0f
-                    emitirMetricas("abortada", duracion, fpsParcial, targetFrames, parcial, null, emptyList())
-                    framesCrudos.clear()
-                    onCaptureProgress?.invoke(0, 15)
-                    state = CaptureState.IDLE
-                }
+            is MaquinaDeCaptura.Evento.Abortada -> {
+                Log.d("GestureEngine", "⏹️ Manos perdidas en CAPTURING → volver a IDLE")
+                // Las capturas abortadas también se reportan: en la tablet fueron el 35 %
+                // y son parte de la experiencia de uso.
+                emitirMetricas("abortada", evento.duracionMs, evento.fps, evento.objetivo, evento.cuadros, null, emptyList())
+                onCaptureProgress?.invoke(0, evento.objetivo)
             }
-
-            CaptureState.DONE -> {
-                // Por tiempo y tolerando detecciones sueltas (ver EsperaSinManos): con
-                // 10 frames seguidos sin mano, un teléfono a 6 FPS quedaba trabado.
-                if (esperaSinManos.listo(hasHands, ts)) {
-                    Log.d("GestureEngine", "👌 Manos desaparecieron realmente → listo para nueva captura (IDLE)")
-                    state = CaptureState.IDLE
-                    noHandFrames = 0
-                    handFrames = 0
-                    onListoParaCapturar?.invoke()
-                }
+            MaquinaDeCaptura.Evento.ListoParaCapturar -> {
+                Log.d("GestureEngine", "👌 Manos desaparecieron realmente → listo para nueva captura (IDLE)")
+                onListoParaCapturar?.invoke()
             }
         }
     }

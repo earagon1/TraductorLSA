@@ -16,18 +16,21 @@ Coordina la detección de manos, el armado de secuencias, la inferencia y la dev
   - Convierte la imagen a `MPImage`.
   - Ejecuta la detección de manos.
   - Genera puntos de overlay para la UI.
-  - Maneja el estado de captura (`IDLE`, `WAITING`, `CAPTURING`, `DONE`).
-  - Llama a la inferencia cuando la secuencia está completa.
+  - Le pasa cada frame a `MaquinaDeCaptura` y actúa según el evento que devuelve.
+  - Llama a la inferencia cuando la captura está completa.
 - **`autoPredict()`**  
-  - Normaliza la secuencia capturada.
+  - Arma la secuencia con `ContratoV2` desde los landmarks crudos.
   - Llama al clasificador para obtener las probabilidades.
   - Devuelve el Top-1 y Top-3 de predicciones.
-- **`forcePrediction()`**  
-  - Forza una predicción con la secuencia disponible, útil para depuración.
 - **`setCameraFacing()`**  
-  - Cambia la orientación de la cámara y reinicia el buffer.
-- **`release()`**  
-  - Libera recursos y callbacks.
+  - Cambia la orientación de la cámara y descarta la captura en curso.
+
+#### `MaquinaDeCaptura.kt`
+La máquina de estados de la captura (`IDLE`, `WAITING`, `CAPTURING`, `DONE`), sin Android:
+recibe el instante y si hay manos, y devuelve un evento (empezó, frame, completa, abortada,
+listo para la siguiente). Salió de `GestureEngine` para poder probarla en la JVM
+(`MaquinaDeCapturaTest`); también decide cuántos frames pide la próxima captura (10, 15 o
+20, según los FPS de la anterior).
 
 **Callbacks principales:**
 - `onHands` → Overlay de landmarks en la UI.
