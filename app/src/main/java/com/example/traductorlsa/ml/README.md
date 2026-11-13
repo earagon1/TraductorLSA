@@ -59,16 +59,12 @@ val etiquetas = labelProvider.labels
 ### **3. `TFLiteClassifier.kt`**
 Ejecuta la inferencia con **TensorFlow Lite** y devuelve las probabilidades de cada clase.
 
-#### **Elección del modelo**
-Recorre los assets en orden de preferencia y carga el primero que encuentra:
+#### **El modelo**
+Carga un único archivo de assets, `actions_15_opt.tflite` (cuantización dinámica, sin ops Flex). Antes recorría una lista con un float32 de respaldo y nombres heredados; se sacó porque un respaldo silencioso permite traducir con un modelo que no es el publicado (auditoría, X3).
 
-1. `actions_15_opt.tflite` — cuantización dinámica. **Es el que se usa.**
-2. `actions_15_f32.tflite` — float32, de respaldo.
-3. `modelo.tflite` / `model.tflite` — nombres heredados.
+Al cargar calcula el sha256 del modelo y lo compara, junto con la forma de la entrada, la cantidad de salidas, las etiquetas y la calibración, con `modelo.json` (`ValidacionModelo.kt`). Lo que no coincide queda en `problemas`, y con algún problema la cámara muestra un aviso en vez de traducir. Los cuatro assets los escribe solo `modelo_LSA/scripts/publicar_modelo.py`.
 
-El cuantizado va primero a propósito. Antes ganaba el float32 y el optimizado viajaba en el APK sin que se lo usara nunca, así que la cuantización que compromete la propuesta no llegaba al dispositivo. Medido con `benchmark_cuantizacion.py` (repo `Modelo_LSA`): **182 KB contra 648**, con la misma accuracy y sin cambiar una sola predicción, a cambio de unos 0,4 ms más por inferencia.
-
-> Si cambiás este orden, actualizá también `startup/AssetWarmup.kt`, que precarga los mismos archivos.
+> `startup/AssetWarmup.kt` precarga el mismo archivo: si cambia el nombre, cambia en los dos lados.
 
 #### **Forma de la entrada**
 `T` y `D` se leen del tensor de entrada del modelo (15 × 126), no están escritos a mano: si el modelo cambia de longitud de secuencia, no hay que tocar código.
@@ -84,7 +80,7 @@ El cuantizado va primero a propósito. Antes ganaba el float32 y el optimizado v
 ---
 
 ## **Relación con otros módulos**
-- Recibe las secuencias normalizadas de `SequenceBuffer` (en `features/`).
+- Recibe la secuencia de 15 × 126 que arma `ContratoV2.secuenciaDesdeFrames` (en `features/`).
 - `GestureEngine` es quien lo invoca; nadie más habla con el intérprete directamente.
 - Las etiquetas salen de `LabelProvider`, que lee el mismo `words.json` con el que se entrenó el modelo. **El orden importa**: los índices de salida de la red corresponden a las posiciones de ese arreglo.
 

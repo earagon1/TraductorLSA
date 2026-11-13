@@ -56,17 +56,15 @@ TFLite, voz) y su cierre, en `camera/PipelineDeCamara.kt`. El resto de las pieza
 - **`InsigniaDeProgreso`**, **`PildoraDeVoz`**, **`RotuloDeEstado`**, **`TrainingWordPickerSheet`**.
 
 #### **Dataset local**
-El archivo `lsa_samples.json` se maneja desde acá:
+Los archivos del dataset se leen y se escriben en el paquete `dataset/` (`DatasetV1`, `DatasetV2` y `AlmacenSeguro`, que escribe de forma atómica y guarda un `.bak`). La cámara llega a ellos por `AlmacenDeTomas`, la interfaz que usa el `CameraViewModel`; la implementación real es `AlmacenDelTelefono`, en `camera/DatasetDeEntrenamiento.kt`. Ahí están también:
 
-- **`appendSamplesByDate(context, samples, T, D, participantId)`** — guarda muestras agrupadas por fecha. Cada muestra lleva **`participant_id`**, el seudónimo de la cuenta que la grabó (ver `dataset/Participante.kt`): sin ese campo no hay forma de saber de quién es cada gesto, y el dataset no sirve ni para el experimento de aprendizaje federado ni para medir generalización interusuario. Si no hay sesión se omite la clave, así las muestras sin atribución quedan identificables.
-- **`participanteActual()`** — lee la cuenta del `StateFlow` de Clerk **en el momento de guardar**, no por composición, para que la lambda de captura no se quede con un valor viejo, y devuelve solo su seudónimo: el id crudo de Clerk no llega al dataset.
-- **`seudonimizarMuestrasViejas(root)`** — las muestras grabadas antes del seudónimo traían `client_id` con el id crudo de la cuenta. Se reemplaza por su `participant_id` al guardar la siguiente muestra y siempre antes de compartir el archivo, así el id crudo no sale del teléfono.
-- **`removeLastDatasetSample`** — deshacer la última muestra.
-- **`shareDatasetJsonFile`** — exporta el JSON por el selector del sistema, vía `FileProvider`.
+- **`participanteActual()`** — lee la cuenta del `StateFlow` de Clerk **en el momento de guardar**, no por composición, y devuelve solo su seudónimo: el id crudo de Clerk no llega al dataset.
+- **`shareDatasetJsonFile`** — exporta el JSON por el selector del sistema, vía `FileProvider`. Antes de compartir, `DatasetV1.prepararParaCompartir` reemplaza los `client_id` viejos por su seudónimo.
 - **`loadDatasetCountsByLabel`** — cuántas muestras hay por seña.
-- **`MUESTRAS_OBJETIVO`** — meta por seña. Es un valor de trabajo, no una medida: el número real sale del script de entrenamiento en Python.
 
-> Un export se puede verificar con `federated/verificar_export.py`, en el repo `Modelo_LSA`.
+`MUESTRAS_OBJETIVO` (en `camera/SenasDeEntrenamiento.kt`) es la meta por seña: un valor de trabajo, no una medida.
+
+> Un export se puede verificar con `federated/verificar_export.py`, en el repo `modelo_LSA`.
 
 ---
 

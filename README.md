@@ -1,88 +1,92 @@
-# Traductor LSA – Aplicación Android
+# SeÑAR: traductor de Lengua de Señas Argentina (app Android)
 
-Este repositorio contiene el **código Android en Kotlin** del traductor de Lengua de Señas Argentina (LSA) a texto y voz.  
-La aplicación utiliza **MediaPipe** para detectar landmarks de las manos, un modelo **TensorFlow Lite** para clasificar las señas, y sintetiza voz en tiempo real.
+App Android en Kotlin y Jetpack Compose que traduce señas de la Lengua de Señas Argentina
+(LSA) a texto y voz, y voz a texto. **Todo el procesamiento ocurre en el teléfono, sin
+internet.** Es el prototipo de la tesina de grado de Evelin Aragón (Licenciatura en
+Sistemas, UNGS).
+
+Reconoce 12 señas aisladas (`hola`, `adios`, `bien`, `como estas`, `gracias`,
+`mi nombre es`, `por favor` y las letras `e`, `v`, `l`, `i`, `n`), más la clase `nada`
+para cuando no hay una seña. No es un traductor completo de LSA.
+
+El modelo se entrena en otro repositorio (`modelo_LSA`); el informe de la tesina está en
+`informe-tesina-latex/`.
 
 ---
 
-## **Arquitectura general**
+## **Qué hace**
 
-### Flujo completo
-1. **Captura de imagen (CameraX)**  
-   - Uso de `CameraManager` y `FrameAnalyzer` para obtener frames de la cámara y convertirlos a `Bitmap`.
+- **Traducir señas:** la cámara detecta las manos, clasifica la seña y la muestra como
+  texto y la dice en voz alta. Si la confianza es baja, lo avisa en vez de arriesgar.
+- **Traducir voz:** pasa a texto lo que dice la persona oyente, con el reconocedor del
+  sistema en modo sin conexión.
+- **Diccionario:** las señas que el modelo conoce, con su ilustración.
+- **Entrenar:** graba tomas etiquetadas (libres o en una sesión guiada por planilla) y
+  las guarda en el teléfono para exportarlas.
+- **Aprendizaje federado (experimental):** entrena la última capa del modelo en el
+  teléfono y comparte solo los pesos con un servidor de la red local.
 
-2. **Detección de manos (MediaPipe)**  
-   - `HandTracker` detecta landmarks tridimensionales de ambas manos.
+Traducir y consultar el diccionario no necesitan cuenta ni red. La cuenta (Clerk) se
+inicializa solo si la persona elige usarla, y hace falta para entrenar.
 
-3. **Construcción de features**  
-   - `FeatureBuilder` convierte los landmarks en un vector de 126 valores.  
-   - `SequenceBuffer` normaliza secuencias a 15 frames para inferencia.
+---
 
-4. **Inferencia del modelo (TensorFlow Lite)**  
-   - `GestureEngine` procesa la secuencia y la pasa al `TFLiteClassifier`.  
-   - `LabelProvider` carga las etiquetas (`words.json`).  
-   - El resultado es una predicción con nivel de confianza.
+## **Pipeline de la seña**
 
-5. **Salida y feedback**  
-   - **Texto:** se actualiza el texto traducido en pantalla.  
-   - **Voz:** `SpeechManager` sintetiza la palabra predicha.  
-   - **Overlay:** dibuja puntos de referencia de las manos para visualización.
+```
+CameraX (ImageAnalysis, RGBA)
+   → FrameAnalyzer: RgbaABitmap copia y rota el frame (YuvToRgbConverter si la cámara no da RGBA)
+   → GestureEngine.process
+   → HandTracker: MediaPipe HandLandmarker (hand_landmarker.task), en GPU con vuelta a CPU
+   → MaquinaDeCaptura: 10, 15 o 20 frames con mano, según los FPS
+   → ContratoV2.secuenciaDesdeFrames: lh[63] ‖ rh[63], lienzo cuadrado, remuestreo a 15
+   → TFLiteClassifier: actions_15_opt.tflite (15 × 126 → 13 clases, sin ops Flex)
+   → top-3 → pantalla (CameraScreen) y voz (SpeechManager)
+```
+
+- **Máquina de estados** (`ml/MaquinaDeCaptura.kt`): espera a ver la mano 500 ms, captura
+  solo frames con mano y, si la mano se pierde, descarta la captura.
+- **Contrato de features** (`contract/`): la cuenta que convierte landmarks en la entrada
+  del modelo es la misma en la app y en el entrenamiento. La carpeta está espejada en los
+  dos repositorios y un fixture verifica que Kotlin y Python den el mismo resultado.
+- **Modelo publicado** (`app/src/main/assets/`): `actions_15_opt.tflite`, `words.json`,
+  `calibracion.json` y `modelo.json`. Los escribe únicamente
+  `modelo_LSA/scripts/publicar_modelo.py`; la app valida `modelo.json` al cargar y, si
+  no coincide, muestra un aviso en vez de traducir.
 
 ---
 
 ## **Estructura de paquetes**
 ```
 com.example.traductorlsa
-├── camera/          # Manejo de cámara y conversión de imágenes
-├── detection/       # Detección de landmarks con MediaPipe
-├── features/        # Extracción y normalización de características
-├── ml/              # Motor de inferencia y clasificación
-├── model/           # Modelos de datos simples (NormPoint, PredictionResult)
-├── speech/          # Síntesis de voz (Text-to-Speech)
-├── startup/         # Precarga de assets durante el splash
+├── camera/       # CameraX y conversión del frame a Bitmap
+├── detection/    # MediaPipe HandLandmarker
+├── features/     # Contrato v2: de landmarks a la secuencia 15 × 126
+├── ml/           # Motor de captura, clasificador TFLite, validación del modelo, métricas
+├── model/        # Tipos simples (NormPoint, PredictionResult)
+├── dataset/      # Tomas grabadas en el teléfono (v1 y v2), sesión guiada, seudónimo
+├── federado/     # Entrenamiento local de la cabeza y cliente del servidor de la red local
+├── speech/       # Texto a voz
+├── voice/        # Voz a texto y limpieza del texto reconocido
+├── settings/     # Ajustes de la app
+├── startup/      # Precarga de assets durante el splash
 ├── ui/
-│   ├── brand/       # Isotipo, logotipo y ornamentos dibujados en Compose
-│   ├── screens/     # Splash, onboarding y acceso
-│   ├── theme/       # Color, tipografía, formas y tema
-│   ├── overlay/     # Dibujo de landmarks sobre la cámara
-│   └── widgets/     # Componentes sueltos
-└── MainActivity.kt  # Punto de entrada de la aplicación
+│   ├── brand/       # Isotipo, logotipo e ilustraciones dibujados en Compose
+│   ├── camera/      # Estado (CameraViewModel), recursos (PipelineDeCamara) y piezas de la cámara
+│   ├── components/  # Componentes reutilizables
+│   ├── overlay/     # Dibujo de los landmarks sobre la cámara
+│   ├── screens/     # Las pantallas, una por destino de navegación
+│   └── theme/       # Color, tipografía y formas
+└── MainActivity.kt
 ```
 
----
-
-## **Componentes principales**
-
-### Cámara y análisis de frames
-- **`CameraManager.kt`**: Configura la cámara, lente y resolución.  
-- **`FrameAnalyzer.kt`**: Convierte los frames a `Bitmap` y los envía al pipeline.  
-- **`YuvToRgbConverter.kt`**: Convierte imágenes YUV de CameraX a RGB.
-
-### Detección de manos
-- **`HandTracker.kt`**: Detecta manos y landmarks usando MediaPipe.
-
-### Extracción de features
-- **`FeatureBuilder.kt`**: Convierte landmarks a vectores de 126 valores para el modelo.  
-- **`SequenceBuffer.kt`**: Guarda y normaliza secuencias de frames para inferencia.
-
-### Inferencia y predicción
-- **`GestureEngine.kt`**: Orquesta el pipeline completo y gestiona los estados de captura.  
-- **`LabelProvider.kt`**: Carga etiquetas desde el archivo `words.json`.  
-- **`TFLiteClassifier.kt`**: Ejecuta la inferencia con TensorFlow Lite.
-
-### Salida y UI
-- **`CameraScreen.kt`**: Pantalla principal con Jetpack Compose. Muestra overlay de landmarks, texto traducido y predicción actual.  
-- **`SpeechManager.kt`**: Text-to-Speech para reproducir la predicción.  
-- **`PredictionCard.kt` y overlays**: Visualización de datos y feedback en tiempo real.
-
-### Punto de entrada
-- **`MainActivity.kt`**: Inicia la UI y ajusta el volumen del dispositivo para maximizar la salida de voz.
+Casi todos los paquetes tienen su `README.md` con el porqué de las decisiones.
 
 ---
 
 ## **Sistema de diseño**
 
-Las pantallas de entrada siguen un sistema propio, definido en `ui/theme/`.
+Las pantallas siguen un sistema propio, definido en `ui/theme/`.
 
 **La regla base sale del logo:** una burbuja azul con una mano (seña) y una
 burbuja grafito con una onda (voz). De ahí en más, **el azul es siempre el lado
@@ -103,7 +107,7 @@ de ícono).
   lienzo de 200 × 156 unidades, así escala a cualquier tamaño y se recolorea
   según el fondo.
 
-Los mockups de las cinco pantallas viven en `docs/design/`.
+Los mockups de las pantallas viven en `docs/design/`.
 
 **Accesibilidad, no negociable:** toque mínimo 48 dp, contraste 4,5:1 en texto,
 el color nunca como único indicador, y el contenido de lectura desplazable para
@@ -111,89 +115,51 @@ que resista la fuente del sistema al 200 %.
 
 ---
 
-## **Requisitos**
-- **Android Studio** (Koala o más reciente)
-- **Kotlin DSL** para Gradle
-- Dispositivo con Android 8.0+ (API 26+)
-- Permiso de cámara habilitado
+## **Compilar y probar**
 
----
+Requisitos: JDK 17, Android SDK (compileSdk 36) y un dispositivo con Android 7.0 o
+superior (API 24) y cámara.
 
-## **Ejecución**
-1. Clonar el repositorio.  
-2. Abrir en Android Studio.  
-3. Sincronizar dependencias y conectar un dispositivo físico.  
-4. Ejecutar el proyecto y conceder permisos de cámara.
-
----
-
-## **Diagrama del flujo**
-```
- Cámara (CameraX)
-        ↓
- FrameAnalyzer (Bitmap)
-        ↓
- HandTracker (MediaPipe)
-        ↓
- FeatureBuilder + SequenceBuffer
-        ↓
- GestureEngine (Pipeline)
-        ↓
- TFLiteClassifier (Modelo .tflite)
-        ↓
- Texto y voz en tiempo real
+```bash
+./gradlew.bat assembleDebug        # APK en app/build/outputs/apk/debug/
+./gradlew.bat testDebugUnitTest    # tests en la JVM
+./gradlew.bat lintDebug
+python tools/chequeo_imports.py && python tools/chequeo_orden.py && python tools/chequeo_compose.py
 ```
 
----
-
-## Pruebas de rendimiento en distintos dispositivos
-
-Se realizaron pruebas en diferentes dispositivos, obteniéndose los siguientes resultados:
-
-| Dispositivo        | SoC (CPU / GPU)                              | Captura (ms) | FPS efectivos | Inferencia (ms) |
-|--------------------|----------------------------------------------|--------------|---------------|-----------------|
-| **Galaxy Tab S7**  | Snapdragon 865+ / Adreno 650                 | 1073 ms      | 14.0 FPS      | 32 ms           |
-| **Galaxy A55**     | Exynos 1480 (4×A78 + 4×A55) / Xclipse 530    | 2808 ms      | 5.3 FPS       | 30 ms           |
-| **Galaxy A31**     | Helio P65 (2×A75 + 6×A55) / Mali-G52 MC2     | 4984 ms      | 3.0 FPS       | 559 ms         |
-
-**Observaciones**
-- **Tab S7:** Experiencia fluida; la etapa de captura es rápida y estable.
-- **A55:** Funciona bien, pero la **captura es más lenta** (≈2.8 s para 15 frames → 5.3 FPS) aun cuando la **inferencia se mantiene en ~30 ms**. En **horizontal** mejoró la estabilidad del tracking.
-- **A31:** Funciona pero con FPS bajos; también **mejora en horizontal** (mayor estabilidad de manos y menos “parpadeo” del landmark).
-
-**Causa principal (resumen técnico)**
-- El cuello de botella está en **captura/convertido de imagen + extracción de landmarks (MediaPipe)**, muy dependiente de CPU/ISP/GPU del dispositivo.
-- La **inferencia TFLite** es ligera y consistente (30–40 ms); por eso la diferencia grande está **antes** del modelo.
-
-**Sugerencias de mejora**
-1. Bajar resolución de análisis (ej. **480×360**) en la config de cámara para subir FPS.
-2. Evitar la ruta **YUV → JPEG → Bitmap** y usar conversión directa **YUV → RGB** (reduce CPU y GC).
-3. Mantener `STRATEGY_KEEP_ONLY_LATEST` para no acumular backlog.
-4. Ajustar dinámicamente `targetFrames` (ya lo hace la app) para sostener fluidez.
-5. (Opcional) Exportar un modelo **INT8 full** si necesitás exprimir más la inferencia (no es el principal cuello).
-
+Los tests instrumentados se corren con `installDebug installDebugAndroidTest` y
+`adb shell am instrument`, **no** con `connectedAndroidTest`: ese comando desinstala la
+app al terminar y borra las tomas grabadas en el teléfono. El detalle está en `CLAUDE.md`.
 
 ---
 
-## **Tecnologías utilizadas**
+## **Rendimiento medido**
+
+Tiempo por cuadro (mediana) con la versión final. La detección de manos domina el tiempo;
+la inferencia del modelo no es el cuello de botella.
+
+| Dispositivo | Preparación (ms) | MediaPipe (ms) | Cuadros por segundo |
+|---|---|---|---|
+| Lenovo TB321FU | 2,4 | 35 | 24,9 |
+| OnePlus CPH2663 | 2,7 | 51 | 17,5 |
+| Galaxy Tab S7 | 24,5 | 53 | 12,1 |
+| Galaxy A55 | 5,4 | 93 | 9,6 |
+| Galaxy A31 | 5,3 | 92 | 9,6 |
+| Galaxy A20 | 13,9 | 130 | 6,6 |
+
+Las cifras, el método y la comparación antes y después de las optimizaciones están en el
+capítulo de resultados del informe. Las métricas de cada captura quedan en el teléfono
+(`files/metricas/senar_metrics.jsonl`) y se resumen con `tools/logcat_metrics.py` y
+`tools/linea_base.py`.
+
+El acierto del modelo (67,3 % con una persona que no participó del entrenamiento) y cómo
+se midió están en el README de `modelo_LSA` y en el informe.
+
+---
+
+## **Tecnologías**
 - Kotlin y Jetpack Compose
 - CameraX
-- MediaPipe Tasks Vision
+- MediaPipe Tasks Vision (HandLandmarker)
 - TensorFlow Lite
-- Text-to-Speech (Android TTS)
-
----
-
-## **Novedades recientes**
-
-### Modo Training para recolección de datos
-Se agregó un nuevo **modo de entrenamiento** que permite:
-- Mostrar las **tres mejores predicciones** del modelo (Top-3) junto con su porcentaje de confianza.
-- Seleccionar manualmente la predicción correcta para **guardar la secuencia capturada con la etiqueta elegida**.
-- **Exportar los datos en JSON** (`lsa_samples_YYYYMMDD_HHMMSS.json`) para usarlos luego en el reentrenamiento del modelo en Python.
-- Llevar un contador de muestras recolectadas y opciones para **limpiar** o **exportar**.
-
-### Cierre manual del panel de predicciones
-- Dentro del panel de entrenamiento se agregó un botón **“X”** en la esquina superior derecha.  
-- Esto permite **cerrar el panel manualmente** en caso de que ninguna predicción sea correcta o si la seña fue mal realizada, dejando la pantalla lista para una nueva captura.
-
+- Text-to-Speech y reconocimiento de voz de Android
