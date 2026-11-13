@@ -96,7 +96,7 @@ Un modelo que asigna la misma probabilidad a todas las clases obtiene un $\sigma
 
 \subsection{Robustez}
 
-Para cada condición de captura adversa se informa el acierto y su diferencia respecto de la condición estándar, calculados con el mismo modelo. Los intervalos de confianza al 95\,\% del acierto se calculan con el método de Wilson, adecuado para muestras chicas, y los de la diferencia, por \emph{bootstrap} sobre las tomas (10\,000 remuestreos).
+Para cada condición de captura adversa se informa el acierto y su diferencia respecto de la condición estándar, calculados con el mismo modelo. Como no todas las condiciones pudieron grabarse con las tres personas, la diferencia se calcula persona por persona, contra la condición estándar de esa misma persona, y se promedia entre las personas que tienen la condición. Los intervalos de confianza al 95\,\% se calculan por \emph{bootstrap} (10\,000 remuestreos), remuestreando las tomas dentro de cada persona y las semillas de entrenamiento. Estos intervalos describen a las personas evaluadas: con tres personas o menos por condición no es posible estimar la variación entre personas, por lo que los resultados se informan también por persona.
 
 \subsection{Rendimiento en el dispositivo}
 

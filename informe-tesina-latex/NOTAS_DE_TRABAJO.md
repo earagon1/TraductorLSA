@@ -169,6 +169,14 @@ Carpetas auxiliares:
 - Discusion, conclusiones (objetivo 6, aportes, trabajo futuro), introduccion (descripcion del cap. 6) y metodologia actualizadas.
 - Sigue pendiente de la auditoria (fuera de esta sesion): la "fuga de 27 puntos" de los cap. 7-9 compara poblaciones distintas (en la misma poblacion son unos 14).
 
+## Sesión 2026-11-12 (Claude): robustez por condición (auditoría, ML-M3 y ML-M6)
+
+- Fuente: `modelo_LSA/resultados_robustez/2026-11-12_p1p2p3_5semillas_pareado/` (commit `f4879ec`), recalculada desde las predicciones de la corrida del 2026-10-17, sin reentrenar. Los aciertos no cambian; cambian las caídas y los intervalos.
+- La caída de cada condición se mide contra el estándar de las mismas personas que la grabaron (antes, contra el de las tres). Cambian «lejos» (-9,4 / -18,3), «lejos y poca luz» (-14,0 / -7,1) y «girado 30°» (-25,1 / -33,8).
+- Los intervalos son por bootstrap de las tomas dentro de cada persona y de las semillas; ya no se usa Wilson. Describen a las personas evaluadas, no a la población.
+- El texto ya no dice que la caída a 30° es la única «que los datos permiten afirmar»: se midió con dos personas y se concentra en P2 (-51 y -55 puntos; P1: +1 y -13).
+- Tocados: cap. 3 (metodología), cap. 7 (`tab:robustez`, `fig:robustez` y su análisis), cap. 8 (discusión y limitaciones), apéndice (ficha del modelo) y `figures/robustez-por-condicion.png`.
+
 ## Flujo de trabajo con Overleaf
 
 La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mantener sincronizacion automatica por Git.

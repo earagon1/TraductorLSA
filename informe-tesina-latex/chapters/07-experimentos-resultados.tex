@@ -163,25 +163,27 @@ Cada condición se compara con su referencia estándar usando el mismo modelo, e
         Estándar & 69,8 & ref. & 84,6 & ref. \\
         Poca luz & 60,0 & $-$9,8 & 75,0 & $-$9,6 \\
         Cerca & 62,2 & $-$7,6 & 78,9 & $-$5,7 \\
-        Lejos & 57,5 & $-$12,3 & 68,3 & $-$16,3 \\
-        Lejos y poca luz & 61,7 & $-$8,1 & 73,3 & $-$11,3 \\
-        Girado 30° & 42,6 & $-$27,2 & 53,9 & $-$30,7 \\
+        Lejos & 57,5 & $-$9,4 & 68,3 & $-$18,3 \\
+        Lejos y poca luz & 61,7 & $-$14,0 & 73,3 & $-$7,1 \\
+        Girado 30° & 42,6 & $-$25,1 & 53,9 & $-$33,8 \\
         \bottomrule
     \end{tabular}
-    \caption{Acierto por condición de captura y caída respecto de la referencia estándar (cinco semillas). La referencia de persona no vista (69,8\,\%) se mide sobre las 288 tomas de la sesión~1 sin la clase «nada», que no tiene condiciones adversas; por eso difiere del 67,3\,\% de la Tabla~\ref{tab:escenarios}, que incluye esa clase.}
+    \caption{Acierto por condición de captura y caída respecto de la referencia estándar (cinco semillas). La caída de cada condición se calcula contra el acierto estándar de las mismas personas que la grabaron: las tres en «poca luz» y «cerca», P1 y P2 en «lejos» y «girado 30°», y solo P3 en «lejos y poca luz»; por eso no coincide con la resta de las columnas de acierto. La referencia de persona no vista (69,8\,\%) se mide sobre las 288 tomas de la sesión~1 sin la clase «nada», que no tiene condiciones adversas; por eso difiere del 67,3\,\% de la Tabla~\ref{tab:escenarios}, que incluye esa clase.}
     \label{tab:robustez}
 \end{table}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.95\textwidth]{robustez-por-condicion.png}
-    \caption{Acierto por condición con intervalos de confianza de Wilson al 95\,\%.}
+    \caption{Acierto por condición con intervalos de confianza al 95\,\% (\emph{bootstrap} de las tomas dentro de cada persona y de las semillas).}
     \label{fig:robustez}
 \end{figure}
 
-La única caída cuyo intervalo de confianza al 95\,\% no incluye el cero es la del cuerpo girado 30°: $-27{,}2$ puntos (de $-44{,}5$ a $-9{,}1$) con persona no vista y $-30{,}7$ puntos (de $-48{,}0$ a $-12{,}9$) con persona conocida. Las demás condiciones caen entre 6 y 16 puntos, con intervalos que en general incluyen el cero; la excepción es «lejos» con persona conocida, cuyo intervalo termina en $-0{,}8$.
+La caída más grande es la del cuerpo girado 30°: $-25{,}1$ puntos (de $-42{,}9$ a $-7{,}6$) con persona no vista y $-33{,}8$ puntos (de $-50{,}5$ a $-17{,}4$) con persona conocida. Las demás condiciones caen entre 6 y 18 puntos, con intervalos que incluyen el cero; la excepción es «lejos» con persona conocida ($-18{,}3$ puntos, de $-35{,}6$ a $-2{,}3$).
 
-El efecto a 30° varía mucho entre personas y dispositivos: P1, con la tableta, alcanza entre 62 y 77\,\%; P2, con su teléfono, entre 22 y 29\,\%.
+El resultado a 30° no puede atribuirse solo al giro, porque depende casi por completo de una de las dos personas que grabaron esa condición. P1, con la tableta, alcanza entre 62 y 77\,\%: no cae con persona no vista ($+1{,}0$ puntos) y cae $12{,}9$ puntos con persona conocida. P2, con su teléfono, alcanza entre 22 y 29\,\%: cae $51{,}3$ y $54{,}7$ puntos. Con dos personas, cada una con un dispositivo distinto, no es posible separar el efecto del giro del efecto de la persona y del dispositivo.
+
+Los intervalos informados corresponden a las personas evaluadas y no a la población: reflejan la variación entre tomas y entre semillas, pero no la variación entre personas, que con tres participantes o menos por condición no puede estimarse.
 
 La detección de manos explica parte de la caída. En las señas que se realizan con las dos manos («por favor» y «¿cómo estás?»), MediaPipe detecta ambas manos en el 58,4\,\% de los cuadros en la condición estándar, pero solo en el 17,5\,\% «lejos» y en el 21,1\,\% a 30°.
 
