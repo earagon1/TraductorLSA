@@ -68,7 +68,7 @@ Se informan la exactitud (\emph{accuracy}), el F1 macro, que promedia el F1 de c
 
 \subsection{Calibración}
 
-La confianza del modelo se evalúa con el error de calibración esperado (ECE, con 15 intervalos), que mide la diferencia entre la confianza informada y el acierto observado. Se corrige con escalado de temperatura: las probabilidades se reescalan como $\mathrm{softmax}(\log p / T)$ con una única temperatura $T$, ajustada minimizando la verosimilitud negativa sobre personas no vistas. Para el umbral de confianza de la aplicación se analiza, para cada umbral, la fracción de predicciones que se muestra y el acierto entre ellas.
+La confianza del modelo se evalúa con el error de calibración esperado (ECE, con 15 intervalos), que mide la diferencia entre la confianza informada y el acierto observado. Se corrige con escalado de temperatura: las probabilidades se reescalan como $\mathrm{softmax}(\log p / T)$ con una única temperatura $T$, ajustada minimizando la verosimilitud negativa sobre tomas reservadas, que el modelo no utilizó para entrenar; la calibración resultante se evalúa sobre personas no vistas. Para el umbral de confianza de la aplicación se analiza, para cada umbral, la fracción de predicciones que se muestra y el acierto entre ellas.
 
 \subsection{Consistencia estadística}
 

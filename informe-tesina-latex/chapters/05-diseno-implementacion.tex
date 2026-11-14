@@ -100,7 +100,7 @@ El pipeline no clasifica de forma continua, sino seña por seña. Una máquina d
     \item \textbf{Clasificación.} La secuencia se lleva a 15 cuadros y se clasifica. Para habilitar la siguiente seña, la persona tiene que bajar las manos durante 600\,ms.
 \end{enumerate}
 
-La cantidad de cuadros por captura se ajusta a la velocidad del dispositivo: se capturan 10 cuadros si el dispositivo procesa menos de 8 por segundo, 20 si procesa más de 20 y 15 en los demás casos. De este modo, una seña dura aproximadamente lo mismo en un teléfono lento que en uno rápido, y el modelo siempre recibe la misma longitud.
+La cantidad de cuadros por captura se ajusta a la velocidad del dispositivo: se capturan 10 cuadros si el dispositivo procesa menos de 8 por segundo, 20 si procesa más de 20 y 15 en los demás casos. De este modo se acota la diferencia de duración entre un teléfono lento y uno rápido, aunque no se elimina (una captura dura entre 0,9 y 1,6\,s según el equipo; Capítulo~\ref{cap:desafios}), y el modelo siempre recibe la misma longitud.
 
 \section{Decisiones tecnológicas}
 
@@ -183,7 +183,7 @@ El modo de entrenamiento permite grabar tomas etiquetadas desde la propia aplica
 
 En la sesión guiada (Sección~\ref{sec:protocolo-captura}), la aplicación lee la planilla con el orden de las tomas de cada participante y avanza sola de una seña a la siguiente, con pausas entre tandas y una indicación de cómo debe quedar cada condición. Si la aplicación se cierra a mitad de la sesión, se retoma donde quedó.
 
-Cada toma se guarda en el almacenamiento propio de la aplicación en dos formatos: el formato original, con la secuencia ya procesada, y el formato v2 del conjunto de datos, que conserva los landmarks crudos de cada cuadro y sus metadatos (Sección~\ref{sec:representacion}). Las tomas se asocian a un seudónimo derivado de la cuenta, que no permite recuperar la identidad de la persona. Una pantalla de gestión del conjunto de datos muestra las tomas por seña y permite exportarlas mediante el menú de compartir del sistema, para incorporarlas al reentrenamiento.
+Cada toma se guarda en el almacenamiento propio de la aplicación en dos formatos: el formato original, con la secuencia ya procesada, y el formato v2 del conjunto de datos, que conserva los landmarks crudos de cada cuadro y sus metadatos (Sección~\ref{sec:representacion}). Las tomas se guardan como texto, sin cifrado propio, por lo que quien acceda al almacenamiento del dispositivo puede leerlas. Se asocian a un seudónimo derivado de la cuenta mediante SHA-256, que no contiene el nombre ni el correo de la persona; como se calcula de forma determinista y sin sal, quien conozca el identificador de la cuenta puede volver a calcularlo. Una pantalla de gestión del conjunto de datos muestra las tomas por seña y permite exportarlas mediante el menú de compartir del sistema, para incorporarlas al reentrenamiento.
 
 \section{Aprendizaje federado}
 

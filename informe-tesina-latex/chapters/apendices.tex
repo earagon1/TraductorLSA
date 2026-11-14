@@ -64,10 +64,10 @@ Esta ficha resume, en un formato inspirado en las fichas de modelo propuestas en
         \textbf{Protocolo} & Sesión~1 en condición estándar (bloques A y N); sesión~2 en cuatro condiciones adversas (bloque B), solo para evaluación (Sección~\ref{sec:protocolo-captura}). \\
         \textbf{Dispositivos} & Tableta Lenovo TB321FU, Samsung Galaxy A55 y OnePlus CPH2663, con la cámara frontal y en orientación vertical. \\
         \textbf{Formato} & JSON Lines (esquema \texttt{senar-muestra-v2}): una toma por línea con los landmarks crudos de cada cuadro, la etiqueta y la confianza de lateralidad de cada mano, el tamaño y la rotación de la imagen, los cuadros por segundo, el dispositivo, la versión de Android y, en las sesiones guiadas, el bloque, la tanda y la condición. \\
-        \textbf{Identificación} & Seudónimo por persona (P1, P2, P3) y un identificador derivado de la cuenta mediante SHA-256, que no permite recuperar la identidad. \\
+        \textbf{Identificación} & Seudónimo por persona (P1, P2, P3) y un identificador derivado de la cuenta mediante SHA-256 (determinista, sin sal), que no contiene el nombre ni el correo de la persona. \\
         \textbf{Exclusiones} & Tomas con menos de cinco cuadros con manos; las tomas giradas de P3, por fallas reiteradas de detección; una toma de P2 que no correspondía a la seña indicada. \\
         \textbf{Consentimiento} & Participación voluntaria, con un documento de consentimiento informado que describe qué se registra y con qué fin (Capítulo~\ref{cap:metodologia}). \\
-        \textbf{Sesgos conocidos} & El 77\,\% de las tomas de entrenamiento es de una sola persona; ninguna persona participante es señante de LSA; encuadre uniforme en las tomas de los dispositivos. \\
+        \textbf{Sesgos conocidos} & El 85\,\% de las tomas de entrenamiento es de una sola persona (P1, 1197 de 1409; 1091 son de la cámara web); ninguna persona participante es señante de LSA; encuadre uniforme en las tomas de los dispositivos. \\
         \bottomrule
     \end{tabular}
     \caption{Ficha del conjunto de datos.}

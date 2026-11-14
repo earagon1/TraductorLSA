@@ -28,7 +28,7 @@ La Tabla~\ref{tab:escenarios} compara el mismo problema bajo cinco esquemas de e
         \quad sobre las tomas de los dispositivos & las mismas 318 tomas que LOPO & 81,4 & 81,6 \\
         \bottomrule
     \end{tabular}
-    \caption{Desempeño del modelo según el esquema de validación (cinco semillas; el $\pm$ es el desvío entre semillas). Salvo el estratificado sobre todas las tomas, que incluye las 1091 de la cámara web, todas las filas se evalúan sobre las tomas de los dispositivos. En una clasificación de una sola etiqueta, el F1 micro coincide con la accuracy.}
+    \caption{Desempeño del modelo según el esquema de validación (cinco semillas; el $\pm$ es el desvío entre semillas). El estratificado sobre todas las tomas y la sesión no vista se evalúan sobre las 1409 tomas, que incluyen las 1091 de la cámara web; las demás filas, sobre las 318 tomas de los dispositivos. Sobre estas últimas, la sesión no vista alcanza 74,5\,\%. En una clasificación de una sola etiqueta, el F1 micro coincide con la accuracy.}
     \label{tab:escenarios}
 \end{table}
 
@@ -94,7 +94,7 @@ Las señas mejor reconocidas son N (98\,\%), hola (92\,\%), por favor (88\,\%) y
 \section{Calibración de la confianza}
 \label{sec:res-calibracion}
 
-La confianza que informa el modelo se ajustó mediante escalado de temperatura sobre personas no vistas (nueve pliegues). La temperatura adoptada es $T = 1{,}20$ y reduce el error de calibración esperado (ECE) de 17,1\,\% a 12,7\,\%. La Tabla~\ref{tab:umbral} muestra, para distintos umbrales de confianza calibrada, qué fracción de las predicciones se muestra en pantalla y cuántas de ellas son correctas.
+La confianza que informa el modelo se ajustó mediante escalado de temperatura: en cada uno de los nueve pliegues, la temperatura se ajustó sobre un 20\,\% de tomas reservadas de las personas de entrenamiento y se evaluó sobre la persona no vista. La temperatura adoptada es $T = 1{,}20$ y reduce el error de calibración esperado (ECE) de 17,1\,\% a 12,7\,\%. La Tabla~\ref{tab:umbral} muestra, para distintos umbrales de confianza calibrada, qué fracción de las predicciones se muestra en pantalla y cuántas de ellas son correctas.
 
 \begin{table}[h]
     \centering
@@ -115,6 +115,8 @@ La confianza que informa el modelo se ajustó mediante escalado de temperatura s
 En la aplicación se adoptó el umbral 0,75, algo menor que el 0,85 que sugería el criterio de lograr un 85\,\% de acierto, para mostrar más predicciones: se muestra el 59,6\,\% y se acierta el 83,0\,\% de lo mostrado, frente al 83\,\% mostrado con 32\,\% de acierto del modelo original.
 
 Las cifras de la Tabla~\ref{tab:umbral} son optimistas: el umbral se eligió observando las mismas predicciones sobre las que se informa su acierto. Para medirlo sin ese sesgo se repitió el procedimiento completo, guardando las predicciones, y se evaluó cada persona con un umbral elegido solo a partir de las otras dos. Con el criterio del 85\,\%, el acierto de lo mostrado en la persona excluida fue de 83,5\,\% en promedio, entre 75,9\,\% y 93,1\,\% según la persona, mostrando el 46\,\% de las predicciones. Con el umbral fijo de la aplicación, fue de 72,7\,\%, 81,0\,\% y 86,9\,\% para P1, P2 y P3 (80,2\,$\pm$\,7,1 entre personas). La repetición también mostró la variabilidad del propio procedimiento: el entrenamiento en GPU no es determinista y la temperatura resultó 1,29 en lugar de 1,20. La aplicación conserva la temperatura y el umbral originales, y el acierto que cabe esperar de lo que muestra es de alrededor del 80\,\%, con una variación importante entre personas.
+
+La temperatura tiene una limitación del mismo tipo. Las tomas reservadas con las que se ajustó pertenecen a las mismas personas con las que se entrenó cada modelo, en su mayoría a la cámara web, y no a personas nuevas. Al ajustarla, en cambio, con las predicciones de las otras dos personas no vistas, la temperatura resulta de entre 1,6 y 2,1 (mediana de 1,9 y 2,0 en dos repeticiones), mayor que la del procedimiento original en los 18 pliegues. Con $T = 1{,}20$, la confianza media de lo que se muestra es de alrededor de 93\,\%, unos doce puntos por encima de su acierto (81\,\%); con la temperatura ajustada sobre personas no vistas, el ECE baja de alrededor de 15\,\% a entre 4 y 5\,\%. La relación entre lo que se muestra y lo que se acierta no cambia: el umbral 0,75 con $T = 1{,}20$ equivale a un umbral de 0,55 con la temperatura más alta. La aplicación conserva $T = 1{,}20$, por lo que la confianza que informa debe leerse como optimista para una persona nueva.
 
 \section{Consistencia estadística}
 \label{sec:res-consistencia}
@@ -141,9 +143,9 @@ La métrica de consistencia $\sigma$ definida en la propuesta mide si entradas p
 
 La Tabla~\ref{tab:sigma} muestra que $\sigma$ crece en las condiciones adversas: se multiplica por tres con poca luz y por cuatro y medio cuando se combinan distancia y poca luz. Las tomas con el cuerpo girado 30° casi no tienen vecinos en el espacio de entrada, es decir, caen lejos de todas las demás.
 
-Las tomas que el modelo clasifica mal tienen un $\sigma_i$ entre tres y cuatro veces mayor que las que clasifica bien: 0,028 frente a 0,007 en la sesión~1 y 0,052 frente a 0,019 con poca luz.
+Las tomas que el modelo clasifica mal tienen un $\sigma_i$ entre 2,7 y 4 veces mayor que las que clasifica bien: 0,028 frente a 0,007 en la sesión~1 y 0,052 frente a 0,019 con poca luz.
 
-Con modelos que no vieron a la persona evaluada, $\sigma$ es de dos a cuatro veces mayor (0,022 en la sesión~1, con 67,2\,\% de acierto; es el mismo esquema LOPO de la Tabla~\ref{tab:escenarios}, con tres semillas en lugar de cinco). La métrica depende del umbral elegido: en la sesión~1, $\sigma$ pasa de 0,008 con $\varepsilon = 0{,}72$ a 0,127 con $\varepsilon = 2{,}19$, valor para el cual solo el 30,5\,\% de los vecinos corresponde a la misma seña.
+Con modelos que no vieron a la persona evaluada, $\sigma$ es mayor en todas las condiciones, entre 1,2 y 3,6 veces según la condición (0,022 en la sesión~1, con 67,2\,\% de acierto; es el mismo esquema LOPO de la Tabla~\ref{tab:escenarios}, con tres semillas en lugar de cinco). La métrica depende del umbral elegido: en la sesión~1, $\sigma$ pasa de 0,008 con $\varepsilon = 0{,}72$ a 0,127 con $\varepsilon = 2{,}19$, valor para el cual solo el 30,5\,\% de los vecinos corresponde a la misma seña.
 
 \section{Robustez ante condiciones de captura}
 \label{sec:res-robustez}
@@ -303,7 +305,7 @@ Ajustar la cabeza solo con las 84 tomas de P2, sin promediar con otros dispositi
 
 La propuesta plantea limitar la magnitud de las actualizaciones y comprimirlas con rotación aleatoria y cuantización. Ambas medidas se evaluaron con actualizaciones reales de las tres personas (Tabla~\ref{tab:limite}).
 
-El límite se fijó en una norma L2 de 2,0, tres veces la mediana de las actualizaciones honestas (entre 0,68 y 0,76). Ninguna actualización honesta lo alcanza, por lo que el acierto sin ataques no cambia (80,9\,\%).
+El límite se fijó en una norma L2 de 2,0, tres veces la mediana de las actualizaciones honestas (entre 0,68 y 0,75). Ninguna actualización honesta lo alcanza, por lo que el acierto sin ataques no cambia (80,9\,\%).
 
 \begin{table}[h]
     \centering
@@ -437,7 +439,7 @@ Con la versión final se midieron otros tres dispositivos, que no participaron d
     \label{tab:rendimiento-extra}
 \end{table}
 
-En los tres, MediaPipe se ejecutó en la GPU, sin recurrir al procesador central. El Galaxy A31 alcanza los mismos cuadros por segundo que el Galaxy A55, un equipo más reciente. El Galaxy A20, el más antiguo, queda en 6,6 cuadros por segundo; como no llega a nueve, la aplicación captura 10 cuadros por seña en lugar de 15, de modo que cada captura dura lo mismo que en el Galaxy A31 (alrededor de 1,5\,s). En los teléfonos de gama baja la inferencia del modelo tarda unos 8\,ms, todavía muy por debajo del tiempo de detección.
+En los tres, MediaPipe se ejecutó en la GPU, sin recurrir al procesador central. El Galaxy A31 alcanza los mismos cuadros por segundo que el Galaxy A55, un equipo más reciente. El Galaxy A20, el más antiguo, queda en 6,6 cuadros por segundo; como no llega a ocho, la aplicación captura 10 cuadros por seña en lugar de 15, de modo que cada captura dura lo mismo que en el Galaxy A31 (alrededor de 1,5\,s). En los teléfonos de gama baja la inferencia del modelo tarda unos 8\,ms, todavía muy por debajo del tiempo de detección.
 
 En estos teléfonos, las señas de una mano se reconocieron con confianza alta. Las señas de dos manos fueron las más afectadas: cuando el detector perdía una de las manos durante la captura, la confianza caía por debajo del umbral y la aplicación no mostraba la predicción, mientras que, con las dos manos detectadas en todos los cuadros, «por favor» y «¿cómo estás?» se reconocieron con confianzas de entre 0,86 y 1,0.
 
@@ -475,7 +477,7 @@ El modelo original utilizaba operaciones de TensorFlow no incluidas en el núcle
         Cuantización entera de 8 bits & 276 & 99,7 \\
         \bottomrule
     \end{tabular}
-    \caption{Variantes del modelo exportado sin operaciones Flex.}
+    \caption{Variantes del modelo exportado sin operaciones Flex, medidas sobre el modelo preliminar entrenado con la cámara web. Las cifras del modelo final se indican en el texto.}
     \label{tab:variantes}
 \end{table}
 

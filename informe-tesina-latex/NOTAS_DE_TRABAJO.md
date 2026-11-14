@@ -177,6 +177,29 @@ Carpetas auxiliares:
 - El texto ya no dice que la caída a 30° es la única «que los datos permiten afirmar»: se midió con dos personas y se concentra en P2 (-51 y -55 puntos; P1: +1 y -13).
 - Tocados: cap. 3 (metodología), cap. 7 (`tab:robustez`, `fig:robustez` y su análisis), cap. 8 (discusión y limitaciones), apéndice (ficha del modelo) y `figures/robustez-por-condicion.png`.
 
+
+## Sesión 2026-11-14 (auditoría de cifras)
+
+Se auditó cada cifra del informe contra su fuente (unas 390; el detalle está en `plan/evidencia/2026-11-14_auditoria_informe.md`) y se corrigió lo que no coincidía. Cambios:
+
+- **Resumen (`main.tex`):** «alrededor del 80 %» de lo mostrado (antes 83 %, que el cap. 7 declara optimista); la caída con el cuerpo girado, «medida con dos personas y concentrada en una».
+- **Cap. 3 y 7, temperatura (ML-M7):** se ajustó sobre un 20 % de tomas reservadas de las personas de entrenamiento, no «sobre personas no vistas». Párrafo nuevo en la sección de calibración: ajustada con personas no vistas da 1,6 a 2,1, y con T = 1,20 la confianza mostrada supera al acierto en unos doce puntos. Fuente: `modelo_LSA/resultados_calibracion/2026-11-14_temperatura/`. La app no cambia.
+- **Cap. 7:** caption de `tab:escenarios` (la sesión no vista se evalúa sobre las 1409 tomas; sobre los dispositivos da 74,5 %); umbral de 8 cuadros por segundo (decía nueve); razones de σ (2,7 a 4 veces; 1,2 a 3,6 veces con persona no vista); caption de `tab:variantes` (es del modelo preliminar); normas honestas 0,68 a 0,75.
+- **Cap. 5:** la duración de la captura no es pareja entre equipos (0,9 a 1,6 s); el dataset se guarda sin cifrado propio y el seudónimo es SHA-256 sin sal.
+- **Cap. 5b:** 84,6 contra 69,8 (misma población; antes 67,3); «Aportar» sí centraliza los landmarks de cada toma.
+- **Cap. 6:** la duración de las tomas de la cámara web no quedó registrada.
+- **Cap. 8:** caídas de 6 a 18 puntos y la excepción de «lejos»; limitaciones nuevas (calibración, condiciones de captura, federado sincrónico); se quitó el `\pendiente` sobre conectar el contrato a la cámara, que ya está conectado.
+- **Cap. 9 y apéndices:** tomas descartadas (una, más las doce giradas de P3); P1 es el 85 % de las tomas (decía 77 %, que es solo la webcam).
+
+**Sin resolver, para que lo decida Evelin:**
+
+- Cap. 7 («La simulación de las mismas rondas… reproduce el resultado real (81,8 % y 59,6 %)») y cap. 8 («reproduce exactamente»): el resultado real de P2 en la sesión 2 es 61,7 % y no se encontró la corrida simulada.
+- Cap. 7, personalizado en la computadora 84,5 ± 2,5: `progreso.md` da también 83,6 para lo mismo.
+- Cap. 6: sin fuente localizada para 12 ms frente a 7 ms (rotación), la Tab S7 (0,87 a 1,0), `tab:encuadre` y los porcentajes de la muñeca (35/43/49 % y 23 %).
+- `resultados_tesis/resultados.md` quedó atrás en dos puntos (sección 6: p = 0,083 y 0,428; sección 7: T = 1,29): el informe usa las cifras correctas, pero conviene regenerarlo.
+
+El PDF compila (98 páginas). Para Overleaf: `main.tex`, los capítulos 03, 05, 05b, 06, 07, 08, 09 y `apendices.tex`, además de `figures/robustez-por-condicion.png` si no se subió todavía.
+
 ## Flujo de trabajo con Overleaf
 
 La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mantener sincronizacion automatica por Git.

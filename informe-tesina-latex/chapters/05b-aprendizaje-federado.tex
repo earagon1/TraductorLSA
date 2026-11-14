@@ -5,7 +5,7 @@ Este capítulo describe el esquema de aprendizaje federado incorporado al protot
 
 \section{Motivación y alcance}
 
-La escasez de datos anotados de LSA limita la capacidad del modelo de reconocer a personas que no participaron de su entrenamiento: el acierto cae de 84,6\,\% con una persona conocida a 67,3\,\% con una persona no vista (Sección~\ref{sec:res-escenarios}). Mejorar el modelo requiere incorporar tomas de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales.
+La escasez de datos anotados de LSA limita la capacidad del modelo de reconocer a personas que no participaron de su entrenamiento: sobre las mismas tomas, el acierto cae de 84,6\,\% con una persona conocida a 69,8\,\% con una persona no vista (Sección~\ref{sec:res-robustez}). Mejorar el modelo requiere incorporar tomas de nuevas personas, pero centralizar grabaciones de gestos implica recolectar datos personales.
 
 El aprendizaje federado permite entrenar un modelo de forma colaborativa a partir de actualizaciones calculadas en cada dispositivo, sin transferir los datos crudos~\cite{mcmahan2017fedavg}. En este trabajo se aborda con carácter experimental: se implementa el ciclo completo en dispositivos reales y se evalúa su viabilidad, sin pretender un mecanismo de producción.
 
@@ -135,7 +135,7 @@ Siguiendo las actualizaciones esbozadas de Kone\v{c}n\'y et al.~\cite{konecny201
 
 \section{Reentrenamiento completo y distribución de modelos}
 
-Además de las rondas sobre la cabeza, el servidor puede reentrenar el modelo completo. Las personas pueden aportar sus tomas de forma opcional, con consentimiento explícito: se envían solo las coordenadas de los puntos de las manos, nunca imágenes, asociadas a un identificador seudónimo derivado de la cuenta.
+Además de las rondas sobre la cabeza, el servidor puede reentrenar el modelo completo. Las personas pueden aportar sus tomas de forma opcional, con consentimiento explícito: se envían solo las coordenadas de los puntos de las manos, nunca imágenes, asociadas a un identificador seudónimo derivado de la cuenta. A diferencia de las rondas, que solo comparten actualizaciones de la cabeza, esta opción sí centraliza datos: el servidor recibe los landmarks de cada toma y sus metadatos.
 
 El servidor reentrena con todas las fuentes, verifica que el modelo nuevo no tenga operaciones Flex, que la parte de extracción en TensorFlow Lite coincida con la de Keras y que el acierto sobre el conjunto de prueba fijo no empeore, y lo publica como un paquete versionado. El paquete incluye la parte de extracción, la cabeza, la calibración y un manifiesto con el resumen SHA-256 de cada archivo. La aplicación descarga el paquete, verifica cada archivo antes de usarlo y conserva siempre el modelo de fábrica para poder volver a él.
 
