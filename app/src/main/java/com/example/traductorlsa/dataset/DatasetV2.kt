@@ -43,7 +43,7 @@ object DatasetV2 {
         return try {
             val versionApp = try {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
-            } catch (_: Exception) { "?" }
+            } catch (_: Exception) { "?" }  // Solo es un dato de la muestra: no frena el guardado.
             agregar(
                 context,
                 lineaMuestraV2(

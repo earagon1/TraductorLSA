@@ -29,6 +29,7 @@ fun leerPlanilla(csv: String): List<TomaPlanificada> {
     if (listOf(iCod, iOrden, iBloque, iTanda, iCond, iClase).any { it < 0 }) return emptyList()
     return lineas.drop(1).mapNotNull { linea ->
         val c = linea.split(",")
+        // Fila rota: se descarta (ver arriba). cargarPlanilla cuenta cuántas y lo registra.
         runCatching {
             TomaPlanificada(
                 codigo = c[iCod].trim(),

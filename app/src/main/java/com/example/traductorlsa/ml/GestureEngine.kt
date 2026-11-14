@@ -86,22 +86,30 @@ class GestureEngine(
         // ============================================================
         // 🔁 1. Corregir rotación si el dispositivo está en modo vertical
         val t0 = System.nanoTime()
+        // Las secciones de Trace se cierran en un finally: si algo tira en el medio, una
+        // sección abierta deja corrida toda la traza de Perfetto (lint, UnclosedTrace).
         Trace.beginSection("senar:rot")
-        val correctedBitmap = if (yaDerecho) bitmap else when (rotationDeg) {
-            90, 180, 270 -> Bitmap.createBitmap(
-                bitmap, 0, 0, bitmap.width, bitmap.height,
-                android.graphics.Matrix().apply { postRotate(rotationDeg.toFloat()) }, true
-            )
-            else -> bitmap
+        val correctedBitmap = try {
+            if (yaDerecho) bitmap else when (rotationDeg) {
+                90, 180, 270 -> Bitmap.createBitmap(
+                    bitmap, 0, 0, bitmap.width, bitmap.height,
+                    android.graphics.Matrix().apply { postRotate(rotationDeg.toFloat()) }, true
+                )
+                else -> bitmap
+            }
+        } finally {
+            Trace.endSection()
         }
-        Trace.endSection()
         val t1 = System.nanoTime()
 
         // Ya está rotado correctamente, así que pasamos rotación 0 al tracker
         Trace.beginSection("senar:mp")
-        val mpImage = BitmapImageBuilder(correctedBitmap).build()
-        val res = handTracker.detect(mpImage, 0, ts)
-        Trace.endSection()
+        val (mpImage, res) = try {
+            val imagen = BitmapImageBuilder(correctedBitmap).build()
+            imagen to handTracker.detect(imagen, 0, ts)
+        } finally {
+            Trace.endSection()
+        }
         val t2 = System.nanoTime()
         comparador?.let { otro ->
             val imagen2 = entradaComparador?.let { BitmapImageBuilder(it(correctedBitmap)).build() } ?: mpImage
@@ -213,10 +221,13 @@ class GestureEngine(
             ?: return emptyList<Pair<String, Float>>() to null
 
         Trace.beginSection("senar:infer")
-        val startInfer = System.nanoTime()
-        val (_, _, probs) = classifier.inferTop(seqT, labelProvider.labels)
-        val inferNanos = System.nanoTime() - startInfer
-        Trace.endSection()
+        val (probs, inferNanos) = try {
+            val startInfer = System.nanoTime()
+            val (_, _, p) = classifier.inferTop(seqT, labelProvider.labels)
+            p to (System.nanoTime() - startInfer)
+        } finally {
+            Trace.endSection()
+        }
         val inferDuration = inferNanos / 1_000_000
 
         // 🔹 AQUÍ va lo que te pasé:
@@ -246,7 +257,8 @@ class GestureEngine(
     private fun manosCrudas(res: HandLandmarkerResult?): List<ManoCruda> {
         if (res == null) return emptyList()
         val landmarks = res.landmarks()
-        val lados = res.handednesses()
+        // handedness() es el nombre nuevo: handednesses(), deprecado, solo lo llama (0.10.29).
+        val lados = res.handedness()
         return landmarks.indices.map { i ->
             val mejor = lados.getOrNull(i)?.maxByOrNull { it.score() }
             val lm = FloatArray(landmarks[i].size * 3)

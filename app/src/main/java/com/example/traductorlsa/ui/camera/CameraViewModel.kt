@@ -1,6 +1,7 @@
 package com.example.traductorlsa.ui.camera
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -88,11 +89,11 @@ class CameraViewModel(
     }
 
     // ---- Captura en curso (los dos modos) ----
-    var frameCount by mutableStateOf(0)
+    var frameCount by mutableIntStateOf(0)
         private set
     // GestureEngine ajusta su objetivo de cuadros según los fps que mide (10, 15 o 20),
     // así que la barra sigue ese número y no uno fijo.
-    var frameTarget by mutableStateOf(15)
+    var frameTarget by mutableIntStateOf(15)
         private set
 
     // ---- Entrenamiento ----

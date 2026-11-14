@@ -146,6 +146,8 @@ class VoiceToText(
             recognizer?.startListening(intent)
         } catch (e: Exception) {
             isListening = false
+            // La pantalla recibe el mensaje; la traza queda en logcat (no lleva texto dictado).
+            Log.e(TAG, "Fallo al iniciar el reconocimiento", e)
             onError("Fallo al iniciar el motor: ${e.message}")
         }
     }

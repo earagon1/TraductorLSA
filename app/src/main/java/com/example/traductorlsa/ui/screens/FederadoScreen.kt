@@ -2,6 +2,7 @@ package com.example.traductorlsa.ui.screens
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.navigation.NavHostController
 import com.example.traductorlsa.federado.Base64Simple
 import com.example.traductorlsa.federado.ClienteFederado
@@ -82,7 +84,7 @@ fun FederadoScreen(navController: NavHostController) {
         if (conServidor) {
             if (direccion.isBlank()) { registro.add(0, "Escribí la dirección del servidor"); return }
             if (h == null) { registro.add(0, "Primero tocá «Probar conexión» y confirmá la huella del servidor"); return }
-            prefs.edit().putString("servidor", direccion.trim()).apply()
+            prefs.edit { putString("servidor", direccion.trim()) }
         }
         ocupado = true
         progreso = "$nombre…"
@@ -93,6 +95,9 @@ fun FederadoScreen(navController: NavHostController) {
                     guardarEnLog(context, nombre, r)
                     r.resumen
                 } catch (e: Exception) {
+                    // El registro de la pantalla muestra la versión en palabras; la causa
+                    // completa (la de TLS viene envuelta) queda en logcat.
+                    Log.w(TAG, "$nombre falló", e)
                     mensajeDeError(e)
                 }
             }
@@ -146,7 +151,10 @@ fun FederadoScreen(navController: NavHostController) {
                         scope.launch {
                             val r = withContext(Dispatchers.IO) { runCatching { ClienteFederado.sondearHuella(direccion) } }
                             r.onSuccess { huellaPorConfirmar = it }
-                                .onFailure { registro.add(0, "Probar conexión: ${mensajeDeError(it)}") }
+                                .onFailure {
+                                    Log.w(TAG, "Probar conexión falló", it)
+                                    registro.add(0, "Probar conexión: ${mensajeDeError(it)}")
+                                }
                             ocupado = false
                             progreso = ""
                         }
@@ -185,7 +193,7 @@ fun FederadoScreen(navController: NavHostController) {
                 Aire(6)
                 OutlinedTextField(
                     value = codigo,
-                    onValueChange = { codigo = it; prefs.edit().putString("codigo", it.trim()).apply() },
+                    onValueChange = { codigo = it; prefs.edit { putString("codigo", it.trim()) } },
                     label = { Text("Código de participación (te lo da la PC)") },
                     singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !ocupado,
                     isError = codigo.isNotBlank() && !Seguridad.codigoBienFormado(codigo),
@@ -201,7 +209,7 @@ fun FederadoScreen(navController: NavHostController) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = acepta, onCheckedChange = {
                         acepta = it
-                        prefs.edit().putBoolean("consentimiento", it).apply()
+                        prefs.edit { putBoolean("consentimiento", it) }
                     }, enabled = !ocupado)
                     Text("Acepto participar. Al entrenar sale del teléfono solo un ajuste del modelo, sin mis tomas. " +
                         "Si toco «Aportar mis tomas», también salen los puntos de mis manos (nunca imágenes), con un " +
@@ -262,19 +270,29 @@ fun FederadoScreen(navController: NavHostController) {
     }
 }
 
+private const val TAG = "FederadoScreen"
+
 // La huella se guarda por dirección: otra PC (u otra dirección) se confirma de nuevo.
+// Una dirección inválida (por ejemplo, a medio escribir o con «http://») no tiene clave:
+// no es un error que perder, el aviso lo da la operación cuando se intenta.
 private fun claveHuella(direccion: String): String? =
     runCatching { "huella:" + ClienteFederado.normalizarDireccion(direccion) }.getOrNull()
 
+// Una huella guardada que no se puede decodificar vale como no confirmada: la persona la
+// vuelve a confirmar, que es lo seguro. Se registra porque no debería pasar.
 private fun huellaGuardada(prefs: SharedPreferences, direccion: String): ByteArray? =
-    claveHuella(direccion)?.let { prefs.getString(it, null) }?.let { runCatching { Base64Simple.decodificar(it) }.getOrNull() }
+    claveHuella(direccion)?.let { prefs.getString(it, null) }?.let { guardada ->
+        runCatching { Base64Simple.decodificar(guardada) }
+            .onFailure { Log.w(TAG, "La huella guardada no se pudo leer: hay que confirmarla de nuevo", it) }
+            .getOrNull()
+    }
 
 private fun guardarHuella(prefs: SharedPreferences, direccion: String, h: ByteArray) {
-    claveHuella(direccion)?.let { prefs.edit().putString(it, Base64Simple.codificar(h)).apply() }
+    claveHuella(direccion)?.let { prefs.edit { putString(it, Base64Simple.codificar(h)) } }
 }
 
 private fun olvidarHuella(prefs: SharedPreferences, direccion: String) {
-    claveHuella(direccion)?.let { prefs.edit().remove(it).apply() }
+    claveHuella(direccion)?.let { prefs.edit { remove(it) } }
 }
 
 /** Lo que vio la persona cuando algo falló, en palabras: la causa de TLS viene envuelta. */

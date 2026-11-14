@@ -54,6 +54,7 @@ private val TECNOLOGIAS = listOf(
 fun AboutScreen(navController: NavHostController) {
     val context = LocalContext.current
     var mostrarPolitica by rememberSaveable { mutableStateOf(false) }
+    // La info del propio paquete no falla en la práctica; si fallara, solo falta la versión.
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName

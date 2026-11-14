@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -100,7 +101,7 @@ fun DictionaryScreen(navController: NavHostController) {
     var entradas by remember { mutableStateOf<List<DictionaryEntry>>(emptyList()) }
 
     var busqueda by remember { mutableStateOf("") }
-    var pestana by remember { mutableStateOf(0) }
+    var pestana by remember { mutableIntStateOf(0) }
     var ascendente by remember { mutableStateOf(true) }
     var seleccion by remember { mutableStateOf<DictionaryEntry?>(null) }
 
@@ -614,18 +615,26 @@ internal fun loadWordsFromAssets(assetManager: AssetManager, fileName: String): 
 }
 
 internal fun findWordImageInAssets(assetManager: AssetManager, word: String): String? {
-    val base = normalizeForFileName(word)
-    val extensiones = listOf("jpg", "jpeg", "png", "webp")
-    val candidatos = extensiones.map { "dictionary/$base.$it" } + extensiones.map { "$base.$it" }
-
-    for (ruta in candidatos) {
+    for (ruta in rutasCandidatasDeImagen(normalizeForFileName(word))) {
         try {
             assetManager.open(ruta).use { }
             return ruta
         } catch (_: Exception) {
+            // Esa ruta no existe: se prueba la siguiente. Sin ninguna, la tarjeta muestra el ícono.
         }
     }
     return null
+}
+
+/**
+ * Dónde se busca el dibujo de una seña, en orden: primero `dictionary/`, después la raíz
+ * de assets, y en cada lugar las extensiones de más usada a menos. [base] ya viene con
+ * guion bajo en lugar de espacios ("por_favor"). La usan el diccionario y el selector de
+ * la cámara, para que las dos pantallas encuentren la misma imagen.
+ */
+internal fun rutasCandidatasDeImagen(base: String): List<String> {
+    val extensiones = listOf("jpg", "jpeg", "png", "webp")
+    return extensiones.map { "dictionary/$base.$it" } + extensiones.map { "$base.$it" }
 }
 
 /** Nombre de archivo: minúsculas, sin tildes, con "_" en lugar de espacios. */

@@ -1,9 +1,11 @@
 package com.example.traductorlsa.ui.camera
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.util.Log
 import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import com.example.traductorlsa.dataset.SesionGuiada
 import com.example.traductorlsa.dataset.TomaPlanificada
 import com.example.traductorlsa.dataset.descripcionCompletaCondicion
@@ -45,9 +48,28 @@ import kotlinx.coroutines.delay
 const val ASSET_PLANILLA = "captura/planilla.csv"
 
 fun cargarPlanilla(context: Context): List<TomaPlanificada> = try {
-    context.assets.open(ASSET_PLANILLA).bufferedReader().use { leerPlanilla(it.readText()) }
-} catch (_: Exception) {
+    val csv = context.assets.open(ASSET_PLANILLA).bufferedReader().use { it.readText() }
+    leerPlanilla(csv).also { tomas ->
+        // leerPlanilla descarta las filas rotas sin cortar la sesión; acá al menos se
+        // cuenta cuántas, porque cada una es una toma del protocolo que nadie va a pedir.
+        val descartadas = filasDescartadas(csv, tomas)
+        if (descartadas > 0) Log.w(TAG_SESION, "La planilla tiene $descartadas filas que no se pudieron leer")
+    }
+} catch (e: Exception) {
+    // Sin planilla no se ofrece la sesión guiada; antes no quedaba rastro del porqué (TL-M5).
+    Log.w(TAG_SESION, "No se pudo leer $ASSET_PLANILLA", e)
     emptyList()
+}
+
+private const val TAG_SESION = "SesionGuiadaUi"
+
+/**
+ * Cuántas filas de datos de [csv] no llegaron a [tomas] (las que `leerPlanilla` descartó
+ * por mal formadas). Sin encabezado válido son todas.
+ */
+internal fun filasDescartadas(csv: String, tomas: List<TomaPlanificada>): Int {
+    val filasDeDatos = csv.lines().count { it.isNotBlank() } - 1
+    return (filasDeDatos - tomas.size).coerceAtLeast(0)
 }
 
 /**
@@ -62,16 +84,19 @@ object ProgresoSesion {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt("indice_$codigo", 0)
 
     fun guardar(context: Context, sesion: SesionGuiada) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putInt("indice_${sesion.codigo}", sesion.indice).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
+            putInt("indice_${sesion.codigo}", sesion.indice)
+        }
     }
 }
 
 /**
  * Pantalla fija en vertical mientras se ve la cámara (decisión D-7): el contrato de
  * features asume una sola geometría, y en horizontal la corrección de aspecto comprime
- * el otro eje. Al salir se devuelve la orientación que tenía la Activity.
+ * el otro eje. Al salir se devuelve la orientación que tenía la Activity. Lint marca
+ * igual el bloqueo de orientación; acá es a propósito, por eso el SuppressLint.
  */
+@SuppressLint("SourceLockedOrientationActivity")
 @Composable
 fun FijarVertical() {
     val activity = LocalContext.current.buscarActivity() ?: return
@@ -185,7 +210,7 @@ fun DialogoPausa(sesion: SesionGuiada, onContinuar: () -> Unit) {
     val condicion = instruccionCondicion(toma.condicion)
     val esCambioDeCondicion = toma.bloque == "B"
     // Las pausas de descanso (entre tandas) no siguen solas: son para levantarse.
-    var restantes by remember(sesion.indice) { mutableStateOf(if (esCambioDeCondicion) SEGUNDOS_AUTO_CONTINUAR else -1) }
+    var restantes by remember(sesion.indice) { mutableIntStateOf(if (esCambioDeCondicion) SEGUNDOS_AUTO_CONTINUAR else -1) }
     if (restantes >= 0) {
         LaunchedEffect(sesion.indice, restantes) {
             if (restantes == 0) onContinuar() else { delay(1000); restantes -= 1 }

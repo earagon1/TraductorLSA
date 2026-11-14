@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.traductorlsa.startup.AssetWarmup
 import com.example.traductorlsa.ui.brand.SenarBurbujasContorno
@@ -107,12 +108,16 @@ fun SplashScreen(onFinished: () -> Unit) {
         animationSpec = tween(durationMillis = 520, delayMillis = 260),
         label = "opacidadTexto",
     )
+    // Se lee dentro de offset { }: así la animación solo reubica el texto en cada cuadro y
+    // no recompone la pantalla (lint, UseOfNonLambdaOffsetOverload). Se ve igual.
     val desplazamientoTexto by animateDpAsState(
         targetValue = if (entro) 0.dp else 12.dp,
         animationSpec = tween(durationMillis = 520, delayMillis = 260, easing = FastOutSlowInEasing),
         label = "desplazamientoTexto",
     )
 
+    // Pedir la info del propio paquete no falla en la práctica; si fallara, la versión
+    // simplemente no se muestra, que es lo único que depende de esto.
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -196,7 +201,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                     colorTexto = SenarBlanco,
                     colorEne = SenarAzul300,
                     modifier = Modifier
-                        .offset(y = desplazamientoTexto)
+                        .offset { IntOffset(0, desplazamientoTexto.roundToPx()) }
                         .graphicsLayer { alpha = opacidadTexto },
                 )
                 Spacer(Modifier.height(16.dp))
@@ -206,7 +211,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                     color = SenarSobreMarca,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .offset(y = desplazamientoTexto)
+                        .offset { IntOffset(0, desplazamientoTexto.roundToPx()) }
                         .graphicsLayer { alpha = opacidadTexto },
                 )
             }

@@ -1,6 +1,8 @@
 package com.example.traductorlsa.federado
 
 import android.content.Context
+import android.util.Log
+import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -42,7 +44,11 @@ class ModeloInstalado(
      */
     val tienePersonal: Boolean
         get() = cabezaPersonal.exists() &&
-            runCatching { JSONObject(cabezaPersonal.readText()).getInt("version_base") == versionCabeza }.getOrDefault(false)
+            runCatching { JSONObject(cabezaPersonal.readText()).getInt("version_base") == versionCabeza }
+                // Ilegible vale como sin personalizar (se traduce con la compartida), pero
+                // la persona la había pedido: que quede registrado (TL-M5).
+                .onFailure { Log.w(TAG, "La cabeza personal del paquete v$paquete no se pudo leer", it) }
+                .getOrDefault(false)
 
     /** La cabeza con la que se traduce: la personal si está vigente; si no, la compartida. */
     fun cabeza(): CabezaDensa = if (tienePersonal) CabezaDensa.desdeJson(JSONObject(cabezaPersonal.readText())) else cabezaGlobal()
@@ -70,6 +76,7 @@ class ModeloInstalado(
     }
 
     companion object {
+        private const val TAG = "ModeloInstalado"
         private const val PREFS = "federado"
         private const val CLAVE_ACTIVO = "paquete_activo"
         private const val CLAVE_VERSION = "version_cabeza"
@@ -81,7 +88,7 @@ class ModeloInstalado(
         fun quierePersonalizar(context: Context): Boolean = prefs(context).getBoolean(CLAVE_PERSONALIZAR, false)
 
         fun guardarQuierePersonalizar(context: Context, si: Boolean) {
-            prefs(context).edit().putBoolean(CLAVE_PERSONALIZAR, si).apply()
+            prefs(context).edit { putBoolean(CLAVE_PERSONALIZAR, si) }
         }
 
         fun raiz(context: Context) = File(context.filesDir, "modelos")
@@ -98,7 +105,9 @@ class ModeloInstalado(
                 ModeloInstalado(n, carpeta, JSONObject(man.readText()), versionCabeza(context)).takeIf { m ->
                     listOf("backbone.tflite", "cabeza.json").all { File(carpeta, it).exists() } && m.clases.isNotEmpty()
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                // Se vuelve al de fábrica, que nunca se pisa; antes sin decir por qué (TL-M5).
+                Log.w(TAG, "El paquete activo v$n no se pudo abrir: se traduce con el de fábrica", e)
                 null
             }
         }
@@ -107,13 +116,14 @@ class ModeloInstalado(
         fun versionCabeza(context: Context): Int = prefs(context).getInt(CLAVE_VERSION, 0)
 
         fun guardarVersionCabeza(context: Context, version: Int) {
-            prefs(context).edit().putInt(CLAVE_VERSION, version).apply()
+            prefs(context).edit { putInt(CLAVE_VERSION, version) }
         }
 
         /** También apaga la personalización automática: volver a lo de fábrica es volver a todo. */
         fun volverAFabrica(context: Context) {
-            prefs(context).edit().putInt(CLAVE_ACTIVO, 0).putInt(CLAVE_VERSION, 0)
-                .putBoolean(CLAVE_PERSONALIZAR, false).apply()
+            prefs(context).edit {
+                putInt(CLAVE_ACTIVO, 0).putInt(CLAVE_VERSION, 0).putBoolean(CLAVE_PERSONALIZAR, false)
+            }
         }
 
         /**
@@ -142,7 +152,7 @@ class ModeloInstalado(
             val destino = File(raiz, "v$n")
             destino.deleteRecursively()
             check(tmp.renameTo(destino)) { "no se pudo instalar en $destino" }
-            prefs(context).edit().putInt(CLAVE_ACTIVO, n).putInt(CLAVE_VERSION, 0).apply()
+            prefs(context).edit { putInt(CLAVE_ACTIVO, n).putInt(CLAVE_VERSION, 0) }
             return ModeloInstalado(n, destino, manifiesto)
         }
 

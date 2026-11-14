@@ -85,7 +85,7 @@ object AlmacenSeguro {
     private fun parsear(f: File): JSONObject? = try {
         if (f.exists() && f.length() > 0L) JSONObject(f.readText()) else null
     } catch (_: JSONException) {
-        null
+        null  // No se pierde: leerJson aparta el archivo roto, prueba el .bak y si no, avisa.
     }
 
     private fun cuarentena(archivo: File): File {

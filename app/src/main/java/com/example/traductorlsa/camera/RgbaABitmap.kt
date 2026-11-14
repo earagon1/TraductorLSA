@@ -2,6 +2,7 @@ package com.example.traductorlsa.camera
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
+import androidx.core.graphics.createBitmap
 import java.nio.ByteOrder
 import java.nio.IntBuffer
 
@@ -39,7 +40,7 @@ class RgbaABitmap {
         if (destino.size != ancho * alto) destino = IntArray(ancho * alto)
         val (anchoFinal, altoFinal) = rotarPixeles(origen, ancho, alto, paso, grados, destino)
         val b = bitmap?.takeIf { it.width == anchoFinal && it.height == altoFinal }
-            ?: Bitmap.createBitmap(anchoFinal, altoFinal, Bitmap.Config.ARGB_8888).also { bitmap = it }
+            ?: createBitmap(anchoFinal, altoFinal, Bitmap.Config.ARGB_8888).also { bitmap = it }
         // Los enteros conservan el orden de bytes de memoria (RGBA), que es el de un Bitmap
         // ARGB_8888: copiarlos tal cual no cambia los colores.
         b.copyPixelsFromBuffer(IntBuffer.wrap(destino))

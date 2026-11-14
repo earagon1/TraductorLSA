@@ -1,7 +1,7 @@
 package com.example.traductorlsa.ui.screens
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -70,7 +70,7 @@ fun HomeScreen(
 
         Aire(12)
         FilaDestino(
-            icono = Icons.Filled.MenuBook,
+            icono = Icons.AutoMirrored.Filled.MenuBook,
             titulo = "Diccionario de señas",
             descripcion = "Ver las señas que reconoce el modelo",
             onClick = onDictionary,

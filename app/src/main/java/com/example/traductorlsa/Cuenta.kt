@@ -1,6 +1,7 @@
 package com.example.traductorlsa
 
 import android.content.Context
+import androidx.core.content.edit
 import com.clerk.api.Clerk
 
 /**
@@ -40,18 +41,18 @@ object Cuenta {
 
     /** La persona eligió iniciar sesión: desde ahora se inicializa en cada arranque. */
     fun activar(context: Context) {
-        prefs(context).edit().putBoolean(CLAVE, true).apply()
+        prefs(context).edit { putBoolean(CLAVE, true) }
         inicializar(context)
     }
 
     /** Cerró sesión o resultó no tener cuenta: el próximo arranque ya no conecta. */
     fun desactivar(context: Context) {
-        prefs(context).edit().putBoolean(CLAVE, false).apply()
+        prefs(context).edit { putBoolean(CLAVE, false) }
     }
 
     /** Para las instalaciones viejas: una vez que Clerk respondió, se anota si había sesión. */
     fun recordarSiHaceFalta(context: Context, haySesion: Boolean) {
-        if (usaCuenta(context) == null) prefs(context).edit().putBoolean(CLAVE, haySesion).apply()
+        if (usaCuenta(context) == null) prefs(context).edit { putBoolean(CLAVE, haySesion) }
     }
 
     @Synchronized

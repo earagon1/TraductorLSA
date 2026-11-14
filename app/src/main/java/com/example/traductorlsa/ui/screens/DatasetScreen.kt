@@ -1,6 +1,7 @@
 package com.example.traductorlsa.ui.screens
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -114,6 +115,8 @@ fun DatasetScreen(navController: NavHostController) {
         try {
             senas = withContext(Dispatchers.IO) { leerSenasDelDataset(context) }
         } catch (e: Exception) {
+            // La pantalla muestra el mensaje; la traza queda en logcat para saber dónde falló.
+            Log.e("DatasetScreen", "No se pudo leer el dataset", e)
             errorDeLectura = e.message ?: "No se pudo leer el dataset"
         }
         cargando = false

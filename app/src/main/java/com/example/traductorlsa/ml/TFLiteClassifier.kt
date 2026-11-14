@@ -30,7 +30,12 @@ class TFLiteClassifier(
      * con el modelo de fábrica, que queda en assets para "Volver al de fábrica".
      */
     val modeloInstalado: ModeloInstalado? = ModeloInstalado.activo(context)
-    private val cabeza: CabezaDensa? = modeloInstalado?.let { runCatching { it.cabeza() }.getOrNull() }
+    // Sin cabeza, ValidacionModelo muestra "no se pudo cargar la cabeza"; el porqué queda en logcat.
+    private val cabeza: CabezaDensa? = modeloInstalado?.let {
+        runCatching { it.cabeza() }
+            .onFailure { e -> Log.e("TFLiteClassifier", "No se pudo leer la cabeza del paquete v${it.paquete}", e) }
+            .getOrNull()
+    }
     private var dimSalida: Int = 0
 
     /** Temperatura y umbral del modelo con el que se traduce (el instalado o el de fábrica). */
@@ -102,9 +107,14 @@ class TFLiteClassifier(
         Log.d("TFLiteClassifier", "Input: T=$T D=$D - labels=${labelsProvider.labels.size}")
     }
 
+    // Null hace que la cámara muestre "falta modelo.json" y no traduzca. Si el archivo está
+    // pero roto, ese aviso confunde: el motivo real queda en logcat.
     private fun leerManifiesto(): JSONObject? = try {
         JSONObject(context.assets.open(MANIFIESTO).bufferedReader().use { it.readText() })
-    } catch (_: Exception) { null }
+    } catch (e: Exception) {
+        Log.e("TFLiteClassifier", "No se pudo leer $MANIFIESTO", e)
+        null
+    }
 
     private fun sha256(buffer: ByteBuffer): String {
         val md = MessageDigest.getInstance("SHA-256")

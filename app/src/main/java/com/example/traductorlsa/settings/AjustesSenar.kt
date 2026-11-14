@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +36,9 @@ enum class VarianteEspanol(val etiqueta: String, private val pais: String) {
     MEXICO("México", "MX"),
     NEUTRO("Neutro", "");
 
-    val locale: Locale get() = if (pais.isEmpty()) Locale("es") else Locale("es", pais)
+    // Desde la etiqueta y no con el constructor Locale(idioma, país), deprecado en Java 19:
+    // da el mismo Locale ("es", "AR") y deja una sola fuente para los dos usos.
+    val locale: Locale get() = Locale.forLanguageTag(etiquetaBcp47)
     val etiquetaBcp47: String get() = if (pais.isEmpty()) "es" else "es-$pais"
 }
 
@@ -98,18 +101,18 @@ class RepositorioAjustes private constructor(context: Context) {
 
     fun actualizar(cambio: (AjustesSenar) -> AjustesSenar) {
         val nuevo = cambio(_estado.value)
-        prefs.edit()
-            .putString(CALIDAD, nuevo.calidad.name)
-            .putBoolean(CAMARA_FRONTAL, nuevo.camaraFrontal)
-            .putFloat(SENSIBILIDAD, nuevo.sensibilidadDeteccion)
-            .putBoolean(LANDMARKS, nuevo.mostrarLandmarks)
-            .putBoolean(VOZ_ALTA, nuevo.leerEnVozAlta)
-            .putFloat(VELOCIDAD, nuevo.velocidadVoz)
-            .putFloat(TONO, nuevo.tonoVoz)
-            .putString(VARIANTE, nuevo.variante.name)
-            .putFloat(CONFIANZA, nuevo.confianzaMinima)
-            .putBoolean(RECONOCIMIENTO_LOCAL, nuevo.reconocimientoSoloLocal)
-            .apply()
+        prefs.edit {
+            putString(CALIDAD, nuevo.calidad.name)
+            putBoolean(CAMARA_FRONTAL, nuevo.camaraFrontal)
+            putFloat(SENSIBILIDAD, nuevo.sensibilidadDeteccion)
+            putBoolean(LANDMARKS, nuevo.mostrarLandmarks)
+            putBoolean(VOZ_ALTA, nuevo.leerEnVozAlta)
+            putFloat(VELOCIDAD, nuevo.velocidadVoz)
+            putFloat(TONO, nuevo.tonoVoz)
+            putString(VARIANTE, nuevo.variante.name)
+            putFloat(CONFIANZA, nuevo.confianzaMinima)
+            putBoolean(RECONOCIMIENTO_LOCAL, nuevo.reconocimientoSoloLocal)
+        }
         _estado.value = nuevo
     }
 

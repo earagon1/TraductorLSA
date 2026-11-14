@@ -1,5 +1,6 @@
 package com.example.traductorlsa.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -166,7 +167,9 @@ fun SettingsScreen(navController: NavHostController) {
                                     popUpTo(AppDestination.Home.route) { inclusive = true }
                                 }
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                // printStackTrace no lleva tag ni se filtra en logcat (TL-M6). Esta
+                                // pantalla no tiene dónde avisar: la sesión sigue iniciada a la vista.
+                                Log.e("SettingsScreen", "No se pudo cerrar la sesión", e)
                             }
                         }
                     }

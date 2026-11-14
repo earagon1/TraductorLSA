@@ -1,7 +1,9 @@
 package com.example.traductorlsa.ml
 
+import android.util.Log
 import java.io.File
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Locale
 import kotlin.math.ceil
 
@@ -50,6 +52,7 @@ object Metricas {
     // escribía ahí mismo, demorando el frame siguiente (auditoría, TL-A5). Uno solo, así
     // las líneas quedan en el orden en que se emitieron.
     private val escritor = Executors.newSingleThreadExecutor { r -> Thread(r, "senar-metricas").apply { isDaemon = true } }
+    private val avisoDeEscritura = AtomicBoolean(false)
 
     /** Agrega [linea] a [destino] en el hilo escritor, fuera del de la cámara. */
     fun agregarLinea(destino: File, linea: String) {
@@ -57,8 +60,12 @@ object Metricas {
             try {
                 destino.parentFile?.mkdirs()
                 destino.appendText(linea + "\n")
-            } catch (_: Exception) {
-                // Se pierde esta línea y nada más: sigue estando en logcat.
+            } catch (e: Exception) {
+                // Se pierde esta línea y nada más: la de la captura sigue estando en logcat.
+                // Se avisa una sola vez, para no llenar logcat con un disco lleno (TL-M5).
+                if (avisoDeEscritura.compareAndSet(false, true)) {
+                    Log.w(TAG, "No se pudo escribir en ${destino.name}: se pierden líneas del archivo", e)
+                }
             }
         }
     }

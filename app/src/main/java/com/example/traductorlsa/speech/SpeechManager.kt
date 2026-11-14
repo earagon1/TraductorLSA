@@ -16,7 +16,7 @@ class SpeechManager(private val context: Context) {
     // guardan y se aplican en cuanto inicializa.
     private var velocidad = 1.0f
     private var tono = 1.0f
-    private var locale: Locale = Locale("es", "AR")
+    private var locale: Locale = Locale.forLanguageTag("es-AR")
 
     init {
         tts = TextToSpeech(context) { status ->
@@ -44,7 +44,7 @@ class SpeechManager(private val context: Context) {
         if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
             // El dispositivo no tiene esa variante instalada: caemos a español a secas.
             Log.w("SpeechManager", "Variante $locale no disponible, se usa español neutro")
-            motor.setLanguage(Locale("es"))
+            motor.setLanguage(Locale.forLanguageTag("es"))
         }
         motor.setSpeechRate(velocidad)
         motor.setPitch(tono)

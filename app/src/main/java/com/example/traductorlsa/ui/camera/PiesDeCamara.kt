@@ -3,6 +3,8 @@ package com.example.traductorlsa.ui.camera
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,11 +54,12 @@ internal fun PieDeCaptura(
     frameTarget: Int,
     hayManos: Boolean,
     recienGuardada: Boolean,
-    listoParaSiguiente: Boolean = false,
     onCambiarSena: () -> Unit,
     onGirarCamara: () -> Unit,
     onDeshacer: () -> Unit,
+    // Primero de los opcionales, como pide la convención de Compose (lint, ModifierParameter).
     modifier: Modifier = Modifier,
+    listoParaSiguiente: Boolean = false,
 ) {
     val grabando = frameCount > 0
 
@@ -124,7 +127,7 @@ internal fun PieDeCaptura(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (recienGuardada) {
                     BotonRedondo(
-                        icono = Icons.Default.Undo,
+                        icono = Icons.AutoMirrored.Filled.Undo,
                         descripcion = "Deshacer la última muestra",
                         onClick = onDeshacer,
                     )
@@ -245,7 +248,7 @@ internal fun PieDeTraduccion(
                     Spacer(Modifier.width(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BotonRedondo(
-                            icono = Icons.Default.VolumeUp,
+                            icono = Icons.AutoMirrored.Filled.VolumeUp,
                             descripcion = "Repetir en voz alta",
                             onClick = onRepetir,
                             primario = true,

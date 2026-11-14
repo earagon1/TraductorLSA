@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,7 +67,7 @@ internal fun CabeceraCamara(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BotonRedondo(
-            icono = Icons.Default.ArrowBack,
+            icono = Icons.AutoMirrored.Filled.ArrowBack,
             descripcion = "Volver",
             onClick = onVolver,
             tamano = 38.dp,
@@ -124,7 +127,7 @@ internal fun PildoraDeVoz(activa: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = if (activa) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+            imageVector = if (activa) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
             contentDescription = if (activa) "Apagar la voz" else "Encender la voz",
             tint = Color.White,
             modifier = Modifier.size(15.dp),

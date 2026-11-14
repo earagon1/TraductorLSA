@@ -1,6 +1,7 @@
 package com.example.traductorlsa.ui.camera
 
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.filled.*
@@ -35,7 +36,9 @@ internal fun TrainingReferenceDialog(
                 context.assets.open(assetPath).use { stream ->
                     BitmapFactory.decodeStream(stream)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                // El diálogo ya dice que no se pudo cargar; el motivo queda en logcat (TL-M5).
+                Log.w("DialogoDeReferencia", "No se pudo abrir la imagen $assetPath", e)
                 null
             }
         }

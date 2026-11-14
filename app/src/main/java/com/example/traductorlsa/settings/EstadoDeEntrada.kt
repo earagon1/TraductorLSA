@@ -1,6 +1,7 @@
 package com.example.traductorlsa.settings
 
 import android.content.Context
+import androidx.core.content.edit
 
 /**
  * Lo que la app recuerda del recorrido de entrada.
@@ -31,7 +32,7 @@ class EstadoDeEntrada private constructor(context: Context) {
     var vioLaPresentacion: Boolean
         get() = prefs.getBoolean(PRESENTACION, false)
         set(valor) {
-            prefs.edit().putBoolean(PRESENTACION, valor).apply()
+            prefs.edit { putBoolean(PRESENTACION, valor) }
         }
 
     companion object {

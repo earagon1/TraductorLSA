@@ -30,10 +30,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -342,7 +342,7 @@ private fun HeroSenas() {
                 )
                 Spacer(Modifier.width(12.dp))
                 Icon(
-                    imageVector = Icons.Filled.VolumeUp,
+                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                     contentDescription = null,
                     tint = SenarAzul600,
                     modifier = Modifier.size(20.dp),
@@ -480,7 +480,7 @@ private fun BurbujaSena(texto: String, etiqueta: String?) {
             )
             Spacer(Modifier.width(10.dp))
             Icon(
-                imageVector = Icons.Filled.VolumeUp,
+                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                 contentDescription = null,
                 tint = SenarSobreAzul,
                 modifier = Modifier.size(17.dp),

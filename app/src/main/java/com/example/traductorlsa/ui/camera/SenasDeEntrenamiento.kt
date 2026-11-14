@@ -1,12 +1,14 @@
 package com.example.traductorlsa.ui.camera
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.example.traductorlsa.ui.CameraScreen
 import com.example.traductorlsa.ui.screens.nombreParaMostrar
+import com.example.traductorlsa.ui.screens.rutasCandidatasDeImagen
 import java.text.Normalizer
 import java.util.*
 import org.json.JSONObject
@@ -49,16 +51,22 @@ internal fun loadAllLabels(context: Context): List<String> {
                 return out.distinct().sorted()
             }
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+        // Sin words.json el selector queda vacío: que quede el motivo en logcat (TL-M5).
+        Log.w(TAG_SENAS, "No se pudo leer words.json para el selector de señas", e)
+    }
 
     return try {
         context.assets.open("labels.txt").bufferedReader().use { br ->
             br.readLines().map { it.trim() }.filter { it.isNotEmpty() }.distinct().sorted()
         }
     } catch (_: Exception) {
+        // labels.txt es un respaldo viejo que hoy no viaja en el APK: que falte es lo normal.
         emptyList()
     }
 }
+
+private const val TAG_SENAS = "SenasDeEntrenamiento"
 
 /**
  * Lleva una etiqueta escrita a mano al formato de id del modelo.
@@ -99,15 +107,12 @@ internal fun archivoDeSena(label: String): String =
     normalizeTrainingLabel(label).replace(' ', '_')
 
 internal fun findTrainingWordImageInAssets(context: Context, word: String): String? {
-    val base = archivoDeSena(word)
-    val exts = listOf("jpg", "jpeg", "png", "webp")
-    val candidates = exts.map { "dictionary/$base.$it" } + exts.map { "$base.$it" }
-
-    for (path in candidates) {
+    for (path in rutasCandidatasDeImagen(archivoDeSena(word))) {
         try {
             context.assets.open(path).use { }
             return path
         } catch (_: Exception) {
+            // Esa ruta no existe: se prueba la siguiente. Sin ninguna, la seña va sin dibujo.
         }
     }
     return null

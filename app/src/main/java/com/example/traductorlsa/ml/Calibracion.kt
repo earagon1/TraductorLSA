@@ -1,7 +1,9 @@
 package com.example.traductorlsa.ml
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONObject
+import java.io.FileNotFoundException
 import kotlin.math.exp
 import kotlin.math.ln
 
@@ -27,16 +29,25 @@ data class Calibracion(
 
         fun leer(context: Context): Calibracion = try {
             desdeJson(JSONObject(context.assets.open(ASSET).bufferedReader().use { it.readText() }))
-        } catch (_: Exception) {
+        } catch (_: FileNotFoundException) {
+            Calibracion()  // Sin archivo, T = 1: es el caso documentado arriba.
+        } catch (e: Exception) {
+            // Un archivo roto también da T = 1, pero eso no es lo que se publicó (TL-M5).
+            Log.w(TAG, "$ASSET ilegible: se traduce sin calibrar", e)
             Calibracion()
         }
 
         /** La de un paquete bajado del servidor del federado (viaja con su backbone). */
         fun leer(archivo: java.io.File): Calibracion = try {
             desdeJson(JSONObject(archivo.readText()))
-        } catch (_: Exception) {
+        } catch (_: FileNotFoundException) {
+            Calibracion()  // Sin archivo, T = 1: es el caso documentado arriba.
+        } catch (e: Exception) {
+            Log.w(TAG, "${archivo.name} del paquete ilegible: se traduce sin calibrar", e)
             Calibracion()
         }
+
+        private const val TAG = "Calibracion"
 
         private fun desdeJson(json: JSONObject) = Calibracion(
             temperatura = json.optDouble("temperatura", 1.0).toFloat().takeIf { it > 0f } ?: 1f,

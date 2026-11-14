@@ -3,6 +3,7 @@ package com.example.traductorlsa.federado
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import com.example.traductorlsa.dataset.DatasetV2
 import com.example.traductorlsa.dataset.ManoCruda
 import com.example.traductorlsa.features.ContratoV2
@@ -63,6 +64,7 @@ class ClienteFederado(direccion: String, private val huella: ByteArray, private 
             val codigo = c.responseCode
             val datos = (if (codigo < 400) c.inputStream else c.errorStream)?.use { it.readBytes() } ?: ByteArray(0)
             if (codigo >= 400) {
+                // El motivo es un extra: si el cuerpo no es JSON, el error sale igual con el código.
                 val motivo = runCatching { JSONObject(String(datos)).optString("motivo") }.getOrNull().orEmpty()
                 throw ErrorServidor(codigo, "el servidor respondió $codigo${if (motivo.isNotEmpty()) ": $motivo" else ""}")
             }
@@ -91,14 +93,17 @@ class ClienteFederado(direccion: String, private val huella: ByteArray, private 
         fun sondearHuella(direccion: String): ByteArray {
             val verificador = VerificadorDeHuella(null)
             val c = abrir(normalizarDireccion(direccion) + "/estado", fabricaDeSockets(verificador))
-            try {
+            // Que connect() falle es lo esperado: el verificador corta el handshake apenas ve
+            // el certificado. Si no llegó a verlo, ese fallo es la causa real (timeout, puerto
+            // cerrado...) y viaja como causa en vez de perderse (TL-M5); el mensaje no cambia.
+            val fallo = try {
                 c.connectTimeout = 8_000
                 c.readTimeout = 8_000
-                runCatching { c.connect() }
+                runCatching { c.connect() }.exceptionOrNull()
             } finally {
                 c.disconnect()
             }
-            return verificador.vista ?: throw IOException("no se pudo hablar con el servidor por https")
+            return verificador.vista ?: throw IOException("no se pudo hablar con el servidor por https", fallo)
         }
 
         private fun fabricaDeSockets(verificador: VerificadorDeHuella): SSLSocketFactory =
@@ -121,6 +126,7 @@ class ClienteFederado(direccion: String, private val huella: ByteArray, private 
 data class ResultadoFederado(val resumen: String, val detalle: JSONObject = JSONObject())
 
 object OperacionesFederadas {
+    private const val TAG = "OperacionesFederadas"
     private const val EPOCAS = 2
     private const val EPOCAS_PERSONALIZAR = 8
     private const val TAMANO_LOTE = 8
@@ -216,13 +222,19 @@ object OperacionesFederadas {
     fun aportar(context: Context, cliente: ClienteFederado, participante: String): ResultadoFederado {
         val excluir = ModeloInstalado.activo(context)?.uuidsTest ?: runCatching {
             cliente.manifiesto().optJSONArray("uuids_test")?.let { a -> List(a.length()) { a.getString(it) }.toSet() }
+        }.onFailure {
+            // Sin la lista del test fijo no se excluye nada de este lado: que quede registrado.
+            Log.w(TAG, "No se pudo leer uuids_test del manifiesto: no se excluyen tomas del test", it)
         }.getOrNull() ?: emptySet()
         val muestras = JSONArray()
+        var ilegibles = 0
         DatasetV2.archivo(context).takeIf { it.exists() }?.forEachLine { linea ->
             if (linea.isBlank()) return@forEachLine
-            val mm = runCatching { JSONObject(linea) }.getOrNull() ?: return@forEachLine
+            val mm = runCatching { JSONObject(linea) }.getOrNull() ?: run { ilegibles++; return@forEachLine }
             if (esAportable(mm, participante, excluir)) muestras.put(mm)
         }
+        // Una línea rota se saltea para no cortar el aporte, pero no en silencio (TL-M5).
+        if (ilegibles > 0) Log.w(TAG, "$ilegibles líneas del dataset v2 no se pudieron leer y no se aportaron")
         if (muestras.length() == 0) return ResultadoFederado("No hay tomas tuyas para aportar.")
         val r = cliente.enviar("/muestras", JSONObject().put("protocolo", ProtocoloFederado.PROTOCOLO)
             .put("participant_id", participante).put("muestras", muestras))
@@ -253,10 +265,11 @@ object OperacionesFederadas {
 
     private fun tomasPropias(context: Context, modelo: ModeloInstalado, participante: String): TomasPropias {
         val grupos = List(3) { ArrayList<FloatArray>() to ArrayList<Int>() }
+        var ilegibles = 0
         Backbone(modelo.backbone).use { backbone ->
             DatasetV2.archivo(context).takeIf { it.exists() }?.forEachLine { linea ->
                 if (linea.isBlank()) return@forEachLine
-                val m = runCatching { JSONObject(linea) }.getOrNull() ?: return@forEachLine
+                val m = runCatching { JSONObject(linea) }.getOrNull() ?: run { ilegibles++; return@forEachLine }
                 if (m.optString("participant_id") != participante) return@forEachLine
                 val grupo = when {
                     esAportable(m, participante, modelo.uuidsTest) -> 0
@@ -271,6 +284,8 @@ object OperacionesFederadas {
                 grupos[grupo].second += etiqueta
             }
         }
+        // Se saltean para no cortar el entrenamiento, pero no en silencio (TL-M5).
+        if (ilegibles > 0) Log.w(TAG, "$ilegibles líneas del dataset v2 no se pudieron leer y no entrenan")
         val (e, r, b) = grupos.map { (x, y) -> x to y.toIntArray() }
         return TomasPropias(e, r, b)
     }
