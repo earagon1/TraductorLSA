@@ -196,7 +196,7 @@ Se auditó cada cifra del informe contra su fuente (unas 390; el detalle está e
 - Cap. 7 («La simulación de las mismas rondas… reproduce el resultado real (81,8 % y 59,6 %)») y cap. 8 («reproduce exactamente»): el resultado real de P2 en la sesión 2 es 61,7 % y no se encontró la corrida simulada.
 - Cap. 7, personalizado en la computadora 84,5 ± 2,5: `progreso.md` da también 83,6 para lo mismo.
 - Cap. 6: sin fuente localizada para 12 ms frente a 7 ms (rotación), la Tab S7 (0,87 a 1,0), `tab:encuadre` y los porcentajes de la muñeca (35/43/49 % y 23 %).
-- `resultados_tesis/resultados.md` quedó atrás en dos puntos (sección 6: p = 0,083 y 0,428; sección 7: T = 1,29): el informe usa las cifras correctas, pero conviene regenerarlo.
+- Resuelto el 2026-11-15 (modelo_LSA `9be7442`): `resultados_tesis/resultados.md` se regeneró y ya coincide con el informe. La sección 6 da p = 0,14 y 0,60 (prueba t sobre la media de cada persona, n = 3) y la sección 7 pone primero la calibración publicada (T = 1,20).
 
 El PDF compila (98 páginas). Para Overleaf: `main.tex`, los capítulos 03, 05, 05b, 06, 07, 08, 09 y `apendices.tex`, además de `figures/robustez-por-condicion.png` si no se subió todavía.
 
