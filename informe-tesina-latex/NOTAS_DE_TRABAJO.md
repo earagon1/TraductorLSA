@@ -200,6 +200,24 @@ Se auditó cada cifra del informe contra su fuente (unas 390; el detalle está e
 
 El PDF compila (98 páginas). Para Overleaf: `main.tex`, los capítulos 03, 05, 05b, 06, 07, 08, 09 y `apendices.tex`, además de `figures/robustez-por-condicion.png` si no se subió todavía.
 
+## Sesión 2026-11-15 (diccionario con videos y fuentes de las cifras)
+
+**Diccionario.** La app reemplazó los dibujos por una imagen y un video de cada seña. El cap. 5 lo describe así y las capturas `figures/capturas/diccionario.jpg` y `entrenamiento_lista.jpg` son nuevas (tablet, 2026-11-15). Quedan con las miniaturas viejas `entrenamiento_camara.jpg` y `dataset.jpg`. Pendiente de la autora: decir cómo se produjeron los videos y quién verificó las señas.
+
+**Cifras del cap. 6 que no tenían fuente, revisadas contra los datos** (`plan/evidencia/2026-11-15_encuadre_y_muneca.txt`, con los dos scripts que lo generan):
+
+- `tab:encuadre` y «entre 0,87 y 1,0»: se reproducen exactas clasificando las tomas de `respaldo_TabS7` con el modelo publicado **sin temperatura** (0,79/0,72; 0,96/0,90; 0,95/0,95; 1,00/1,00; formato cuadrado 0,94/0,87). Con T = 1,20 dan 0,70/0,64; 0,92/0,82; 0,89/0,89; 1,00; 0,88/0,78. El texto y el caption ahora lo aclaran.
+- Muñeca al 35 % («N»), 43 % («E») y 49 % («adiós»), 42 % en la «V» mal encuadrada y aviso en el 23 %: confirmadas con las tomas de teléfono de la sesión 1 (medianas 0,35 / 0,43 / 0,49; mediana por toma por encima de la mitad en el 23,6 % de las 318). La fuente original son los commits `8348df3` y `05e24a4`.
+- Rotación: los 7 ms de la versión original están medidos (6,9 ms por cuadro en el A55, `camera/README.md`). Los 12 ms del intento con imagen reutilizada no aparecen en ninguna métrica ni commit: se sacó la cifra y quedó un `\pendienteautora`.
+- En `respaldo_TabS7` hay además tres «V» en horizontal del primer intento (muñeca al 63-83 %) que el modelo no reconoce («cómo estás» 0,50 y «nada»). La tabla no las incluye; conviene decidir si se mencionan.
+
+**Federado.**
+
+- La simulación (81,8 % y 59,6 %): el piloto real está en `federated/piloto_sinP2/evaluacion_versiones.json` y P2 en la sesión 2 fue 59,6 → 61,7 → 59,6 → 59,6 → 61,7. La corrida simulada no está guardada. Los cap. 7 y 8 ya no dicen «reproduce exactamente»: dicen que difiere en una toma, dentro de la oscilación, y quedó un `\pendienteautora` para volver a correrla o retirar la comparación.
+- 84,5 ± 2,5 frente a 83,6: `progreso.md` da los dos (fila del experimento sin P2: 77,3 → 83,6; fila de la personalización en el teléfono: 84,5 ± 2,5 «desde la misma cabeza»). No hay script ni resultado guardado de ninguna de las dos corridas, así que no se pudo decidir cuál vale. La tabla conserva 84,5 ± 2,5. Sigue pendiente.
+
+El PDF compila (99 páginas). Para Overleaf: los capítulos 05, 06, 07 y 08 y las dos capturas nuevas, además de lo listado en la sesión anterior.
+
 ## Flujo de trabajo con Overleaf
 
 La usuaria no tiene funciones premium de Overleaf, por lo tanto no se puede mantener sincronizacion automatica por Git.

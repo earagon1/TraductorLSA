@@ -51,7 +51,8 @@ Este capítulo reúne los problemas técnicos más relevantes encontrados durant
     \item MediaPipe se ejecuta en la unidad de procesamiento gráfico, con retorno automático al procesador central si el dispositivo no la soporta.
 \end{itemize}
 
-Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sobre una imagen reutilizada, resultó más lento que la versión original (12\,ms frente a 7\,ms) y se reemplazó por la rotación durante la copia. También se evaluaron y descartaron el modo de video de MediaPipe y la delegación de la rotación al detector.
+Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sobre una imagen reutilizada, resultó más lento que la versión original, cuya rotación costaba unos 7\,ms por cuadro en el Galaxy A55, y se reemplazó por la rotación durante la copia.
+\pendienteautora{El tiempo del intento con imagen reutilizada (12\,ms) no quedó registrado en las métricas ni en el historial: reponerlo solo si se encuentra la medición.} También se evaluaron y descartaron el modo de video de MediaPipe y la delegación de la rotación al detector.
 
 \textbf{Efecto.} El Galaxy A55 pasó de 6,3 a 9,6 cuadros por segundo, el OnePlus de 7,5 a 17,5 y la tableta de 16,7 a 24,9, con diferencias en los landmarks inferiores al 0,3\,\% del ancho de la imagen en la mediana.
 
@@ -61,7 +62,7 @@ Un primer intento de reducir el costo de la rotación, dibujando cada cuadro sob
 
 \textbf{Decisión.} La pantalla de cámara queda fija en orientación vertical, que es la forma habitual de sostener un teléfono para una videollamada. Al salir de esa pantalla, la aplicación recupera la orientación que tenía. Todas las tomas de las sesiones de captura se grabaron en vertical.
 
-En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. La imagen, en cambio, sigue la orientación física del dispositivo: la Galaxy Tab S7 la entregó en formato apaisado (640$\times$480) y, en otras sesiones, cuadrado (1088$\times$1088). La corrección a lienzo cuadrado divide las coordenadas por el lado mayor de la imagen, por lo que la mano conserva su escala en todos esos formatos y solo cambia su posición. En la prueba, las tomas de «V» y de «hola» en horizontal y en formato cuadrado se reconocieron con confianzas de entre 0,87 y 1,0. Se evaluó recortar el centro de la imagen apaisada a formato vertical, y se descartó porque cambia el lado mayor y, con él, la escala de la mano.
+En una tableta, la orientación fija tiene un costo de uso: apoyada en horizontal, la pantalla de cámara queda de costado. La imagen, en cambio, sigue la orientación física del dispositivo: la Galaxy Tab S7 la entregó en formato apaisado (640$\times$480) y, en otras sesiones, cuadrado (1088$\times$1088). La corrección a lienzo cuadrado divide las coordenadas por el lado mayor de la imagen, por lo que la mano conserva su escala en todos esos formatos y solo cambia su posición. En la prueba, las tomas de «V» y de «hola» en horizontal y en formato cuadrado se reconocieron con confianzas de entre 0,87 y 1,0 (salida del modelo al clasificar las tomas en la computadora, sin el ajuste de temperatura). Se evaluó recortar el centro de la imagen apaisada a formato vertical, y se descartó porque cambia el lado mayor y, con él, la escala de la mano.
 
 \section{Dependencia del encuadre}
 \label{sec:encuadre}
@@ -85,7 +86,7 @@ En una tableta, la orientación fija tiene un costo de uso: apoyada en horizonta
         «hola», horizontal & --- & «hola» (1,00 y 1,00) \\
         \bottomrule
     \end{tabular}
-    \caption{Clase predicha y confianza para dos tomas de cada seña en la Galaxy Tab S7, según el encuadre.}
+    \caption{Clase predicha y confianza para dos tomas de cada seña en la Galaxy Tab S7, según el encuadre. Las confianzas son la salida del modelo al clasificar las tomas en la computadora, sin el ajuste de temperatura; con el ajuste que aplica la aplicación resultan hasta 0,09 menores y la clase predicha no cambia.}
     \label{tab:encuadre}
 \end{table}
 

@@ -196,7 +196,7 @@ La pantalla principal ofrece las dos funciones de traducción, señas y voz, y d
 \begin{itemize}
     \item \textbf{Traducir señas.} La vista de la cámara ocupa toda la pantalla, con un recuadro que indica el encuadre y se resalta cuando se detectan manos, los puntos de las manos dibujados encima y, en la parte inferior, la frase traducida y un rótulo de estado («esperando señas», «leyendo la seña», «no la reconocí»).
     \item \textbf{Traducir voz.} La transcripción en curso y las frases anteriores, en letra grande.
-    \item \textbf{Diccionario.} Las señas que reconoce el modelo, organizadas en palabras y letras, con un buscador y una imagen de referencia de cada seña; «mi nombre es» y «por favor» todavía no tienen imagen.
+    \item \textbf{Diccionario.} Las señas que reconoce el modelo, organizadas en palabras y letras, con un buscador. Cada seña se presenta con una imagen del momento que mejor la identifica y, al abrirla, con un video breve que la muestra completa y se repite hasta que se lo pausa. Los videos se incluyen en la aplicación, por lo que el diccionario tampoco requiere conexión. El mismo video se ofrece como referencia en el modo de entrenamiento.
     \item \textbf{Modo entrenamiento y conjunto de datos.} La grabación de tomas y su gestión.
     \item \textbf{Aprendizaje federado.} Las funciones de la sección anterior.
     \item \textbf{Ajustes.} Resolución de análisis, cámara, sensibilidad de detección, dibujo de los puntos, lectura en voz alta, velocidad y tono de la voz, variante del español, umbral de confianza y reconocimiento de voz solo local.
@@ -247,6 +247,6 @@ Las Figuras~\ref{fig:pantallas-principales} a~\ref{fig:pantallas-ajustes} muestr
     \label{fig:pantallas-ajustes}
 \end{figure}
 
-\pendienteautora{Imágenes de referencia del diccionario: reemplazarlas por imágenes propias o citar su fuente.}
+\pendienteautora{Videos del diccionario: indicar cómo se produjeron y quién verificó que cada seña esté bien realizada.}
 
 El núcleo comprometido en la propuesta es el pipeline de traducción de señas, la salida en texto y voz y el modo voz a texto. Durante el desarrollo se incorporaron mejoras de experiencia de uso que surgieron de las pruebas: la presentación inicial, la precarga de los modelos mientras se muestra la pantalla de inicio para que la primera traducción no espere, el rótulo de estado de la traducción, la pantalla que permanece encendida durante la traducción y la grabación, y la pantalla de cámara fija en orientación vertical (Capítulo~\ref{cap:desafios}).
