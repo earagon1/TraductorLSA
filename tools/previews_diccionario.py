@@ -40,10 +40,11 @@ FRAME_DE_CADA_SENA = {
     "v": 25,
 }
 
-# En la grilla las letras van de a cuatro por fila: con el cuerpo entero, la mano queda
-# de pocos píxeles. Su captura se recorta a un cuadrado con la cara y la mano. Las
-# palabras van enteras porque dónde queda el brazo respecto del cuerpo es parte de la seña.
-MARGEN_SUPERIOR_DE_LETRA = 0.08  # fracción del alto que se saltea arriba
+# La captura se recorta a un cuadrado con la cara, el torso y las manos. Con el cuerpo
+# entero la mano queda de pocos píxeles en una tarjeta de la grilla, y de la cintura para
+# abajo no hay nada de la seña. En todas las señas del modelo las manos quedan dentro del
+# cuadrado; si se agrega una que se hace más abajo, hay que revisar su captura.
+MARGEN_SUPERIOR = 0.08  # fracción del alto que se saltea arriba
 CALIDAD_JPG = 88
 
 
@@ -51,14 +52,10 @@ def nombre_de_archivo(clase):
     return clase.strip().replace(" ", "_")
 
 
-def es_letra(clase):
-    return len(clase) == 1 and clase.isalpha()
-
-
-def recorte_de_letra(alto, ancho):
+def recorte_cuadrado(alto, ancho):
     """El cuadrado de la parte de arriba del frame: (y0, y1), sin salirse de la imagen."""
     lado = min(ancho, alto)
-    y0 = min(int(round(MARGEN_SUPERIOR_DE_LETRA * alto)), alto - lado)
+    y0 = min(int(round(MARGEN_SUPERIOR * alto)), alto - lado)
     return y0, y0 + lado
 
 
@@ -142,9 +139,8 @@ def main():
     os.makedirs(DESTINO, exist_ok=True)
     for clase in clases:
         frame = leer_frame(cv2, videos[clase], FRAME_DE_CADA_SENA[clase])
-        if es_letra(clase):
-            y0, y1 = recorte_de_letra(*frame.shape[:2])
-            frame = frame[y0:y1]
+        y0, y1 = recorte_cuadrado(*frame.shape[:2])
+        frame = frame[y0:y1]
         base = os.path.join(DESTINO, nombre_de_archivo(clase))
         # imencode y no imwrite: imwrite falla en Windows con rutas que tienen tildes.
         ok, datos = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, CALIDAD_JPG])
