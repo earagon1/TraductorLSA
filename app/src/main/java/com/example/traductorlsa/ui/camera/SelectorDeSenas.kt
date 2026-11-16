@@ -240,15 +240,15 @@ internal fun FilaDeSenaAEntrenar(
                 .size(44.dp)
                 .clip(RoundedCornerShape(13.dp))
                 .background(SenarBlanco)
-                .border(1.dp, SenarBordeSuave, RoundedCornerShape(13.dp))
-                .padding(3.dp),
+                .border(1.dp, SenarBordeSuave, RoundedCornerShape(13.dp)),
             contentAlignment = Alignment.Center,
         ) {
             if (assetPath != null) {
                 DictionaryAssetImage(
                     assetPath = assetPath,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
+                    // Crop: la captura es cuadrada y llena el recuadro redondeado, sin marco.
+                    contentScale = ContentScale.Crop,
                 )
             } else {
                 Icon(

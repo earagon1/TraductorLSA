@@ -258,12 +258,12 @@ internal fun ReferenciaFija(
             .clip(RoundedCornerShape(16.dp))
             .background(SenarBlanco.copy(alpha = 0.86f))
             .clickable(onClick = onAmpliar)
-            .padding(4.dp)
     ) {
         DictionaryAssetImage(
             assetPath = assetPath,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
+            // Crop: la captura es cuadrada y llena el recuadro redondeado, sin marco.
+            contentScale = ContentScale.Crop,
         )
     }
 }

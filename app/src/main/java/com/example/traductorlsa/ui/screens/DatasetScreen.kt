@@ -331,15 +331,15 @@ private fun FilaDelDataset(sena: SenaDelDataset, onClick: () -> Unit) {
             Modifier
                 .size(42.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(SenarAzul050)
-                .padding(3.dp),
+                .background(SenarAzul050),
             contentAlignment = Alignment.Center,
         ) {
             if (sena.imagen != null) {
                 DictionaryAssetImage(
                     assetPath = sena.imagen,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
+                    // Crop: la captura es cuadrada y llena el recuadro redondeado, sin marco.
+                    contentScale = ContentScale.Crop,
                 )
             } else {
                 Icon(

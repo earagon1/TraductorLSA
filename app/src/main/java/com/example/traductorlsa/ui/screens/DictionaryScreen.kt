@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -268,19 +269,18 @@ private fun ColumnScope.DetalleDeSena(
     TituloDePagina(texto = entrada.display, onVolver = onVolver)
 
     Aire(22)
+    // Si el video no se puede reproducir, queda la imagen: la seña no se queda sin explicación.
+    var videoFallo by remember(entrada.word) { mutableStateOf(false) }
+    val video = entrada.videoAssetPath
     Box(
         Modifier
             .fillMaxWidth()
-            .weight(1f)
-            .clip(RoundedCornerShape(28.dp))
-            .background(SenarBlanco)
-            .padding(18.dp),
+            .weight(1f),
         contentAlignment = Alignment.Center,
     ) {
-        // Si el video no se puede reproducir, queda la imagen: la seña no se queda sin explicación.
-        var videoFallo by remember(entrada.word) { mutableStateOf(false) }
-        val video = entrada.videoAssetPath
         if (video != null && !videoFallo) {
+            // El video va directo sobre el fondo de la pantalla, con sus esquinas redondeadas:
+            // dentro de una caja blanca quedaban dos franjas blancas a los costados.
             VideoDeSena(
                 assetPath = video,
                 descripcion = "Video de cómo se hace la seña ${entrada.display}. Tocá para pausar.",
@@ -291,7 +291,9 @@ private fun ColumnScope.DetalleDeSena(
             DictionaryAssetImage(
                 assetPath = entrada.imageAssetPath,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(28.dp)),
                 descripcion = "Imagen de cómo se hace la seña ${entrada.display}",
             )
         }
@@ -369,18 +371,20 @@ private fun TarjetaDeSena(
         border = BorderStroke(1.dp, SenarBordeSuave),
     ) {
         Column {
+            // La captura llena la tarjeta de borde a borde y la tarjeta la recorta con sus
+            // esquinas redondeadas: con márgenes quedaba una foto chica flotando en blanco.
+            // Es cuadrada (la arma tools/previews_diccionario.py con la cara y las manos
+            // adentro), así que Crop no le saca nada.
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(if (compacta) 80.dp else 148.dp)
-                    .padding(if (compacta) 5.dp else 8.dp),
+                    .aspectRatio(1f)
+                    .background(SenarAzul050),
                 contentAlignment = Alignment.Center,
             ) {
-                // Fit y no Crop: en una seña, dónde queda el brazo respecto del
-                // cuerpo es parte de lo que la tarjeta viene a enseñar.
                 DictionaryAssetImage(
                     assetPath = entrada.imageAssetPath,
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

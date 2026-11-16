@@ -66,7 +66,7 @@ internal fun VideoDeSena(
         Box(
             Modifier
                 .aspectRatio(proporcion)
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(28.dp))
                 .semantics { contentDescription = descripcion }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
