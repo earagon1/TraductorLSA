@@ -90,6 +90,8 @@ data class DictionaryEntry(
     val display: String,
     val imageAssetPath: String?,
     val category: WordCategory,
+    // El video que muestra la seña completa. Sin video, el detalle muestra la imagen.
+    val videoAssetPath: String? = null,
 )
 
 @Composable
@@ -118,6 +120,7 @@ fun DictionaryScreen(navController: NavHostController) {
                         display = nombreParaMostrar(palabra),
                         imageAssetPath = findWordImageInAssets(context.assets, palabra),
                         category = categorizeWord(palabra),
+                        videoAssetPath = findWordVideoInAssets(context.assets, palabra),
                     )
                 }
             }
@@ -274,12 +277,24 @@ private fun ColumnScope.DetalleDeSena(
             .padding(18.dp),
         contentAlignment = Alignment.Center,
     ) {
-        DictionaryAssetImage(
-            assetPath = entrada.imageAssetPath,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
-            descripcion = "Ilustración de cómo se hace la seña ${entrada.display}",
-        )
+        // Si el video no se puede reproducir, queda la imagen: la seña no se queda sin explicación.
+        var videoFallo by remember(entrada.word) { mutableStateOf(false) }
+        val video = entrada.videoAssetPath
+        if (video != null && !videoFallo) {
+            VideoDeSena(
+                assetPath = video,
+                descripcion = "Video de cómo se hace la seña ${entrada.display}. Tocá para pausar.",
+                onFalla = { videoFallo = true },
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            DictionaryAssetImage(
+                assetPath = entrada.imageAssetPath,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+                descripcion = "Imagen de cómo se hace la seña ${entrada.display}",
+            )
+        }
     }
 
     Aire(18)
@@ -626,8 +641,21 @@ internal fun findWordImageInAssets(assetManager: AssetManager, word: String): St
     return null
 }
 
+/** La ruta del video de la seña en los assets, o null si esa seña no tiene video. */
+internal fun findWordVideoInAssets(assetManager: AssetManager, word: String): String? {
+    val ruta = rutaDeVideo(normalizeForFileName(word))
+    return try {
+        // openFd y no open: es lo que usa el reproductor, y falla si el archivo quedó comprimido en el APK.
+        assetManager.openFd(ruta).close()
+        ruta
+    } catch (_: Exception) {
+        // Sin video para esta seña: el detalle muestra la imagen.
+        null
+    }
+}
+
 /**
- * Dónde se busca el dibujo de una seña, en orden: primero `dictionary/`, después la raíz
+ * Dónde se busca la imagen de una seña, en orden: primero `dictionary/`, después la raíz
  * de assets, y en cada lugar las extensiones de más usada a menos. [base] ya viene con
  * guion bajo en lugar de espacios ("por_favor"). La usan el diccionario y el selector de
  * la cámara, para que las dos pantallas encuentren la misma imagen.

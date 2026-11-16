@@ -20,7 +20,7 @@ El modelo se entrena en otro repositorio (`modelo_LSA`); el informe de la tesina
   texto y la dice en voz alta. Si la confianza es baja, lo avisa en vez de arriesgar.
 - **Traducir voz:** pasa a texto lo que dice la persona oyente, con el reconocedor del
   sistema en modo sin conexión.
-- **Diccionario:** las señas que el modelo conoce, con su ilustración.
+- **Diccionario:** las señas que el modelo conoce, cada una con una imagen y, al abrirla, el video de cómo se hace.
 - **Entrenar:** graba tomas etiquetadas (libres o en una sesión guiada por planilla) y
   las guarda en el teléfono para exportarlas.
 - **Aprendizaje federado (experimental):** entrena la última capa del modelo en el
