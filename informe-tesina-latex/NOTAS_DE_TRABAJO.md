@@ -202,7 +202,7 @@ El PDF compila (98 páginas). Para Overleaf: `main.tex`, los capítulos 03, 05, 
 
 ## Sesión 2026-11-15 (diccionario con videos y fuentes de las cifras)
 
-**Diccionario.** La app reemplazó los dibujos por una imagen y un video de cada seña. El cap. 5 lo describe así y las capturas `figures/capturas/diccionario.jpg` y `entrenamiento_lista.jpg` son nuevas (tablet, 2026-11-15). Quedan con las miniaturas viejas `entrenamiento_camara.jpg` y `dataset.jpg`. Pendiente de la autora: decir cómo se produjeron los videos y quién verificó las señas.
+**Diccionario.** La app reemplazó los dibujos por una imagen y un video de cada seña. El cap. 5 lo describe así y las capturas `figures/capturas/diccionario.jpg` y `entrenamiento_lista.jpg` son nuevas (tablet, 2026-11-15). Quedan con las miniaturas viejas `entrenamiento_camara.jpg` y `dataset.jpg`. Origen de los videos (dicho por la autora el 2026-11-16 y ya escrito en el cap. 5): los grabó ella haciendo cada seña, se recortaron a unos 3 s y se pasaron de MOV a MP4; la persona que se ve es ficticia (imagen generada con Gemini) y el movimiento se transfirió con Mage (mage.space). Pendiente de la autora: confirmar que revisó cada video final contra su grabación y decidir si se citan las dos herramientas.
 
 **Cifras del cap. 6 que no tenían fuente, revisadas contra los datos** (`plan/evidencia/2026-11-15_encuadre_y_muneca.txt`, con los dos scripts que lo generan):
 
