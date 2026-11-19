@@ -21,7 +21,7 @@ La métrica $\sigma$ de la propuesta se comporta como se esperaba: crece en las 
 
 \subsection{Aprendizaje federado}
 
-El piloto muestra que el ciclo completo es viable en dispositivos reales: el entrenamiento local de la cabeza tarda una décima de segundo, cada actualización ocupa 13\,KB y la cabeza combinada llega a cada dispositivo sin alteraciones. La simulación reproduce el resultado de las rondas reales con una toma de diferencia, dentro de la oscilación observada entre rondas, lo que respalda las conclusiones obtenidas en simulación con más rondas y semillas.
+El piloto muestra que el ciclo completo es viable en dispositivos reales: el entrenamiento local de la cabeza tarda una décima de segundo, cada actualización ocupa 13\,KB y la cabeza combinada llega a cada dispositivo sin alteraciones. El resultado de las rondas reales queda dentro del rango que da su simulación con distintas semillas, lo que respalda las conclusiones obtenidas en simulación con más rondas y semillas.
 
 El experimento con una persona nueva matiza el aporte del esquema. Las rondas mejoraron el modelo compartido para todas las personas, incluida una que no participó, pero la mejora propia de la persona nueva fue pequeña. Promediar las actualizaciones entre dispositivos produce un modelo para el conjunto de los participantes, en el que lo específico de cada uno se diluye; la personalización local, que no se promedia, lo recupera en buena medida. Este comportamiento es conocido en la literatura del área~\cite{kairouz2021advances} y es el motivo por el que los esquemas federados suelen combinar un modelo global con un ajuste local.
 

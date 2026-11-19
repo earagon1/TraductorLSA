@@ -213,7 +213,7 @@ El PDF compila (98 páginas). Para Overleaf: `main.tex`, los capítulos 03, 05, 
 
 **Federado.**
 
-- La simulación (81,8 % y 59,6 %): el piloto real está en `federated/piloto_sinP2/evaluacion_versiones.json` y P2 en la sesión 2 fue 59,6 → 61,7 → 59,6 → 59,6 → 61,7. La corrida simulada no está guardada. Los cap. 7 y 8 ya no dicen «reproduce exactamente»: dicen que difiere en una toma, dentro de la oscilación, y quedó un `\pendienteautora` para volver a correrla o retirar la comparación.
+- La simulación del piloto: resuelto el 2026-11-18. `federated/simular_piloto.py` (modelo_LSA) repite las 4 rondas con los mismos clientes (84 y 93 tomas, verificado contra `rondas.jsonl`) y reproduce el punto de partida exacto (77,3 y 59,6). Con 5 semillas: P2 habituales 80,0 ± 2,5 (77,3 a 81,8), sesión 2 60,4 ± 1,2 (59,6 a 61,7); con 8 épocas, sesión 2 63,0 ± 1,9. El real (81,8 y 61,7) queda dentro del rango. Los cap. 7 y 8 ya lo dicen así; la frase vieja «8 épocas no lo modifica» se corrigió (sube unas dos tomas). Resultados en `resultados_federado_simulacion_piloto/2026-11-18/`.
 - 84,5 ± 2,5 frente a 83,6: `progreso.md` da los dos (fila del experimento sin P2: 77,3 → 83,6; fila de la personalización en el teléfono: 84,5 ± 2,5 «desde la misma cabeza»). No hay script ni resultado guardado de ninguna de las dos corridas, así que no se pudo decidir cuál vale. La tabla conserva 84,5 ± 2,5. Sigue pendiente.
 
 El PDF compila (99 páginas). Para Overleaf: los capítulos 05, 06, 07 y 08 y las dos capturas nuevas, además de lo listado en la sesión anterior.
