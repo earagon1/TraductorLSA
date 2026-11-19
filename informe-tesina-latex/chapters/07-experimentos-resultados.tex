@@ -293,13 +293,13 @@ Para evaluar el caso en que el esquema federado debería aportar más, se entren
         Personalizado en el teléfono de P2 & 82 & 66 & --- & --- \\
         \bottomrule
     \end{tabular}
-    \caption{Acierto (\%) del experimento con una persona nueva. «Normal»: 22 tomas de P2 reservadas para prueba; «sesión 2»: tomas en condiciones adversas (47 de P2). P3 no participó de las rondas.}
+    \caption{Acierto (\%) del experimento con una persona nueva. «Normal»: 22 tomas de P2 reservadas para prueba; «sesión 2»: tomas en condiciones adversas (47 de P2). P3 no participó de las rondas. La personalización en la computadora parte, como la del teléfono, de la cabeza que dejaron las rondas (media y desvío con cinco semillas).}
     \label{tab:federado-sin-p2}
 \end{table}
 
 Las rondas mejoraron el modelo compartido para las tres personas, incluida P3, que no participó, y el acierto sobre el conjunto de prueba fijo del servidor pasó de 78,8\,\% a 84,6\,\%. La mejora específica para P2 fue pequeña: dos puntos en sus tomas de la sesión~2, equivalentes a una sola toma, y con oscilaciones entre rondas. Para comprobar que el resultado no depende de las condiciones particulares del piloto, las mismas cuatro rondas se repitieron en la computadora, con los mismos dos clientes y las mismas tomas (84 de P2 y 93 de P1), la misma cuantización a 8 bits y cinco semillas. P2 obtiene 80,0\,$\pm$\,2,5\,\% en sus tomas habituales y 60,4\,$\pm$\,1,2\,\% en la sesión~2 (entre 77,3 y 81,8\,\% y entre 59,6 y 61,7\,\%, respectivamente): el resultado real queda dentro de ese rango. Con ocho épocas locales en lugar de dos, la sesión~2 sube a 63,0\,$\pm$\,1,9\,\%, alrededor de una toma más, todavía lejos de lo que logra la personalización.
 
-Ajustar la cabeza solo con las 84 tomas de P2, sin promediar con otros dispositivos, eleva su acierto en la sesión~2 a 70,6\,$\pm$\,2,3\,\%. Esta personalización local se implementó en la aplicación y, ejecutada en el teléfono de P2, tardó 0,3\,s y elevó su acierto en la sesión~2 de 62\,\% a 66\,\%. El ajuste solo con P2 también mejora a P3 (de 66,7\,\% a entre 81 y 83\,\%).
+Ajustar la cabeza solo con las 84 tomas de P2, sin promediar con otros dispositivos, eleva su acierto en la sesión~2 a 70,6\,$\pm$\,2,3\,\% (cinco semillas, ocho épocas, partiendo de la cabeza que dejaron las rondas, como en el teléfono). Partiendo de la cabeza del paquete, sin las rondas, el resultado es prácticamente el mismo (83,6\,\% en las tomas habituales y 71,1\,\% en la sesión~2): para P2, lo que mejora el acierto es el ajuste con sus propias tomas, no las rondas previas. Esta personalización local se implementó en la aplicación y, ejecutada en el teléfono de P2, tardó 0,3\,s y elevó su acierto en la sesión~2 de 62\,\% a 66\,\%. El ajuste solo con P2 también mejora a P3, que no participó: su acierto en la sesión~2 pasa de 66,7\,\% a 80,6\,$\pm$\,2,0\,\%.
 
 \subsection{Protección de las actualizaciones}
 
